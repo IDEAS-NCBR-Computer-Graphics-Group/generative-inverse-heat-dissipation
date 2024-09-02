@@ -68,6 +68,14 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
                                batch_size=eval_batch_size, image_size=config.data.image_size,
                                random_flip=False)
         return trainloader, testloader
+    elif config.data.dataset == 'FFHQ_128':
+        trainloader = load_data(data_dir="data/ffhq-128-70k",
+                                batch_size=train_batch_size, image_size=config.data.image_size,
+                                random_flip=config.data.random_flip)
+        testloader = load_data(data_dir="data/ffhq-128-70k",
+                               batch_size=eval_batch_size, image_size=config.data.image_size,
+                               random_flip=False)
+        return trainloader, testloader
     elif config.data.dataset == 'AFHQ':
         trainloader = load_data(data_dir="data/afhq/train",
                                 batch_size=train_batch_size, image_size=config.data.image_size,

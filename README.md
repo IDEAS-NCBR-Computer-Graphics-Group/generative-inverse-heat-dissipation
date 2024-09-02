@@ -9,7 +9,7 @@ This repository is the official implementation of the methods in the publication
 The "`configs`" folder contains the configuration details on different experiments and the "`data`" folder contains the data. MNIST and CIFAR-10 should run as-is with automatic torchvision data loading, but the other experiments require downloading the data to the corresponding `data/` folders. The "`model_code`" contains the U-Net definition and utilities for working with the proposed inverse heat dissipation model. "`scripts`" contains additional code, for i/o, data loading, loss calculation and sampling. "`runs`" is where the results get saved at.
 
 ## Used Python packages
-
+generative-inverse-heat-dissipation
 The file "requirements.txt" contains the Python packages necessary to run the code, and they can be installed by running
 
 ```pip install -r requirements.txt```
@@ -22,6 +22,17 @@ You can get started by running an MNIST training script with
 
 ```python train.py --config configs/mnist/default_mnist_configs.py --workdir runs/mnist/default```
 
+```python train.py --config configs/cifar10/default_cifar10_configs.py --workdir runs/cifar10/default```
+
+
+```python train.py --config configs/afhq/default_afhq_configs.py --workdir runs/afhq/default```
+
+```python train.py --config configs/afhq/img_size_64.py --workdir runs/afhq/img_size_64```
+
+```python train.py --config configs/ffhq/default_ffhq_configs.py --workdir runs/ffhq/default```
+
+```python train.py --config configs/ffhq/img_size_128_maxblur128.py --workdir runs/ffhq/img_size_128_maxblur128```
+
 This creates a folder "`runs/mnist/default`", which contains the folder "`checkpoint-meta`", where the newest checkpoint is saved periodically. "`samples`" folder contains samples saved during training. You can change the frequency of checkpointing and sampling with the command line flags "`training.snapshot_freq_for_preemption=?`" and "`config.training.sampling_freq=?`". 
 
 ## Sampling
@@ -31,8 +42,9 @@ Once you have at least one checkpoint, you can do sampling with "`sample.py`", w
 Random samples: 
 
 ```bash
-python sample.py --config configs/mnist/default_mnist_configs.py
-                 --workdir runs/mnist/default --checkpoint 0 --batch_size=9
+python sample.py --config configs/mnist/default_mnist_configs.py --workdir runs/mnist/default --checkpoint 0 --batch_size=9
+
+python sample.py --config configs/ffhq/img_size_128_maxblur128.py --workdir runs/ffhq/img_size_128_maxblur128 --checkpoint 0 --batch_size=9
 ```
 
 ### Share the initial state

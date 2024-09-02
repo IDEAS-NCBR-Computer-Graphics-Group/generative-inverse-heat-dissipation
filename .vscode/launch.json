@@ -1,0 +1,26 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+
+// Select the Interpreter in VSCode:
+// Open the Command Palette (Ctrl+Shift+P or Cmd+Shift+P on macOS).
+// Type Python: Select Interpreter
+
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: sample.py with Arguments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/sample.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--config", "configs/ffhq/img_size_128_maxblur128.py",
+                "--workdir", "runs/ffhq/img_size_128_maxblur128",
+                "--checkpoint", "0",
+                "--batch_size", "9"
+            ]
+        }
+    ]
+}

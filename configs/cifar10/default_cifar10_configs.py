@@ -16,9 +16,9 @@ def get_default_configs():
     training.snapshot_freq = 50000
     training.log_freq = 50
     training.eval_freq = 100
-    training.sampling_freq = 100  # 10000
+    training.sampling_freq = 500  # 10000
     # store additional checkpoints for preemption in cloud computing environments
-    training.snapshot_freq_for_preemption = 100  # 10000
+    training.snapshot_freq_for_preemption = 500  # 10000
 
     # sampling
     config.sampling = sampling = ml_collections.ConfigDict()

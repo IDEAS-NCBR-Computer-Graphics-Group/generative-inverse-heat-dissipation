@@ -104,7 +104,8 @@ def get_step_fn(train, scales, config, optimize_fn=None,
             optimizer = state['optimizer']
             if config.optim.automatic_mp:
                 optimizer.zero_grad()
-                with torch.cuda.amp.autocast():
+                with torch.amp.autocast("cuda"):
+                # with torch.cuda.amp.autocast(): # depreciated
                     loss, losses_batch, fwd_steps_batch = loss_fn(model, batch)
                     # amp not recommended in backward pass, but had issues getting this to work without it
                     # Followed https://github.com/pytorch/pytorch/issues/37730

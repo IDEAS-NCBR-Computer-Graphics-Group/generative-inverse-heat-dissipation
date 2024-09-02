@@ -98,6 +98,7 @@ def sample(config, workdir, checkpoint, save_sample_freq=1,
     sample, n, intermediate_samples = sampling_fn(model_fn)
 
     # Save results
+    logging.info("Save results")
     utils.save_tensor_list(this_sample_dir, intermediate_samples, "samples.np")
     utils.save_tensor(this_sample_dir, sample, "final.np")
     utils.save_png(this_sample_dir, sample, "final.png")
