@@ -7,22 +7,22 @@ c2-deeplearning-pytorch-1-13-cu113-v20240730-debian-11
 ## conda way
 create and activate conda env
 
-
+```
 conda create --name ihd-env --clone base
 conda activate ihd-env
 pip install -r gcp_requirements.txt
 
 
-
-
 $conda env remove --name ihd-env # if things go wrong
+```
 
+## python way
 
-# python way
-first time...
-sudo apt-get install python3-dev
+first time...`sudo apt-get install python3-dev`
 
 then
+
+```.sh
 /usr/bin/python3.9 -m venv py-ihd-env
 source ./py-ihd-env/bin/activate
 
@@ -30,7 +30,15 @@ $ nvcc --version # check your version
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu113 # and install the right one
 
 pip install -r gcp_requirements.txt
+```
 
+### athena cluster
+
+module load CUDA/12.4.0
+module load Python/3.10.4
+
+source $SCRATCH/ihd-env/bin/activate
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
 
 ### datasets download
 
