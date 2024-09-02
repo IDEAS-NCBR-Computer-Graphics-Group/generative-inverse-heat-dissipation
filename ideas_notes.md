@@ -34,11 +34,18 @@ pip install -r gcp_requirements.txt
 
 ### athena cluster
 
-module load CUDA/12.4.0
+module load GCC/11.2.0
+module load GCCcore/11.2.0
 module load Python/3.10.4
+module load OpenMPI/4.1.2-CUDA-11.6.0
+module load libtirpc/1.3.2
 
-source $SCRATCH/ihd-env/bin/activate
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+python -m venv py-ihd-env
+source $SCRATCH/py-ihd-env/bin/activate
+$SCRATCH/py-ihd-env/bin/python -m pip install --upgrade pip
+pip install mpi4py torch torchvision --index-url https://download.pytorch.org/whl/cu116
+pip install -r gcp_requirements.txt #
+pip install -r requirements.txt # pi-inr
 
 ### datasets download
 
