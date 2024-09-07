@@ -50,6 +50,8 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
             root="data", train=True, download=True, transform=transform)
         test_data = datasets.MNIST(
             root="data", train=False, download=True, transform=transform)
+    elif config.data.dataset == 'CORRUPTED_MNIST':
+        pass
     elif config.data.dataset == 'CIFAR10':
         training_data = datasets.CIFAR10(
             root="data", train=True, download=True, transform=transform)
