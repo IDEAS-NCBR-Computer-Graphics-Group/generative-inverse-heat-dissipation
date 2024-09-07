@@ -138,6 +138,16 @@ def load_data(
         num_shards=MPI.COMM_WORLD.Get_size(),
         random_flip=random_flip
     )
+    
+    ##
+    # dataset = ImageDataset(
+    #     image_size,
+    #     all_files,
+    #     classes=classes,
+    #     shard=0,
+    #     num_shards=1,
+    #     random_flip=random_flip
+    # )
     if deterministic:
         loader = DataLoader(
             dataset, batch_size=batch_size, shuffle=False, num_workers=4, drop_last=True

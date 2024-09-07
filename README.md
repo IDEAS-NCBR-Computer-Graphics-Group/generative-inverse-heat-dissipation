@@ -24,7 +24,6 @@ You can get started by running an MNIST training script with
 
 ```python train.py --config configs/cifar10/default_cifar10_configs.py --workdir runs/cifar10/default```
 
-
 ```python train.py --config configs/afhq/default_afhq_configs.py --workdir runs/afhq/default```
 
 ```python train.py --config configs/afhq/img_size_64.py --workdir runs/afhq/img_size_64```
