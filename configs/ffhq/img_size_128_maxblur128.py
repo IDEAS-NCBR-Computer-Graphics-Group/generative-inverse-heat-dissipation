@@ -28,4 +28,7 @@ def get_config():
     model.blur_rate = 'custom'
     config.optim.lr = 2e-4
     config.eval.num_samples = 10000
+    
+    config.training.snapshot_freq_for_preemption = 1000
+    config.training.sampling_freq = 1000
     return config
