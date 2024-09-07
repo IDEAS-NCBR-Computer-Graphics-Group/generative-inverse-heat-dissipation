@@ -26,7 +26,7 @@ You can get started by running an MNIST training script with
 
 ```python train.py --config configs/afhq/default_afhq_configs.py --workdir runs/afhq/default```
 
-```python train.py --config configs/afhq/img_size_64.py --workdir runs/afhq/img_size_64```
+```python train.py --config configs/afhq/img_size_128.py --workdir runs/afhq/img_size_128```
 
 ```python train.py --config configs/ffhq/default_ffhq_configs.py --workdir runs/ffhq/default```
 
