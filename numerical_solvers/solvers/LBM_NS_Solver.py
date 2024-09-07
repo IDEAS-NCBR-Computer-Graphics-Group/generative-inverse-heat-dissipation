@@ -39,7 +39,7 @@ class LBM_NS_Solver(LBM_SolverBase):
             # self.init_gaussian_force_field(1E-2, 0, 1)
             self.apply_bb()
             self.iterations_counter = self.iterations_counter +1
-        print(f"iterations: {self.iterations_counter}")
+        # print(f"iterations: {self.iterations_counter}")
                             
 
                

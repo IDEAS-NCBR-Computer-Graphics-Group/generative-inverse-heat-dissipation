@@ -100,8 +100,8 @@ class LBM_NS_Corruptor(BaseCorruptor):
         corruption_amounts = []
         labels = []
         
-        for index in range(10000): 
-        # for index in range(len(initial_dataset)):     # Process all data points
+        # for index in range(10000): 
+        for index in range(len(initial_dataset)):     # Process all data points
             if index % 100 == 0:
                 print(f"Preprocessing (lbm) {index}")
             corruption_amount = np.random.randint(self.min_lbm_steps, 
