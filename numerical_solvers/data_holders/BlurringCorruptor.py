@@ -39,8 +39,8 @@ class BlurringCorruptor(BaseCorruptor):
         corruption_amounts = []
         labels = []
         
-        for index in range(10000): 
-        # for index in range(len(initial_dataset)):     # Process all data points
+        # for index in range(10000): 
+        for index in range(len(initial_dataset)):     # Process all data points
             if index % 1000 == 0:
                 print(f"Preprocessing (blurring) {index}")
             corruption_amount = np.random.randint(2,7)
