@@ -163,9 +163,22 @@ url:
 https://www.kaggle.com/datasets/potatohd404/ffhq-128-70k
 
 
+### mount disk on gcp
+
+lsblk  
+sudo fdisk -l 
+
+sudo fdisk -l /dev/nvme0n2 # Check the Disk for Partitions or Filesystem:
+sudo mkfs.ext4 /dev/nvme0n2 # Create a Filesystem on the Disk (if needed):
+sudo mount /dev/nvme0n2 /mnt/datadisk/
+
+
 # check disk usage
 
 sudo df -h 
 du -sh * | sort -hr | head -n10
 ncdu $HOME
 hpc-fs # athena util
+
+
+
