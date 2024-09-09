@@ -80,23 +80,14 @@ The script "`evaluation.py`" contains code for evaluating the model with FID-sco
 This assumes that you have `clean-fid` installed. 
 
 ```bash
-python evaluate.py --config configs/cifar10/default_cifar10_configs.py
-            --workdir runs/cifar10/default --checkpoint 0
-            --dataset_name=cifar10
-            --experiment_name=experiment1 --param_name=default --mode=fid
-            --delta=0.013 --dataset_name_cleanfid=cifar10
-            --dataset_split=train --batch_size=128 --num_gen=50000
+python evaluate.py --config configs/cifar10/default_cifar10_configs.py --workdir runs/cifar10/default --checkpoint 0 --dataset_name=cifar10 --experiment_name=experiment1 --param_name=default --mode=fid --delta=0.013 --dataset_name_cleanfid=cifar10 --dataset_split=train --batch_size=128 --num_gen=50000
 ```
 
 ### NLL values
 The result contains a breakdown of the different terms in the NLL.
 
 ```bash
-python evaluate.py --config configs/cifar10/default_cifar10_configs.py
-            --workdir runs/cifar10/default --checkpoint 0
-            --dataset_name=cifar10
-            --experiment_name=experiment1 --param_name=default --mode=elbo
-            --delta=0.013
+python evaluate.py --config configs/cifar10/default_cifar10_configs.py --workdir runs/cifar10/default --checkpoint 0 --dataset_name=cifar10 --experiment_name=experiment1 --param_name=default --mode=elbo --delta=0.013
 ```
 
 ### Result folder

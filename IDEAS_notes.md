@@ -36,6 +36,7 @@ pip install -r gcp_requirements.txt
 
 ```
 srun -N1 -n8 --account=plgclb2024-gpu-a100 --partition=plgrid-gpu-a100 --gres=gpu:1 --time=08:00:00 --pty /bin/bash -l
+srun -N1 -n8 --account=plgclb2024-gpu-a100 --partition=plgrid-gpu-a100 --gres=gpu:1 --time=01:00:00 --pty /bin/bash -l
 
 module load GCC/12.3.0
 module load GCCcore/12.3.0
@@ -172,6 +173,27 @@ sudo fdisk -l /dev/nvme0n2 # Check the Disk for Partitions or Filesystem:
 sudo mkfs.ext4 /dev/nvme0n2 # Create a Filesystem on the Disk (if needed):
 sudo mount /dev/nvme0n2 /mnt/datadisk/
 
+
+### qpa error
+
+QObject::moveToThread: Current thread (0x7113010) is not the object's thread (0x99b7750).
+Cannot move to target thread (0x7113010)
+
+qt.qpa.plugin: Could not load the Qt platform plugin "xcb" in "/home/computergraphics/anaconda3/envs/ihd-env/lib/python3.11/site-packages/cv2/qt/plugins" even though it was found.
+This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem.
+
+Available platform plugins are: xcb, eglfs, minimal, minimalegl, offscreen, vnc, webgl.
+
+https://stackoverflow.com/questions/71088095/opencv-could-not-load-the-qt-platform-plugin-xcb-in-even-though-it-was-fou
+
+it was enought to reinstall:
+```
+pip uninstall PyQt5
+pip uninstall opencv-python
+pip install opencv-python
+```
+
+maybe `pip install opencv-python-headless`
 
 # check disk usage
 
