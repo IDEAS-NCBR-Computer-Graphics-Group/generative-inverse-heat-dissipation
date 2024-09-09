@@ -16,16 +16,18 @@ import itertools
 
 import cv2 # conda install conda-forge::opencv || pip install opencv-python
 
-from lbm_diffuser.synthetic_turbulence import SpectralTurbulenceGenerator
-from lbm_diffuser.img_reader import read_img_in_grayscale, normalize_grayscale_image_range
-from lbm_diffuser.lbm_gui_visualizer import run_with_gui
+from numerical_solvers.solvers.SyntheticTurbulence import SpectralTurbulenceGenerator
+from numerical_solvers.solvers.img_reader import read_img_in_grayscale, normalize_grayscale_image_range
+from numerical_solvers.visualization.taichi_lbm_gui import run_with_gui
 
+
+from numerical_solvers.solvers.LBM_ADE_Solver import LBM_ADE_Solver
 
 # %% read IC
 # https://github.com/taichi-dev/image-processing-with-taichi/blob/main/image_transpose.py
 
 
-img_path = 'cat_768x768.jpg'
+img_path = './numerical_solvers/runners/cat_768x768.jpg'
 # img_path = 'cat_768x768.jpg'
 target_size=None
 # target_size=(512, 512)
@@ -43,9 +45,6 @@ np_gray_image = normalize_grayscale_image_range(np_gray_image, 0.95, 1.05)
 
 # %% run sovler
 
-# from lbm_diffuser.lbm_bckp_with_fields import lbm_solver as lbm_solver_bkcp
-# from lbm_diffuser.lbm_solver_old import lbm_solver
-from lbm_diffuser.LBM_ADE_Solver import LBM_ADE_Solver
              
 ti.init(arch=ti.gpu)
 # ti.init(arch=ti.cpu)
@@ -61,15 +60,18 @@ if __name__ == '__main__':
     domain_size = (1.0, 1.0)
     grid_size = np_gray_image.shape
     noise_limiter = (-1E-1, 1E-1)
-    dt_turb = 1E-4
+    dt_turb = 1E-3
 
-    # turb_intensity = 1E-3
+    turb_intensity = 1E-3
     # energy_spectrum = lambda k: np.where(np.isinf(k), 0, k)
     
-    turb_intensity = 8E-4
+    noise_limiter = (-1E-3, 1E-3)
+    # turb_intensity = 1E-2
+    
+
     energy_spectrum = lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
     frequency_range = {'k_min': 2.0 * np.pi / min(domain_size), 
-                       'k_max': 2.0 * np.pi / (min(domain_size) / 2048)}
+                       'k_max': 2.0 * np.pi / (min(domain_size) / 64)}
     
     spectralTurbulenceGenerator = SpectralTurbulenceGenerator(
         domain_size, grid_size, 
@@ -88,7 +90,7 @@ if __name__ == '__main__':
     # 
     solver.init(np_gray_image) 
 
-    # solver.init(1.*np.ones((nx,ny), dtype=float))
+    # solver.init(1.*np.ones((nx,ny), dtype=np.float32))
     # solver.create_ic_hill(.1, 1E-3, int(0.5*nx), int(0.5*ny)) 
     # solver.create_ic_hill( .05, 1E-3, int(0.25*nx), int(0.25*ny))
     # solver.create_ic_hill(-.05, 1E-3, int(0.75*nx), int(0.75*ny))
