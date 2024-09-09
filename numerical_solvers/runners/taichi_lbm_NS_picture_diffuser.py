@@ -57,7 +57,7 @@ if __name__ == '__main__':
     grid_size = np_gray_image.shape
     turb_intensity = 1E-4
     noise_limiter = (-1E-3, 1E-3)
-    dt_turb = 5*1E-4 
+    dt_turb = 5E-3 
 
     # turb_intensity = 1E-3
     # energy_spectrum = lambda k: np.where(np.isinf(k), 0, k)
@@ -86,7 +86,7 @@ if __name__ == '__main__':
     
     solver.init(np_gray_image) 
 
-    # solver.init(1.*np.ones(grid_size, dtype=float))
+    # solver.init(1.*np.ones(grid_size, dtype=np.float32))
     # solver.create_ic_hill(.1, 1E-3, int(0.5*nx), int(0.5*ny)) 
     # solver.create_ic_hill( .05, 1E-3, int(0.25*nx), int(0.25*ny))
     # solver.create_ic_hill(-.05, 1E-3, int(0.75*nx), int(0.75*ny))

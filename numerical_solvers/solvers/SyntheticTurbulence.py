@@ -153,6 +153,56 @@ class SpectralTurbulenceGenerator:
             spectrum[np.isinf(spectrum)] = 0  # Replace any infinities (from divide by zero) with 0
         return spectrum
 
+    def tanh_limiter(self, x, min_val, max_val, sharpness=1.0):
+        """
+        Applies a tanh-like limiter to smoothly constrain x within [min_val, max_val] with adjustable sharpness.
+        
+        Args:
+        - x: Input value or array.
+        - min_val: Minimum allowable value.
+        - max_val: Maximum allowable value.
+        - sharpness: Controls the sharpness of the transition; higher values make the transition sharper.
+        
+        Returns:
+        - Limited value(s) of x within the range [min_val, max_val].
+        """
+        mid_val = (max_val + min_val) / 2
+        range_val = (max_val - min_val) / 2
+        # Adjusted tanh with sharpness
+        return mid_val + range_val * np.tanh(sharpness * (x - mid_val) / range_val)
+
+    def limit_velocity_field(self, u, v, min_val, max_val):
+        """
+        Limits the magnitude of a velocity field with u, v components using a tanh-like limiter.
+        
+        Args:
+        - u: 2D numpy array for the u component of the velocity.
+        - v: 2D numpy array for the v component of the velocity.
+        - min_val: Minimum allowable magnitude of the velocity.
+        - max_val: Maximum allowable magnitude of the velocity.
+        
+        Returns:
+        - u_limited: Limited u component of the velocity field.
+        - v_limited: Limited v component of the velocity field.
+        """
+        # Calculate the magnitude of the velocity field
+        velocity_magnitude = np.sqrt(u**2 + v**2)
+        
+        # Apply the tanh limiter to the velocity magnitudes
+        limited_magnitude = self.tanh_limiter(velocity_magnitude, min_val, max_val)
+        
+        # Avoid division by zero; use a small factor if magnitude is less than 1E-6
+        small_factor = 1E-9
+        direction_factor = np.where(velocity_magnitude < small_factor, small_factor, limited_magnitude / velocity_magnitude)
+        
+        # Adjust u and v components to match the new limited magnitude while preserving direction
+        upscale = 1. #1E1
+        direction_factor *=upscale
+        
+        u_limited = u * direction_factor
+        v_limited = v * direction_factor
+
+        return u_limited, v_limited
 
     def generate_turbulence(self, time):
         """
@@ -207,9 +257,11 @@ class SpectralTurbulenceGenerator:
         min_noise, max_noise = self.noise_limiter
 
         # Limiting the values of u and v elementwise
-        u = np.clip(u, min_noise, max_noise)
-        v = np.clip(v, min_noise, max_noise)
+        # u = np.clip(u, min_noise, max_noise)
+        # v = np.clip(v, min_noise, max_noise)
     
+        u, v = self.limit_velocity_field(u, v, min_noise, max_noise)
+        
         return np.float32(u), np.float32(v)
 
 

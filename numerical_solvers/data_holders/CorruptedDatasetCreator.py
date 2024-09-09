@@ -12,14 +12,15 @@ from matplotlib import pyplot as plt
 import matplotlib
 from timeit import default_timer as timer
 
+import sys
+from pathlib import Path
 
 from BlurringCorruptor import BlurringCorruptor
 # from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from LBM_NS_Corruptor import LBM_NS_Corruptor
 from CorruptedDataset import CorruptedDataset
 
-import sys; 
-from pathlib import Path
+
 # sys.path.insert(0, '../../')
                                 
 # %% dataset

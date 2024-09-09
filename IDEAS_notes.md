@@ -204,3 +204,9 @@ hpc-fs # athena util
 
 
 
+# run
+
+conda activate ihd-env
+export PYTHONPATH=$(pwd)
+python numerical_solvers/data_holders/CorruptedDatasetCreator.py 
+python numerical_solvers/runners/taichi_lbm_NS_picture_diffuser.py 

@@ -32,14 +32,16 @@ class LBM_NS_Solver(LBM_SolverBase):
             # self.collide()
             self.collide_cm()
              
-            u_spec, v_spec = self.turbulenceGenerator.generate_turbulence(self.iterations_counter)     
-            force_numpy = np.stack((u_spec, v_spec), axis=-1)  # Shape becomes (128, 128, 2)
-            self.Force.from_numpy(force_numpy)
+            u_turb, v_turb = self.turbulenceGenerator.generate_turbulence(self.iterations_counter)     
+            turb_numpy = np.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
+            self.Force.from_numpy(turb_numpy)
             
             # self.init_gaussian_force_field(1E-2, 0, 1)
             self.apply_bb()
             self.iterations_counter = self.iterations_counter +1
-        # print(f"iterations: {self.iterations_counter}")
+            
+        if self.iterations_counter % 10 == 0:
+            print(f"iterations: {self.iterations_counter}")
                             
 
                

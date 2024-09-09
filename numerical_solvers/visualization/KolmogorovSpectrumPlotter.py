@@ -94,7 +94,7 @@ class KolmogorovSpectrumPlotter:
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])  # [left, bottom, width, height] as fractions of the figure size
         
         # Plot the current energy spectrum
-        ax.set_ylim([1E-2, 5*1E3])
+        ax.set_ylim([1E-5, 1E2])
         ax.loglog(k[1:len(k) // 2], energy_spectrum[1:len(k) // 2], 'b>', label='Energy spectrum')
         
         # Plot the -5/3 slope line using the reference data from the first call

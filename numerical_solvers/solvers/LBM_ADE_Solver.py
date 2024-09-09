@@ -2,8 +2,9 @@ import taichi as ti
 import taichi.math as tm
 import numpy as np
 
-from lbm_diffuser.synthetic_turbulence import SpectralTurbulenceGenerator, get_gaussian_noise
-from lbm_diffuser.LBM_SolverBase import LBM_SolverBase
+from numerical_solvers.solvers.SyntheticTurbulence import SpectralTurbulenceGenerator, get_gaussian_noise
+from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
+
 # Fluid solver based on lattice boltzmann method using taichi language
 # Inspired by: https://github.com/hietwll/LBM_Taichi
 
@@ -31,17 +32,20 @@ class LBM_ADE_Solver(LBM_SolverBase):
             # self.collide()
             self.collide_cm()
              
-            u_spec, v_spec = self.turbulenceGenerator.generate_turbulence(self.iterations_counter)     
-            force_numpy = np.stack((u_spec, v_spec), axis=-1)  # Shape becomes (128, 128, 2)
-            self.vel.from_numpy(force_numpy)
-            self.Force.from_numpy(force_numpy)
+            u_turb, v_turb = self.turbulenceGenerator.generate_turbulence(self.iterations_counter)     
+            turb_numpy = np.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
+            self.vel.from_numpy(turb_numpy)
+            self.Force.from_numpy(turb_numpy)
             
             # self.init_gaussian_force_field(1E-2, 0, 1)
             
             
             self.apply_bb()
             self.iterations_counter = self.iterations_counter +1
-        print(f"iterations: {self.iterations_counter}")
+        
+        
+        if self.iterations_counter % 10 == 0:
+            print(f"iterations: {self.iterations_counter}")
                             
 
                
