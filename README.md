@@ -9,16 +9,20 @@ This repository is the official implementation of the methods in the publication
 The "`configs`" folder contains the configuration details on different experiments and the "`data`" folder contains the data. MNIST and CIFAR-10 should run as-is with automatic torchvision data loading, but the other experiments require downloading the data to the corresponding `data/` folders. The "`model_code`" contains the U-Net definition and utilities for working with the proposed inverse heat dissipation model. "`scripts`" contains additional code, for i/o, data loading, loss calculation and sampling. "`runs`" is where the results get saved at.
 
 ## Used Python packages
+
 generative-inverse-heat-dissipation
 The file "requirements.txt" contains the Python packages necessary to run the code, and they can be installed by running
 
 ```pip install -r requirements.txt```
 
-If you have issues with installing the `mpi4py` through pip, you can also install it using conda with `conda install -c conda-forge mpi4py`. 
+If you have issues with installing the `mpi4py` through pip, you can also install it using conda with `conda install -c conda-forge mpi4py`.
 
 ## Training
 
 You can get started by running an MNIST training script with
+
+
+```python train.py --config configs/mnist/small_corrupted_mnist.py --workdir runs/mnist/corrupted_mnist```
 
 ```python train.py --config configs/mnist/default_mnist_configs.py --workdir runs/mnist/default```
 

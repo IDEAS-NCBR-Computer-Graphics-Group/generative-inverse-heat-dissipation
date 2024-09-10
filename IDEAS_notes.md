@@ -5,9 +5,10 @@ image:
 c2-deeplearning-pytorch-1-13-cu113-v20240730-debian-11
 
 ## conda way
+
 create and activate conda env
 
-```
+```.sh
 conda create --name ihd-env --clone base
 conda activate ihd-env
 pip install -r gcp_requirements.txt
@@ -141,12 +142,11 @@ in stargan-v2/download.sh
     rm $ZIP_FILE
 ```
 
-
 ### ffhq
 
 Go to the website and "Create New API Token". This will download a kaggle.json
 
-```
+```.sh
 pip install kaggle
 mkdir -p ~/.kaggle
 mv /path/to/kaggle.json ~/.kaggle/

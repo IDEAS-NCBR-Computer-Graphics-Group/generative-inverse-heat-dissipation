@@ -13,6 +13,7 @@ from absl import app
 from absl import flags
 from ml_collections.config_flags import config_flags
 
+
 FLAGS = flags.FLAGS
 
 config_flags.DEFINE_config_file(
@@ -81,16 +82,22 @@ def train(config, workdir):
     heat_forward_module = mutils.create_forward_process_from_sigmas(
         config, scales, config.device)
 
+
     # Get the loss function
-    train_step_fn = losses.get_step_fn(train=True, scales=scales, config=config, optimize_fn=optimize_fn,
+    train_step_fn = losses.get_step_lbm_fn(train=True, scales=scales, config=config, optimize_fn=optimize_fn,
                                        heat_forward_module=heat_forward_module)
-    eval_step_fn = losses.get_step_fn(train=False, scales=scales, config=config, optimize_fn=optimize_fn,
+    eval_step_fn = losses.get_step_lbm_fn(train=False, scales=scales, config=config, optimize_fn=optimize_fn,
                                       heat_forward_module=heat_forward_module)
 
     # Building sampling functions
     delta = config.model.sigma*1.25
     initial_sample, _ = sampling.get_initial_sample(
         config, heat_forward_module, delta)
+    
+    # TODO: draw a sample by lbm-destroying some rand images?
+    # from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
+    # lbm_corruptor = LBM_NS_Corruptor() 
+    
     sampling_fn = sampling.get_sampling_fn_inverse_heat(config,
                                                         initial_sample, intermediate_sample_indices=list(
                                                             range(config.model.K+1)),
@@ -110,7 +117,7 @@ def train(config, workdir):
         except StopIteration:  # Start new epoch if run out of data
             train_iter = iter(trainloader)
             batch = next(train_iter)[0].to(config.device).float()
-        loss, losses_batch, fwd_steps_batch = train_step_fn(state, batch)
+        loss, _, _ = train_step_fn(state, batch)
 
         writer.add_scalar("training_loss", loss.item(), step)
 
@@ -130,7 +137,7 @@ def train(config, workdir):
                 except StopIteration:  # Start new epoch
                     eval_iter = iter(testloader)
                     eval_batch = next(eval_iter)[0].to(config.device).float()
-                eval_loss, losses_batch, fwd_steps_batch = eval_step_fn(state, eval_batch)
+                eval_loss, _, _ = eval_step_fn(state, eval_batch)
                 eval_loss = eval_loss.detach()
             logging.info("step: %d, eval_loss: %.5e" % (step, eval_loss.item()))
 

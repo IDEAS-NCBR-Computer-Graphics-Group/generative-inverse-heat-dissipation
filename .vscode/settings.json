@@ -1,0 +1,16 @@
+{
+  "python.envFile": "${workspaceFolder}/.env",
+  "jupyter.notebookFileRoot": "${workspaceFolder}",
+  "terminal.integrated.env.linux": {
+      "PYTHONPATH": "${workspaceFolder}:${env:PYTHONPATH}"
+  },
+  "terminal.integrated.env.osx": {
+      "PYTHONPATH": "${workspaceFolder}:${env:PYTHONPATH}"
+  },
+  "terminal.integrated.env.windows": {
+      "PYTHONPATH": "${workspaceFolder};${env:PYTHONPATH}"
+  },
+  "jupyter.runStartupCommands": [
+      "import os; import sys; sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))"
+  ]
+}

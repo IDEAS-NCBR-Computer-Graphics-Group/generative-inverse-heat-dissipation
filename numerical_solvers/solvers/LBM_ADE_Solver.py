@@ -2,7 +2,8 @@ import taichi as ti
 import taichi.math as tm
 import numpy as np
 
-from numerical_solvers.solvers.SyntheticTurbulence import SpectralTurbulenceGenerator, get_gaussian_noise
+from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
+from numerical_solvers.solvers.GaussianTurbulenceGenerator import get_gaussian_noise
 from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
 
 # Fluid solver based on lattice boltzmann method using taichi language
@@ -38,7 +39,7 @@ class LBM_ADE_Solver(LBM_SolverBase):
             self.Force.from_numpy(turb_numpy)
             
             # self.init_gaussian_force_field(1E-2, 0, 1)
-            
+            # self.init_gaussian_velocity_field(1E-2, 0, 1)
             
             self.apply_bb()
             self.iterations_counter = self.iterations_counter +1

@@ -2,8 +2,10 @@ import taichi as ti
 import taichi.math as tm
 import numpy as np
 
-from numerical_solvers.solvers.SyntheticTurbulence import SpectralTurbulenceGenerator, get_gaussian_noise
 from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
+from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
+from numerical_solvers.solvers.GaussianTurbulenceGenerator import get_gaussian_noise
+
 # Fluid solver based on lattice boltzmann method using taichi language
 # Inspired by: https://github.com/hietwll/LBM_Taichi
 

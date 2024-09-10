@@ -23,14 +23,25 @@
             ]
         },
         {
-            "name": "Debugger: lbmtrain.py with Arguments",
+            "name": "Debugger: small-mnist-train with Arguments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/train.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--config", "configs/mnist/small_mnist.py",
+                "--workdir", "runs/mnist/small_debug_mnist"
+            ]
+        },
+        {
+            "name": "Debugger: lbm-train with Arguments",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/train_corrupted.py",
             "console": "integratedTerminal",
             "args": [
-                "--config", "configs/mnist/small_mnist.py",
-                "--workdir", "runs/mnist/small_debug_mnist"
+                "--config", "configs/mnist/small_corrupted_mnist.py",
+                "--workdir", "runs/mnist/small_lbm_mnist"
             ]
         }
     ]

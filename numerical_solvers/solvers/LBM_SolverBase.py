@@ -2,7 +2,8 @@ import taichi as ti
 import taichi.math as tm
 import numpy as np
 from math import pi
-from numerical_solvers.solvers.SyntheticTurbulence import SpectralTurbulenceGenerator, get_gaussian_noise
+from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
+from numerical_solvers.solvers.GaussianTurbulenceGenerator import get_gaussian_noise
 
 @ti.data_oriented
 class LBM_SolverBase:
@@ -48,6 +49,15 @@ class LBM_SolverBase:
             noise = magnitude*get_gaussian_noise(mu,variance)
             self.Force[i,j] = ti.Vector([noise[0], noise[1]])
             
+    @ti.kernel
+    def init_gaussian_velocity_field(self, magnitude: float,  mu: float, variance: float):
+        # noise = magnitude*get_gaussian_noise(mu,variance)
+        # self.Force[None] = ti.Vector([noise[0], noise[1]])
+        
+        for i, j in ti.ndrange((1, self.nx - 2), (1, self.ny - 2)):
+            noise = magnitude*get_gaussian_noise(mu,variance)
+            self.vel[i,j] = ti.Vector([noise[0], noise[1]])
+                   
     @ti.kernel
     def create_ic_hill(self, amplitude: float, size: float, x: float, y: float):
         for i, j in ti.ndrange(self.nx, self.ny):
