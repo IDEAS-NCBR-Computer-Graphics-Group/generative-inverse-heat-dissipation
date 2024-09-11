@@ -68,13 +68,12 @@ def sample(config, workdir, checkpoint, save_sample_freq=1,
     heat_forward_module = mutils.create_forward_process_from_sigmas(
         config, scales, config.device)
     logging.info("Done")
-    initial_sample, original_images = sampling.get_initial_sample(
-        config, heat_forward_module, delta, batch_size)
+    initial_sample, original_images = sampling.get_initial_sample(config, heat_forward_module, delta, batch_size)
+    
     if same_init:
         initial_sample = torch.cat(batch_size*[initial_sample[0][None]], 0)
         original_images = torch.cat(batch_size*[original_images[0][None]], 0)
-    initial_sample, original_images = initial_sample[:
-                                                     batch_size], original_images[:batch_size]
+    initial_sample, original_images = initial_sample[:batch_size], original_images[:batch_size]
     sampling_shape = initial_sample.shape
 
     intermediate_sample_indices = list(
@@ -84,8 +83,9 @@ def sample(config, workdir, checkpoint, save_sample_freq=1,
         sample_dir, "checkpoint_{}".format(checkpoint))
 
     # Get smapling function and save directory
-    sampling_fn = sampling.get_sampling_fn_inverse_heat(config, initial_sample,
-                                                        intermediate_sample_indices, delta, config.device, share_noise=share_noise)
+    sampling_fn = sampling.get_sampling_fn_inverse_heat(
+        config, initial_sample, intermediate_sample_indices, delta, config.device, share_noise=share_noise)
+    
     this_sample_dir = os.path.join(this_sample_dir, "delta_{}".format(delta))
     if same_init:
         this_sample_dir += "_same_init"
