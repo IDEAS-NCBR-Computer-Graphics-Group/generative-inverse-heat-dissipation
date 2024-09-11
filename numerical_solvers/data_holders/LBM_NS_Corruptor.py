@@ -24,18 +24,20 @@ from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
     
     
 class LBM_NS_Corruptor(BaseCorruptor):
-    def __init__(self, initial_dataset, train=True, transform=None, target_transform=None, save_dir='./lbm_mnist'):
-        super(LBM_NS_Corruptor, self).__init__(initial_dataset, train, transform, target_transform)
+    def __init__(self, grid_size, train=True, transform=None, target_transform=None):
+        super(LBM_NS_Corruptor, self).__init__(train, transform, target_transform)
 
         ti.init(arch=ti.gpu)
         ti_float_precision = ti.f32
 
-        original_pil_image, label = initial_dataset[0]
-        channels, nx, ny = self.transform(original_pil_image).shape
+        # original_pil_image, label = initial_dataset[0]
+        # channels, nx, ny = self.transform(original_pil_image).shape
         # nx, ny = np_gray_img.shape
-
+        # nx, ny = (128,128)
+        
         domain_size = (1.0, 1.0)
-        grid_size = (nx, ny)
+        # grid_size = (nx, ny)
+        
         turb_intensity = 1E-4
         noise_limiter = (-1E-3, 1E-3)
         dt_turb = 5*1E-4 
@@ -68,14 +70,7 @@ class LBM_NS_Corruptor(BaseCorruptor):
         
         self.min_lbm_steps = 2 # 1
         self.max_lbm_steps = 50 # 500
-
-
-        file_path = os.path.join(save_dir, f"{'train' if self.train else 'test'}_data.pt")
-
-        if not os.path.exists(file_path):
-            os.makedirs(save_dir, exist_ok=True)
-            self._preprocess_and_save_data(initial_dataset, file_path)
-
+        
     def _corrupt(self, x, lbm_steps):
         # https://stackoverflow.com/questions/9786102/how-do-i-parallelize-a-simple-python-loop
 
@@ -101,24 +96,31 @@ class LBM_NS_Corruptor(BaseCorruptor):
 
         self.solver.solve(lbm_steps-step_difference)
         rho_cpu = self.solver.rho.to_numpy()
-        x_noisy_t1 = torch.zeros_like(x) 
-        x_noisy_t1[0,:,:] = torch.tensor(rho_cpu) # unsqueeze(0).unsqueeze(0)
+        x_noisy_pre_t = torch.zeros_like(x) 
+        x_noisy_pre_t[0,:,:] = torch.tensor(rho_cpu) # unsqueeze(0).unsqueeze(0)
         
         self.solver.solve(step_difference)
         rho_cpu = self.solver.rho.to_numpy()
-        x_noisy_t2 = torch.zeros_like(x) 
-        x_noisy_t2[0,:,:] = torch.tensor(rho_cpu) # unsqueeze(0).unsqueeze(0)
+        x_noisy_t = torch.zeros_like(x) 
+        x_noisy_t[0,:,:] = torch.tensor(rho_cpu) # unsqueeze(0).unsqueeze(0)
         
-        return x_noisy_t1, x_noisy_t2    
+        return x_noisy_pre_t, x_noisy_t    
     
-    def _preprocess_and_save_data(self, initial_dataset, file_path):
+    def _preprocess_and_save_data(self, initial_dataset, save_dir):
+        file_path = os.path.join(save_dir, f"{'train' if self.train else 'test'}_data.pt")
+
+        if not os.path.exists(file_path):
+            os.makedirs(self.save_dir, exist_ok=True)
+            self._preprocess_and_save_data(initial_dataset, file_path)
+               
+            
         data = []
         modified_images = []
         corruption_amounts = []
         labels = []
         
-        # for index in range(10000): 
-        for index in range(len(initial_dataset)):     # Process all data points
+        for index in range(10000): 
+        # for index in range(len(initial_dataset)):     # Process all data points
             if index % 100 == 0:
                 print(f"Preprocessing (lbm) {index}")
             corruption_amount = np.random.randint(self.min_lbm_steps, 
@@ -139,4 +141,43 @@ class LBM_NS_Corruptor(BaseCorruptor):
 
         # torch.save((data, targets), save_path)
         torch.save((data, modified_images, corruption_amounts, labels), file_path)
+
+        
+    def _preprocess_and_save_data_pairs(self, initial_dataset, save_dir):
+        
+        file_path = os.path.join(save_dir, f"{'train' if self.train else 'test'}_data.pt")
+
+        if not os.path.exists(file_path):
+            os.makedirs(self.save_dir, exist_ok=True)
+            self._preprocess_and_save_data(initial_dataset, file_path)
+                  
+        data = []
+        pre_modified_images = [] # at time t-1
+        modified_images = [] # at time t
+        corruption_amounts = []
+        labels = []
+        
+        for index in range(10000): 
+        # for index in range(len(initial_dataset)):     # Process all data points
+            if index % 100 == 0:
+                print(f"Preprocessing (lbm) {index}")
+            corruption_amount = np.random.randint(self.min_lbm_steps, 
+                                                  self.max_lbm_steps)
+            original_pil_image, label = initial_dataset[index]
+            original_image = self.transform(original_pil_image)
+            pre_modified_image, modified_image = self._corrupt_pair(original_image, corruption_amount)
             
+            data.append(original_image)
+            pre_modified_images.append(pre_modified_image)
+            modified_images.append(modified_image)
+            corruption_amounts.append(corruption_amount)
+            labels.append(label)
+        
+        data = torch.stack(data)
+        modified_images = torch.stack(modified_images)
+        pre_modified_images = torch.stack(pre_modified_images)
+        corruption_amounts = torch.tensor(corruption_amounts)
+        labels = torch.tensor(labels)
+
+        # torch.save((data, targets), save_path)
+        torch.save((data, modified_images, pre_modified_images, corruption_amounts, labels), file_path)

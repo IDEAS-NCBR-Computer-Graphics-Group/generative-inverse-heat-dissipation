@@ -15,10 +15,10 @@ from timeit import default_timer as timer
 import sys
 from pathlib import Path
 
-from BlurringCorruptor import BlurringCorruptor
+from numerical_solvers.data_holders.BlurringCorruptor import BlurringCorruptor
 # from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
-from LBM_NS_Corruptor import LBM_NS_Corruptor
-from CorruptedDataset import CorruptedDataset
+from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
+from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
 
 
 # sys.path.insert(0, '../../')
@@ -68,12 +68,24 @@ if __name__ == '__main__':
     plt.imshow(torchvision.utils.make_grid(y)[0], cmap='Greys');
 
     # %% lbmize
-    corrupted_dataset_dir = os.path.join(output_data_dir, 'lbm_ns')
+    
     start = timer()
+    # corrupted_dataset_dir = os.path.join(output_data_dir, 'lbm_ns')
+    # lbmCorruptor = LBM_NS_Corruptor(
+    #     initial_dataset=datasets.MNIST(root=input_data_dir, train=is_train_dataset, download=True), 
+    #     train=is_train_dataset, 
+    #     transform=transform, 
+    #     save_dir=corrupted_dataset_dir)
+    initial_dataset = datasets.MNIST(root=input_data_dir, train=is_train_dataset, download=True)
+    
     lbmCorruptor = LBM_NS_Corruptor(
-        initial_dataset=datasets.MNIST(root=input_data_dir, train=is_train_dataset, download=True), 
+        grid_size = initial_dataset[0][0].size,
         train=is_train_dataset, 
-        transform=transform, 
+        transform=transform)
+    
+    corrupted_dataset_dir = os.path.join(output_data_dir, 'lbm_ns_pair')
+    lbmCorruptor._preprocess_and_save_data_pairs(
+        initial_dataset=initial_dataset,
         save_dir=corrupted_dataset_dir)
     
     end = timer()
@@ -93,6 +105,5 @@ if __name__ == '__main__':
                norm=matplotlib.colors.Normalize(vmin=0.95, vmax=1.05),
                cmap='Greys');
     
-
 
 # %%

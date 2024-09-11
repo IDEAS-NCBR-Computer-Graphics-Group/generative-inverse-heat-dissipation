@@ -59,24 +59,30 @@ if __name__ == '__main__':
     
     domain_size = (1.0, 1.0)
     grid_size = np_gray_image.shape
-    noise_limiter = (-1E1, 1E1)
+    noise_limiter = (-1E3, 1E3)
     dt_turb = 3E-4
 
-    turb_intensity = 3E-3
+    # turb_intensity = 3E-3
     # energy_spectrum = lambda k: np.where(np.isinf(k), 0, k)
-    # turb_intensity = 1E-2
-
     
+    
+    # turb_intensity = 1E-3
+    # energy_spectrum = lambda k: np.where(np.isinf(k * k), 0, k * k) # 
+    
+    # turb_intensity = 9E-4
+    # energy_spectrum = lambda k: np.where(np.isinf(k ** (-1.)), 0, k ** (-1.0)) # najs
+    
+    turb_intensity = 3E-3
     energy_spectrum = lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
     frequency_range = {'k_min': 2.0 * np.pi / min(domain_size), 
-                       'k_max': 2.0 * np.pi / (min(domain_size) / 64)}
+                       'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
     
     spectralTurbulenceGenerator = SpectralTurbulenceGenerator(
         domain_size, grid_size, 
         turb_intensity, noise_limiter,
         energy_spectrum=energy_spectrum, frequency_range=frequency_range, 
         dt_turb=dt_turb, 
-        is_div_free=True)
+        is_div_free=False)
         
     solver = LBM_ADE_Solver(
         case_name,

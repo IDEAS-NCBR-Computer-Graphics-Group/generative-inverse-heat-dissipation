@@ -17,11 +17,11 @@ import sys;
 sys.path.insert(0, '..')
 
 # from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
-from BaseCorruptor import BaseCorruptor
+from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
 
 class BlurringCorruptor(BaseCorruptor):
     def __init__(self, initial_dataset, train=True, transform=None, target_transform=None, save_dir='./blurred_mnist'):
-        super(BlurringCorruptor, self).__init__(initial_dataset, train, transform, target_transform)
+        super(BlurringCorruptor, self).__init__(train, transform, target_transform)
         
         file_path = os.path.join(save_dir, f"{'train' if self.train else 'test'}_data.pt")
         if not os.path.exists(file_path):
