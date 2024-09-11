@@ -81,6 +81,90 @@ def get_inverse_heat_loss_fn(config, train, scales, device, heat_forward_module)
     return loss_fn
 
 
+def get_inverse_lbm_ns_loss_fn(config, train, heat_forward_module):
+
+    sigma = config.model.sigma #todo: fix variance in STG
+    label_sampling_fn = get_label_sampling_function(config.model.K) #todo: this is just number of forward steps, isnt it?
+
+    def loss_fn(model, batch):
+        model_fn = mutils.get_model_fn(model, train=train)  # get train/eval model
+        
+        
+        #todo: load a duo-pack from dataloader
+        fwd_steps = label_sampling_fn(batch.shape[0], batch.device)
+        blurred_batch = heat_forward_module(batch, fwd_steps).float()
+        less_blurred_batch = heat_forward_module(batch, fwd_steps-1).float()
+        
+        #todo add same noise as in corruptor?
+        noise = torch.randn_like(blurred_batch) * sigma
+        
+        perturbed_data = noise + blurred_batch
+        diff = model_fn(perturbed_data, fwd_steps)
+        
+        prediction = perturbed_data + diff
+        
+        losses = (less_blurred_batch - prediction)**2
+        losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1)
+        loss = torch.mean(losses)
+        return loss, losses, fwd_steps
+
+    return loss_fn
+
+def get_step_lbm_fn(train, scales, config, optimize_fn=None,
+                heat_forward_module=None, device=None):
+    """A wrapper for loss functions in training or evaluation
+    Based on code from https://github.com/yang-song/score_sde_pytorch"""
+    if device == None:
+        device = config.device
+
+    loss_fn = get_inverse_lbm_ns_loss_fn(
+        config, train, heat_forward_module=heat_forward_module) # todo: pass corrupted dataloader instead of heat_forward_module
+    
+
+    # For automatic mixed precision
+    scaler = torch.cuda.amp.GradScaler()
+
+    def step_fn(state, batch):
+        """Running one step of training or evaluation.
+        Returns:
+                loss: The average loss value of this state.
+        """
+        model = state['model']
+        if train:
+            optimizer = state['optimizer']
+            if config.optim.automatic_mp:
+                optimizer.zero_grad()
+                with torch.amp.autocast("cuda"):
+                # with torch.cuda.amp.autocast(): # depreciated
+                    loss, losses_batch, fwd_steps_batch = loss_fn(model, batch)
+                    # amp not recommended in backward pass, but had issues getting this to work without it
+                    # Followed https://github.com/pytorch/pytorch/issues/37730
+                    scaler.scale(loss).backward()
+                scaler.scale(losses_batch)
+                optimize_fn(optimizer, model.parameters(), step=state['step'],
+                            scaler=scaler)
+                state['step'] += 1
+                state['ema'].update(model.parameters())
+            else:
+                optimizer.zero_grad()
+                loss, losses_batch, fwd_steps_batch = loss_fn(model, batch)
+                loss.backward()
+                optimize_fn(optimizer, model.parameters(), step=state['step'])
+                state['step'] += 1
+                state['ema'].update(model.parameters())
+        else:
+            with torch.no_grad():
+                ema = state['ema']
+                ema.store(model.parameters())
+                ema.copy_to(model.parameters())
+                loss, losses_batch, fwd_steps_batch = loss_fn(model, batch)
+                ema.restore(model.parameters())
+
+        return loss, losses_batch, fwd_steps_batch
+
+    return step_fn
+
+
 def get_step_fn(train, scales, config, optimize_fn=None,
                 heat_forward_module=None, device=None):
     """A wrapper for loss functions in training or evaluation

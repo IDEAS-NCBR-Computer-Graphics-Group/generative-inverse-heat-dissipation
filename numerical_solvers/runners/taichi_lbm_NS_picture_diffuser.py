@@ -16,7 +16,7 @@ import itertools
 
 import cv2 # conda install conda-forge::opencv || pip install opencv-python
 
-from numerical_solvers.solvers.SyntheticTurbulence import SpectralTurbulenceGenerator
+from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from numerical_solvers.solvers.img_reader import read_img_in_grayscale, normalize_grayscale_image_range
 from numerical_solvers.visualization.taichi_lbm_gui import run_with_gui
 
@@ -29,7 +29,7 @@ from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
 
 
 img_path = './numerical_solvers/runners/cat_768x768.jpg'
-# img_path = 'cat_768x768.jpg'
+
 target_size=None
 # target_size=(512, 512)
 target_size = (256, 256) # None
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     grid_size = np_gray_image.shape
     turb_intensity = 1E-4
     noise_limiter = (-1E-3, 1E-3)
-    dt_turb = 5E-3 
+    dt_turb = 5E-4 
 
     # turb_intensity = 1E-3
     # energy_spectrum = lambda k: np.where(np.isinf(k), 0, k)

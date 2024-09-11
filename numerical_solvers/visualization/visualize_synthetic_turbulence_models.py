@@ -2,8 +2,13 @@ import numpy as np
 import scipy.fftpack as fft
 import matplotlib.pyplot as plt
 
+from numerical_solvers.visualization.KolmogorovSpectrumPlotter import compute_kolmogorov_spectrum
+
 
 np.random.seed(123)
+
+
+
 
 def compute_divergence(u, v, dx, dy):
     """

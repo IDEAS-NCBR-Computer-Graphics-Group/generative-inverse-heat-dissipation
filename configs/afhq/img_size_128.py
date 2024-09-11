@@ -26,7 +26,7 @@ def get_config():
     model.blur_schedule[-1] = 0
     model.blur_rate = 'custom'
     config.eval.num_samples = 1000
-    config.training.sampling_freq = 5000
+    config.training.sampling_freq = 1000
     config.optim.lr = 1e-4
     model.ema_rate = 0.999
     return config

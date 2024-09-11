@@ -26,17 +26,13 @@ from CorruptedDataset import CorruptedDataset
 # %% dataset
 # Create the DiffusedMNIST dataset
 if __name__ == '__main__': 
-    
-
     print(f"Current working directory \t {os.getcwd()}")
-    
     current_file_path = Path(__file__).resolve()
-    
     # Determine the base folder (project root)
     base_folder = current_file_path.parents[2]  # Adjust the number depending on your project structure
-
     print(f"Base folder: {base_folder}")
     
+    is_train_dataset = False
 
     input_data_dir = os.path.join(base_folder, "data")
     output_data_dir = os.path.join(input_data_dir, 'corrupted_MNIST')
@@ -44,7 +40,7 @@ if __name__ == '__main__':
     # https://github.com/pytorch/vision/blob/main/references/segmentation/transforms.py
     transform = transforms.Compose([torchvision.transforms.ToTensor()])
     original_dataloader = DataLoader(torchvision.datasets.MNIST(root=input_data_dir, 
-                                    train=True, download=True, transform=transform), 
+                                    train=is_train_dataset, download=True, transform=transform), 
                                     batch_size=8, shuffle=True)
 
     x, y = next(iter(original_dataloader))
@@ -55,10 +51,12 @@ if __name__ == '__main__':
     
     # Define the transformations
     corrupted_dataset_dir = os.path.join(output_data_dir, 'blurred')
-    blurringCorruptor = BlurringCorruptor(initial_dataset=datasets.MNIST(root=input_data_dir, train=True, download=True), 
-                                          train=True, 
-                                          transform=transform, 
-                                          save_dir=corrupted_dataset_dir)
+    blurringCorruptor = BlurringCorruptor(
+        initial_dataset=datasets.MNIST(root=input_data_dir, train=is_train_dataset, download=True), 
+        train=is_train_dataset, 
+        transform=transform, 
+        save_dir=corrupted_dataset_dir)
+    
     diffused_mnist_train = CorruptedDataset(load_dir=corrupted_dataset_dir, transform=None, target_transform=None)
 
     corrupted_dataloader = DataLoader(diffused_mnist_train, batch_size=8, shuffle=True)
@@ -72,10 +70,12 @@ if __name__ == '__main__':
     # %% lbmize
     corrupted_dataset_dir = os.path.join(output_data_dir, 'lbm_ns')
     start = timer()
-    lbmCorruptor = LBM_NS_Corruptor(initial_dataset=datasets.MNIST(root=input_data_dir, train=True, download=True), 
-                                train=True, 
-                                transform=transform, 
-                                save_dir=corrupted_dataset_dir)
+    lbmCorruptor = LBM_NS_Corruptor(
+        initial_dataset=datasets.MNIST(root=input_data_dir, train=is_train_dataset, download=True), 
+        train=is_train_dataset, 
+        transform=transform, 
+        save_dir=corrupted_dataset_dir)
+    
     end = timer()
     print(f"Time in seconds: {end - start:.2f}")
 

@@ -19,8 +19,7 @@ def get_sampling_fn_inverse_heat(config, initial_sample,
     def sampler(model):
 
         if share_noise:
-            noises = [torch.randn_like(initial_sample[0], dtype=torch.float)[None]
-                      for i in range(K)]
+            noises = [torch.randn_like(initial_sample[0], dtype=torch.float)[None] for i in range(K)]
         intermediate_samples_out = []
 
         with torch.no_grad():
@@ -28,8 +27,7 @@ def get_sampling_fn_inverse_heat(config, initial_sample,
             if intermediate_sample_indices != None and K in intermediate_sample_indices:
                 intermediate_samples_out.append((u, u))
             for i in range(K, 0, -1):
-                vec_fwd_steps = torch.ones(
-                    initial_sample.shape[0], device=device, dtype=torch.long) * i
+                vec_fwd_steps = torch.ones(initial_sample.shape[0], device=device, dtype=torch.long) * i
                 # Predict less blurry mean
                 u_mean = model(u, vec_fwd_steps) + u
                 # Sampling step
@@ -106,6 +104,5 @@ def get_initial_sample(config, forward_heat_module, delta, batch_size=None):
 
     initial_sample = next(iter(trainloader))[0].to(config.device)
     original_images = initial_sample.clone()
-    initial_sample = forward_heat_module(initial_sample,
-                                         config.model.K * torch.ones(initial_sample.shape[0], dtype=torch.long).to(config.device))
+    initial_sample = forward_heat_module(initial_sample, config.model.K * torch.ones(initial_sample.shape[0], dtype=torch.long).to(config.device))
     return initial_sample, original_images

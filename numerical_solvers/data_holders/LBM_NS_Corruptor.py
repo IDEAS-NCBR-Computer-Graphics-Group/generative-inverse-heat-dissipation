@@ -19,11 +19,8 @@ sys.path.insert(0, '../../')
 
 from numerical_solvers.solvers.img_reader import read_img_in_grayscale, normalize_grayscale_image_range
 from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver    
-from numerical_solvers.solvers.SyntheticTurbulence import SpectralTurbulenceGenerator
+from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
-
-
-
     
     
 class LBM_NS_Corruptor(BaseCorruptor):
@@ -91,8 +88,28 @@ class LBM_NS_Corruptor(BaseCorruptor):
         rho_cpu = self.solver.rho.to_numpy()
         x_noisy[0,:,:] = torch.tensor(rho_cpu) # unsqueeze(0).unsqueeze(0)
         
-        return x_noisy
+        return x_noisy    
     
+    def _corrupt_pair(self, x, lbm_steps):
+        # https://stackoverflow.com/questions/9786102/how-do-i-parallelize-a-simple-python-loop
+        step_difference = 1
+                
+        np_gray_img = x.numpy()[0,:,:]
+        np_gray_img = normalize_grayscale_image_range(np_gray_img, 0.95, 1.05)
+        self.solver.init(np_gray_img) 
+        self.solver.iterations_counter=0 # reset counter
+
+        self.solver.solve(lbm_steps-step_difference)
+        rho_cpu = self.solver.rho.to_numpy()
+        x_noisy_t1 = torch.zeros_like(x) 
+        x_noisy_t1[0,:,:] = torch.tensor(rho_cpu) # unsqueeze(0).unsqueeze(0)
+        
+        self.solver.solve(step_difference)
+        rho_cpu = self.solver.rho.to_numpy()
+        x_noisy_t2 = torch.zeros_like(x) 
+        x_noisy_t2[0,:,:] = torch.tensor(rho_cpu) # unsqueeze(0).unsqueeze(0)
+        
+        return x_noisy_t1, x_noisy_t2    
     
     def _preprocess_and_save_data(self, initial_dataset, file_path):
         data = []

@@ -16,7 +16,7 @@ import itertools
 
 import cv2 # conda install conda-forge::opencv || pip install opencv-python
 
-from numerical_solvers.solvers.SyntheticTurbulence import SpectralTurbulenceGenerator
+from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from numerical_solvers.solvers.img_reader import read_img_in_grayscale, normalize_grayscale_image_range
 from numerical_solvers.visualization.taichi_lbm_gui import run_with_gui
 
@@ -59,16 +59,14 @@ if __name__ == '__main__':
     
     domain_size = (1.0, 1.0)
     grid_size = np_gray_image.shape
-    noise_limiter = (-1E-1, 1E-1)
-    dt_turb = 1E-3
+    noise_limiter = (-1E1, 1E1)
+    dt_turb = 3E-4
 
-    turb_intensity = 1E-3
+    turb_intensity = 3E-3
     # energy_spectrum = lambda k: np.where(np.isinf(k), 0, k)
-    
-    noise_limiter = (-1E-3, 1E-3)
     # turb_intensity = 1E-2
-    
 
+    
     energy_spectrum = lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
     frequency_range = {'k_min': 2.0 * np.pi / min(domain_size), 
                        'k_max': 2.0 * np.pi / (min(domain_size) / 64)}
@@ -78,7 +76,7 @@ if __name__ == '__main__':
         turb_intensity, noise_limiter,
         energy_spectrum=energy_spectrum, frequency_range=frequency_range, 
         dt_turb=dt_turb, 
-        is_div_free=False)
+        is_div_free=True)
         
     solver = LBM_ADE_Solver(
         case_name,

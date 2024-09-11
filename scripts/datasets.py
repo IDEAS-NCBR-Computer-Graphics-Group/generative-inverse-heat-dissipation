@@ -10,6 +10,8 @@ from torchvision import transforms, datasets
 import torch
 from PIL import Image
 
+import os
+from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
 
 class UniformDequantize(object):
     def __init__(self):
@@ -51,7 +53,9 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         test_data = datasets.MNIST(
             root="data", train=False, download=True, transform=transform)
     elif config.data.dataset == 'CORRUPTED_MNIST':
-        pass
+        corrupted_dataset_dir = os.path.join('data', 'corrupted_MNIST', 'lbm_ns')
+        training_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=True, transform=transform)
+        test_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=True, transform=transform)
     elif config.data.dataset == 'CIFAR10':
         training_data = datasets.CIFAR10(
             root="data", train=True, download=True, transform=transform)
