@@ -8,7 +8,7 @@ from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
 
     
 def run_with_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show_gui=True):
-    window = ti.ui.Window('CG - Renderer', res=(2*solver.nx, 3 * solver.ny))
+    window = ti.ui.Window('CG - Renderer', res=(3*solver.nx, 3 * solver.ny))
     gui = window.get_gui()
     canvas = window.get_canvas()
     
@@ -23,7 +23,7 @@ def run_with_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show
     canvasPlotter.write_canvas_to_file(img, f'output/iteration_{solver.iterations_counter}.jpg')
        
     while window.running:
-        with gui.sub_window('MAIN MENU', x=0, y=0, width=0.2, height=0.1):
+        with gui.sub_window('MAIN MENU', x=0, y=0, width=0.2, height=0.15):
             # if gui.button('option1'): print("ach")
             # if gui.button('option2'): print("och")
             canvasPlotter.is_f_checked = gui.checkbox('plot f', canvasPlotter.is_f_checked)
