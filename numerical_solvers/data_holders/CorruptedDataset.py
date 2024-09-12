@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 # %% dataset
 
 class CorruptedDataset(Dataset):
-    def __init__(self, train=True, transform=None, target_transform=None, download=False, load_dir='./data/corrupted_MNIST/lbm_ns'):
+    def __init__(self, train=True, transform=None, target_transform=None, download=False, load_dir=None):
         self.train = train
         self.transform = transform
         self.target_transform = target_transform
@@ -48,7 +48,11 @@ class CorruptedDataset(Dataset):
         
         if len(self.targets[index]) == 4:  # Check if there are pre-modified images
             modified_image, pre_modified_image, corruption_amount, label = self.targets[index]
-            
+            # Convert numpy array to PIL Image directly with mode 'L' for grayscale images
+            # original_image = Image.fromarray(original_image.astype('uint8'), mode='RGB')
+            # modified_image = Image.fromarray(modified_image.astype('uint8'), mode='RGB')
+            # pre_modified_image = Image.fromarray(pre_modified_image.astype('uint8'), mode='RGB')
+
             # Apply the transformations if any
             if self.transform is not None:
                 original_image = self.transform(original_image)

@@ -79,29 +79,35 @@ def train(config, workdir):
 
     # Get the forward process definition
     scales = config.model.blur_schedule
-    heat_forward_module = mutils.create_forward_process_from_sigmas(
-        config, scales, config.device)
-
+    
+    
+    # load from sampler
+    
+    solver_forward_module = mutils.create_forward_process_from_sigmas(config, scales, config.device)
+    # solver_forward_module = None # we load precomputed data
+    
 
     # Get the loss function
     train_step_fn = losses.get_step_lbm_fn(train=True, scales=scales, config=config, optimize_fn=optimize_fn,
-                                       heat_forward_module=heat_forward_module)
+                                       heat_forward_module=solver_forward_module)
     eval_step_fn = losses.get_step_lbm_fn(train=False, scales=scales, config=config, optimize_fn=optimize_fn,
-                                      heat_forward_module=heat_forward_module)
+                                      heat_forward_module=solver_forward_module)
 
     # Building sampling functions
     delta = config.model.sigma*1.25
-    initial_sample, _ = sampling.get_initial_sample(
-        config, heat_forward_module, delta)
-    
     # TODO: draw a sample by lbm-destroying some rand images?
+    # if we read pre-destroyed one, then number of steps must be passed to get_sampling_fn_inverse_lbm_ns
+    # so it may be better to destroy it to final state with K steps.
+    initial_sample, _ = sampling.get_initial_sample(config, solver_forward_module, delta)
+    
+    
     # from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
     # lbm_corruptor = LBM_NS_Corruptor() 
     
-    sampling_fn = sampling.get_sampling_fn_inverse_heat(config,
-                                                        initial_sample, intermediate_sample_indices=list(
-                                                            range(config.model.K+1)),
-                                                        delta=config.model.sigma*1.25, device=config.device)
+    # TODO: we need a set of initial samples destroyed up to the final, K-th iteration (config.model.K)
+    sampling_fn = sampling.get_sampling_fn_inverse_lbm_ns(
+        config, initial_sample, intermediate_sample_indices=list(range(config.model.K+1)),
+        delta=config.model.sigma*1.25, device=config.device)
 
     num_train_steps = config.training.n_iters
     logging.info("Starting training loop at step %d." % (initial_step,))
@@ -112,11 +118,18 @@ def train(config, workdir):
 
     for step in range(initial_step, num_train_steps + 1):
         # Train step
+        # x, (y, pre_y, corruption_amount, labels) = next(iter(train_iter))
         try:
-            batch = next(train_iter)[0].to(config.device).float()
+            # batch = next(train_iter)[0].to(config.device).float()
+            # _, batch = next(train_iter).to(config.device).float() # not that easy if batch has mutltiple elements
+            # x, (y, pre_y, corruption_amount, labels) = next(train_iter)
+            _, batch = datasets.prepare_batch(train_iter, config.device)
+            
         except StopIteration:  # Start new epoch if run out of data
+            print(f"new epoch at {step}")
             train_iter = iter(trainloader)
-            batch = next(train_iter)[0].to(config.device).float()
+            # batch = next(train_iter)[0].to(config.device).float()
+            _, batch = datasets.prepare_batch(train_iter, config.device)
         loss, _, _ = train_step_fn(state, batch)
 
         writer.add_scalar("training_loss", loss.item(), step)
@@ -133,10 +146,11 @@ def train(config, workdir):
             N_evals = 25
             for i in range(N_evals):
                 try:
-                    eval_batch = next(eval_iter)[0].to(config.device).float()
+                    # eval_batch = next(eval_iter)[0].to(config.device).float()
+                    _, eval_batch = datasets.prepare_batch(eval_iter, config.device)
                 except StopIteration:  # Start new epoch
                     eval_iter = iter(testloader)
-                    eval_batch = next(eval_iter)[0].to(config.device).float()
+                    _, eval_batch = datasets.prepare_batch(eval_iter, config.device)
                 eval_loss, _, _ = eval_step_fn(state, eval_batch)
                 eval_loss = eval_loss.detach()
             logging.info("step: %d, eval_loss: %.5e" % (step, eval_loss.item()))

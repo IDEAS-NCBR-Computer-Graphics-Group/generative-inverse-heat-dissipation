@@ -1,5 +1,3 @@
-
-# %% dataset
 import torch
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, Dataset
@@ -19,7 +17,7 @@ from numerical_solvers.data_holders.BlurringCorruptor import BlurringCorruptor
 # from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
-from scripts import datasets as ihd_datasets
+
 
 # sys.path.insert(0, '../../')
                                 
@@ -49,66 +47,20 @@ if __name__ == '__main__':
     print('Labels:', y.shape)
     plt.imshow(torchvision.utils.make_grid(x)[0], cmap='Greys');
     
-   
-
-    # %% lbmize
-    
-    start = timer()
-    initial_dataset = datasets.MNIST(root=input_data_dir, train=is_train_dataset, download=True)
-    
-    lbmCorruptor = LBM_NS_Corruptor(
-        grid_size = initial_dataset[0][0].size,
+    # Define the transformations
+    corrupted_dataset_dir = os.path.join(output_data_dir, 'blurred')
+    blurringCorruptor = BlurringCorruptor(
+        initial_dataset=datasets.MNIST(root=input_data_dir, train=is_train_dataset, download=True), 
         train=is_train_dataset, 
-        transform=transform)
+        transform=transform, 
+        save_dir=corrupted_dataset_dir)
     
-    corrupted_dataset_dir = os.path.join(output_data_dir, 'lbm_ns_pair')
-    process_pairs=True
-    lbmCorruptor._preprocess_and_save_data(
-        initial_dataset=initial_dataset,
-        save_dir=corrupted_dataset_dir,
-        process_pairs = process_pairs,
-        process_all=False)
-    
-    end = timer()
-    print(f"Time in seconds: {end - start:.2f}")
+    diffused_mnist_train = CorruptedDataset(load_dir=corrupted_dataset_dir, transform=None, target_transform=None)
 
-    
-    # use same transform as in ihd code
-    
-    # transform = [
-    #             torchvision.transforms.ToPILImage()
-    #             transforms.Resize(28),
-    #             transforms.CenterCrop(28),
-    #             transforms.RandomHorizontalFlip(),
-    #             transforms.ToTensor()
-    #             ]
-    # transform = transforms.Compose(transform)
-    
-    transform = None # the dataset is saved as torchtensor
-    lbm_mnist_pairs = CorruptedDataset(train=is_train_dataset, 
-                                       transform=transform, 
-                                       target_transform=None, 
-                                       load_dir=corrupted_dataset_dir)
-
-
-
-    
-    corrupted_dataloader = DataLoader(lbm_mnist_pairs, batch_size=8, shuffle=True)
-    if process_pairs:
-        print(f"==processing pairs===")
-        x, (y, pre_y, corruption_amount, labels) = next(iter(corrupted_dataloader))
-        # alternatively
-        x, batch = ihd_datasets.prepare_batch(iter(corrupted_dataloader),'cpu')
-        y, pre_y, corruption_amount, labels = batch
-    else:
-        x, (y, corruption_amount, labels) = next(iter(corrupted_dataloader))
+    corrupted_dataloader = DataLoader(diffused_mnist_train, batch_size=8, shuffle=True)
+    x, (y, corruption_amount, label) = next(iter(corrupted_dataloader))
     print('Input shape:', x.shape)
     print('batch_size = x.shape[0]:', x.shape[0])
-    print('Labels:', labels)
+    print('Labels:', y[1].shape)
     plt.imshow(torchvision.utils.make_grid(x)[0], cmap='Greys');
     plt.imshow(torchvision.utils.make_grid(y)[0], cmap='Greys');
-    
-    plt.imshow(torchvision.utils.make_grid(y)[0], 
-               norm=matplotlib.colors.Normalize(vmin=0.95, vmax=1.05),
-               cmap='Greys');
-    

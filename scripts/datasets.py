@@ -53,9 +53,20 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         test_data = datasets.MNIST(
             root="data", train=False, download=True, transform=transform)
     elif config.data.dataset == 'CORRUPTED_MNIST':
-        corrupted_dataset_dir = os.path.join('data', 'corrupted_MNIST', 'lbm_ns')
+        # TODO: make it consistent
+        transform = [
+                transforms.ToPILImage(), 
+                transforms.Resize(config.data.image_size),
+                transforms.CenterCrop(config.data.image_size),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor()
+                ]
+        transform = transforms.Compose(transform)
+        # transform = None
+
+        corrupted_dataset_dir = os.path.join('data', 'corrupted_MNIST', 'lbm_ns_pair')
         training_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=True, transform=transform)
-        test_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=True, transform=transform)
+        test_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=False, transform=transform)
     elif config.data.dataset == 'CIFAR10':
         training_data = datasets.CIFAR10(
             root="data", train=True, download=True, transform=transform)
@@ -226,3 +237,46 @@ class ImageDataset(Dataset):
         if self.local_classes is not None:
             out_dict["y"] = np.array(self.local_classes[idx], dtype=np.int64)
         return np.transpose(arr, [2, 0, 1]), out_dict
+
+
+def prepare_batch(data_loader_iterator, device):
+    """
+    Retrieves a batch from the DataLoader iterator, unpacks it, and moves all tensors to the specified device.
+    
+    Args:
+        data_loader_iterator (iterator): Iterator from DataLoader.
+        device (torch.device): Device to move tensors to (e.g., 'cuda' or 'cpu').
+
+    Returns:
+        tuple: Tuple containing original image tensor and a tuple of modified images and other data, all moved to the specified device.
+    """
+    # Get a batch from the DataLoader
+    original_image, batch = next(data_loader_iterator)
+
+    # Move original_image to the desired device
+    original_image = original_image.to(device).float()
+
+    # Unpack eval_batch and move each tensor to the GPU
+    if len(batch) == 4:  # Case with pre-modified images
+        modified_image, pre_modified_image, corruption_amount, label = batch
+        
+        # Move everything to the GPU
+        modified_image = modified_image.to(device).float()
+        pre_modified_image = pre_modified_image.to(device).float()
+        corruption_amount = corruption_amount.to(device)  # Already float32
+        label = label.to(device)  # Already long
+
+        # Efficient packing after moving to GPU
+        batch = (modified_image, pre_modified_image, corruption_amount, label)
+    else:  # Case without pre-modified images
+        modified_image, corruption_amount, label = batch
+        
+        # Move everything to the GPU
+        modified_image = modified_image.to(device).float()
+        corruption_amount = corruption_amount.to(device)  # Already float32
+        label = label.to(device)  # Already long
+
+        # Efficient packing after moving to GPU
+        batch = (modified_image, corruption_amount, label)
+
+    return original_image, batch

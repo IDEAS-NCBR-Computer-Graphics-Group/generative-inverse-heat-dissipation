@@ -3,6 +3,44 @@ import numpy as np
 import logging
 from scripts import datasets
 
+def get_sampling_fn_inverse_lbm_ns(config, initial_sample,
+                                 intermediate_sample_indices, delta, device,
+                                 share_noise=False):
+    """ Returns our inverse heat process sampling function. 
+    Arguments: 
+    initial_sample: Pytorch Tensor with the initial draw from the prior p(u_K)
+    intermediate_sample_indices: list of indices to save (e.g., [0,1,2,3...] or [0,2,4,...])
+    delta: Standard deviation of the sampling noise
+    share_noise: Whether to use the same noises for all elements in the batch
+    """
+    K = config.model.K
+
+    def sampler(model):
+
+        if share_noise:
+            noises = [torch.randn_like(initial_sample[0], dtype=torch.float)[None] for i in range(K)]
+        intermediate_samples_out = []
+
+        with torch.no_grad():
+            u = initial_sample.to(config.device).float()
+            if intermediate_sample_indices != None and K in intermediate_sample_indices:
+                intermediate_samples_out.append((u, u))
+            for i in range(K, 0, -1):
+                vec_fwd_steps = torch.ones(initial_sample.shape[0], device=device, dtype=torch.long) * i
+                # Predict less blurry mean
+                u_mean = model(u, vec_fwd_steps) + u
+                # Sampling step
+                if share_noise:
+                    noise = noises[i-1]
+                else:
+                    noise = torch.randn_like(u)
+                u = u_mean #+ noise*delta #TODO: do we need Gaussian noise here? Or shall do a kind of destruction-step with numerical solver
+                # Save trajectory
+                if intermediate_sample_indices != None and i-1 in intermediate_sample_indices:
+                    intermediate_samples_out.append((u, u_mean))
+
+            return u_mean, config.model.K, [u for (u, u_mean) in intermediate_samples_out]
+    return sampler
 
 def get_sampling_fn_inverse_heat(config, initial_sample,
                                  intermediate_sample_indices, delta, device,
@@ -35,7 +73,7 @@ def get_sampling_fn_inverse_heat(config, initial_sample,
                     noise = noises[i-1]
                 else:
                     noise = torch.randn_like(u)
-                u = u_mean + noise*delta
+                u = u_mean + noise*delta 
                 # Save trajectory
                 if intermediate_sample_indices != None and i-1 in intermediate_sample_indices:
                     intermediate_samples_out.append((u, u_mean))
