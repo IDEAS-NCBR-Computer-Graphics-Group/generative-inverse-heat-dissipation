@@ -13,7 +13,7 @@ def get_sampling_fn_inverse_lbm_ns(config, initial_sample,
     delta: Standard deviation of the sampling noise
     share_noise: Whether to use the same noises for all elements in the batch
     """
-    K = config.model.K
+    # K = config.model.K
 
     def sampler(model):
 
@@ -41,6 +41,7 @@ def get_sampling_fn_inverse_lbm_ns(config, initial_sample,
 
             return u_mean, config.model.K, [u for (u, u_mean) in intermediate_samples_out]
     return sampler
+
 
 def get_sampling_fn_inverse_heat(config, initial_sample,
                                  intermediate_sample_indices, delta, device,

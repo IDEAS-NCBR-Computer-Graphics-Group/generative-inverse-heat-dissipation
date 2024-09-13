@@ -9,43 +9,42 @@ from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range
 from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver    
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
-
+from configs.mnist.lbm_ns_config import LBMConfig
 class LBM_NS_Corruptor(BaseCorruptor):
-    def __init__(self, config, grid_size, transform=None, target_transform=None):
+    def __init__(self, config: LBMConfig, transform=None, target_transform=None):
         super(LBM_NS_Corruptor, self).__init__(transform, target_transform)
 
         ti.init(arch=ti.gpu)
-        domain_size = (1.0, 1.0)
 
-        turb_intensity = 1E-4
-        noise_limiter = (-1E-3, 1E-3)
-        dt_turb = 5 * 1E-4 
-        energy_spectrum = lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
+        grid_size = (config.data.image_size, config.data.image_size)
+        
+        # energy_spectrum = lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
+        energy_spectrum = config.solver.energy_spectrum
         frequency_range = {
-            'k_min': 2.0 * np.pi / min(domain_size), 
-            'k_max': 2.0 * np.pi / (min(domain_size) / 1024)
+            'k_min': config.solver.k_min, 
+            'k_max': config.solver.k_max
         }
 
         spectralTurbulenceGenerator = SpectralTurbulenceGenerator(
-            domain_size, grid_size, 
-            turb_intensity, noise_limiter,
+            config.solver.domain_size, grid_size, 
+            config.solver.turb_intensity, config.solver.noise_limiter,
             energy_spectrum=energy_spectrum, frequency_range=frequency_range, 
-            dt_turb=dt_turb, 
+            dt_turb=config.solver.dt_turb, 
             is_div_free=False
         )
         
-        niu = 0.5 * 1/6
-        bulk_visc = 0.5 * 1/6
-        case_name = "miau"   
+        # LBM NS Solver setup        
+        # Instantiate the LBM NS Solver using the config and spectral turbulence generator
         self.solver = LBM_NS_Solver(
-            case_name,
+            "miau",
             grid_size,
-            niu, bulk_visc,
+            config.solver.niu, config.solver.bulk_visc,
             spectralTurbulenceGenerator
         )
 
-        self.min_lbm_steps = 2 
-        self.max_lbm_steps = 50
+        # Set LBM steps (can be made configurable too)
+        self.min_lbm_steps = config.solver.min_lbm_steps
+        self.max_lbm_steps = config.solver.max_lbm_steps
         
     def _corrupt(self, x, lbm_steps, generate_pair=False):
         """
@@ -81,7 +80,7 @@ class LBM_NS_Corruptor(BaseCorruptor):
         
         return x_noisy_pre_t, None
 
-    def _preprocess_and_save_data(self, initial_dataset, save_dir, process_pairs=False, process_all=True):
+    def _preprocess_and_save_data(self, initial_dataset, save_dir, is_train_dataset: bool, process_pairs=False, process_all=True):
         """
         Preprocesses data and saves it to the specified directory.
 
@@ -91,7 +90,7 @@ class LBM_NS_Corruptor(BaseCorruptor):
             process_pairs (bool): Flag indicating whether to process pairs of images (True) 
                                   or single corrupted images (False). Default is False.
         """
-        file_name = f"{'train' if self.train else 'test'}_data.pt"
+        file_name = f"{'train' if is_train_dataset else 'test'}_data.pt"
         file_path = os.path.join(save_dir, file_name)
  
  
@@ -131,7 +130,17 @@ class LBM_NS_Corruptor(BaseCorruptor):
             if process_pairs:
                 pre_modified_images.append(pre_modified_image)
 
-        # Convert lists to tensors ### TODO: tensors dont match the order of transforms in the original ihd code
+        # Convert lists to tensors 
+        # Be carfull, tensors dont match the order of transforms in the original ihd code
+        # You are likely to use the following later 
+            #  transform = [
+            #     transforms.ToPILImage(), 
+            #     transforms.Resize(config.data.image_size),
+            #     transforms.CenterCrop(config.data.image_size),
+            #     transforms.RandomHorizontalFlip(),
+            #     transforms.ToTensor()
+            #     ]
+            
         data = torch.stack(data)
         modified_images = torch.stack(modified_images)
         corruption_amounts = torch.tensor(corruption_amounts)

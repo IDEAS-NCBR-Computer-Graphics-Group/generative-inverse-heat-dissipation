@@ -32,7 +32,7 @@ if __name__ == '__main__':
     base_folder = current_file_path.parents[2]  # Adjust the number depending on your project structure
     print(f"Base folder: {base_folder}")
     
-    is_train_dataset = False
+    is_train_dataset = True
 
     input_data_dir = os.path.join(base_folder, "data")
     output_data_dir = os.path.join(input_data_dir, 'corrupted_MNIST')
@@ -49,32 +49,32 @@ if __name__ == '__main__':
     print('Labels:', y.shape)
     plt.imshow(torchvision.utils.make_grid(x)[0], cmap='Greys');
     
-   
-
     # %% lbmize
-    
     start = timer()
     initial_dataset = datasets.MNIST(root=input_data_dir, train=is_train_dataset, download=True)
     
+    from configs.mnist.lbm_ns_config import get_lbm_ns_config
+    
+    solver_config = get_lbm_ns_config()
     lbm_ns_Corruptor = LBM_NS_Corruptor(
-        grid_size = initial_dataset[0][0].size,
-        train=is_train_dataset, 
+        solver_config,                                
         transform=transform)
     
     corrupted_dataset_dir = os.path.join(output_data_dir, 'lbm_ns_pair')
     process_pairs=True
+    
     lbm_ns_Corruptor._preprocess_and_save_data(
         initial_dataset=initial_dataset,
         save_dir=corrupted_dataset_dir,
+        is_train_dataset = is_train_dataset,
         process_pairs = process_pairs,
-        process_all=False)
+        process_all=True)
     
     end = timer()
     print(f"Time in seconds: {end - start:.2f}")
 
     
     # use same transform as in ihd code
-    
     # transform = [
     #             torchvision.transforms.ToPILImage()
     #             transforms.Resize(28),
@@ -96,7 +96,7 @@ if __name__ == '__main__':
     corrupted_dataloader = DataLoader(lbm_mnist_pairs, batch_size=8, shuffle=True)
     if process_pairs:
         print(f"==processing pairs===")
-        x, (y, pre_y, corruption_amount, labels) = next(iter(corrupted_dataloader))
+        # x, (y, pre_y, corruption_amount, labels) = next(iter(corrupted_dataloader))
         # alternatively
         x, batch = ihd_datasets.prepare_batch(iter(corrupted_dataloader),'cpu')
         y, pre_y, corruption_amount, labels = batch
@@ -105,6 +105,7 @@ if __name__ == '__main__':
     print('Input shape:', x.shape)
     print('batch_size = x.shape[0]:', x.shape[0])
     print('Labels:', labels)
+    print('corruption_amount:', corruption_amount)
     plt.imshow(torchvision.utils.make_grid(x)[0], cmap='Greys');
     plt.imshow(torchvision.utils.make_grid(y)[0], cmap='Greys');
     

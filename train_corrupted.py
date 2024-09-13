@@ -12,12 +12,11 @@ from scripts import utils
 from absl import app
 from absl import flags
 from ml_collections.config_flags import config_flags
-
+import numpy as np
 
 FLAGS = flags.FLAGS
 
-config_flags.DEFINE_config_file(
-    "config", None, "Training configuration.", lock_config=True)
+config_flags.DEFINE_config_file("config", None, "Training configuration.", lock_config=True)
 flags.DEFINE_string("workdir", None, "Work directory.")
 flags.mark_flags_as_required(["workdir", "config"])
 #flags.DEFINE_string("initialization", "prior", "How to initialize sampling")
@@ -79,34 +78,51 @@ def train(config, workdir):
 
     # Get the forward process definition
     scales = config.model.blur_schedule
-    
-    
-    # load from sampler
-    
-    solver_forward_module = mutils.create_forward_process_from_sigmas(config, scales, config.device)
-    # solver_forward_module = None # we load precomputed data
-    
+    heat_forward_module = mutils.create_forward_process_from_sigmas(
+        config, scales, config.device)
+
 
     # Get the loss function
     train_step_fn = losses.get_step_lbm_fn(train=True, scales=scales, config=config, optimize_fn=optimize_fn,
-                                       heat_forward_module=solver_forward_module)
+                                       heat_forward_module=heat_forward_module)
     eval_step_fn = losses.get_step_lbm_fn(train=False, scales=scales, config=config, optimize_fn=optimize_fn,
-                                      heat_forward_module=solver_forward_module)
+                                      heat_forward_module=heat_forward_module)
 
     # Building sampling functions
-    delta = config.model.sigma*1.25
+    # delta = config.model.sigma*1.25
+    # initial_sample, _ = sampling.get_initial_sample(
+    #     config, heat_forward_module, delta)
+    
     # TODO: draw a sample by lbm-destroying some rand images?
-    # if we read pre-destroyed one, then number of steps must be passed to get_sampling_fn_inverse_lbm_ns
-    # so it may be better to destroy it to final state with K steps.
-    initial_sample, _ = sampling.get_initial_sample(config, solver_forward_module, delta)
-    
-    
-    # from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
+    from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
+    from torchvision import transforms
+    from configs.mnist.lbm_ns_config import get_lbm_ns_config, LBMConfig
     # lbm_corruptor = LBM_NS_Corruptor() 
+    solver_config = get_lbm_ns_config()
+    lbm_ns_Corruptor = LBM_NS_Corruptor(
+        solver_config,                                
+        transform=transforms.Compose([transforms.ToTensor()]))
     
-    # TODO: we need a set of initial samples destroyed up to the final, K-th iteration (config.model.K)
+    def get_initial_lbm_sampe(solver_config: LBMConfig, solver: LBM_NS_Corruptor, batch_size=None):
+        """Take a draw from the prior p(u_K)"""
+        trainloader, _ = datasets.get_dataset(config,
+                                            uniform_dequantization=config.data.uniform_dequantization,
+                                            train_batch_size=batch_size)
+
+        initial_sample = next(iter(trainloader))[0].to('cpu')
+        corrupted_sample = torch.empty_like(initial_sample)
+        for index in range(initial_sample.shape[0]):
+            corruption_amount = solver_config.solver.max_lbm_steps
+            # corruption_amount = np.random.randint(solver_config.solver.min_lbm_steps, solver_config.solver.max_lbm_steps)
+            tmp, _ = solver._corrupt(initial_sample[index], corruption_amount)
+            corrupted_sample[index] = tmp
+        return corrupted_sample
+    
+    initial_sample = get_initial_lbm_sampe(solver_config, lbm_ns_Corruptor)
+    
     sampling_fn = sampling.get_sampling_fn_inverse_lbm_ns(
-        config, initial_sample, intermediate_sample_indices=list(range(config.model.K+1)),
+        config, initial_sample, 
+        intermediate_sample_indices=list(range(solver_config.solver.max_lbm_steps)),
         delta=config.model.sigma*1.25, device=config.device)
 
     num_train_steps = config.training.n_iters
@@ -118,7 +134,6 @@ def train(config, workdir):
 
     for step in range(initial_step, num_train_steps + 1):
         # Train step
-        # x, (y, pre_y, corruption_amount, labels) = next(iter(train_iter))
         try:
             # batch = next(train_iter)[0].to(config.device).float()
             # _, batch = next(train_iter).to(config.device).float() # not that easy if batch has mutltiple elements
@@ -126,7 +141,6 @@ def train(config, workdir):
             _, batch = datasets.prepare_batch(train_iter, config.device)
             
         except StopIteration:  # Start new epoch if run out of data
-            print(f"new epoch at {step}")
             train_iter = iter(trainloader)
             # batch = next(train_iter)[0].to(config.device).float()
             _, batch = datasets.prepare_batch(train_iter, config.device)
