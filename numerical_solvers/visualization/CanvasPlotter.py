@@ -10,7 +10,7 @@ from skimage.metrics import mean_squared_error
 
 from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
 from numerical_solvers.visualization.KolmogorovSpectrumPlotter import KolmogorovSpectrumPlotter
-
+from numerical_solvers.visualization.MetricPlotter import MSEPlotter, SSIMPlotter
 
 class CircularBuffer:
     def __init__(self, buffer_size, array_shape):
@@ -23,21 +23,30 @@ class CircularBuffer:
         """
         self.buffer_size = buffer_size
         self.array_shape = array_shape
-        self.buffer = np.zeros((buffer_size, *array_shape), dtype=np.float32)  # Adjust dtype as needed
+        self.buffer = np.zeros((buffer_size, *array_shape), dtype=np.float32)  # Store snapshots
+        self.mse_values = np.zeros(buffer_size, dtype=np.float32)  # Store MSE values
+        self.ssim_values = np.zeros(buffer_size, dtype=np.float32)  # Store SSIM values
+        self.iteration_numbers = np.zeros(buffer_size, dtype=np.int32)  # Store iteration numbers
         self.index = 0
         self.full = False
 
-    def add_snapshot(self, snapshot):
+    def add_snapshot(self, snapshot, mse, ssim, iteration):
         """
-        Adds a new snapshot to the circular buffer.
+        Adds a new snapshot along with its MSE, SSIM values, and iteration number to the circular buffer.
 
         Parameters:
         - snapshot (ndarray): A new snapshot array with shape equal to `array_shape`.
+        - mse (float): The Mean Squared Error value corresponding to this snapshot.
+        - ssim (float): The Structural Similarity Index Measure value corresponding to this snapshot.
+        - iteration (int): The iteration number corresponding to this snapshot.
         """
         if snapshot.shape != self.array_shape:
             raise ValueError(f"Snapshot shape must be {self.array_shape}, but got {snapshot.shape}.")
         
         self.buffer[self.index] = snapshot
+        self.mse_values[self.index] = mse
+        self.ssim_values[self.index] = ssim
+        self.iteration_numbers[self.index] = iteration
         self.index = (self.index + 1) % self.buffer_size
         if self.index == 0:
             self.full = True
@@ -53,6 +62,36 @@ class CircularBuffer:
             return np.concatenate((self.buffer[self.index:], self.buffer[:self.index]), axis=0)
         else:
             return self.buffer[:self.index]
+    
+    def get_metrics(self):
+        """
+        Retrieves MSE and SSIM values in the buffer in the order they were added.
+        
+        Returns:
+        - Tuple (ndarray, ndarray): Arrays of MSE and SSIM values.
+        """
+        if self.full:
+            mse_values = np.concatenate((self.mse_values[self.index:], self.mse_values[:self.index]), axis=0)
+            ssim_values = np.concatenate((self.ssim_values[self.index:], self.ssim_values[:self.index]), axis=0)
+        else:
+            mse_values = self.mse_values[:self.index]
+            ssim_values = self.ssim_values[:self.index]
+        
+        return mse_values, ssim_values
+    
+    def get_iterations(self):
+        """
+        Retrieves iteration numbers in the buffer in the order they were added.
+        
+        Returns:
+        - ndarray: An array of iteration numbers.
+        """
+        if self.full:
+            return np.concatenate((self.iteration_numbers[self.index:], self.iteration_numbers[:self.index]), axis=0)
+        else:
+            return self.iteration_numbers[:self.index]
+
+
 
 
 class CanvasPlotter:
@@ -71,8 +110,13 @@ class CanvasPlotter:
         self.is_rho_checked = False
         self.is_u_checked = False
         self.is_f_checked = False
+        self.is_rho_MSE_checked = False
+        self.is_rho_SSIM_checked = False
 
-        self.buffer_size = 10
+        self.is_energy_MSE_checked = False
+        self.is_energy_SSIM_checked = False
+
+        self.buffer_size = 1000
         self.array_shape = (solver.nx, solver.ny)
         self.energy_history = CircularBuffer(self.buffer_size, self.array_shape)
         self.rho_history = CircularBuffer(self.buffer_size, self.array_shape)
@@ -126,20 +170,23 @@ class CanvasPlotter:
         return rho_energy_spectrum
     
     def render_energy_difference(self, energy_difference):
-        energy_diff_img = cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=0, vmax=0.02), cmap="gist_gray").to_rgba(energy_difference) 
+        energy_diff_img = cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=0, vmax=0.01), cmap="gist_gray").to_rgba(energy_difference) 
         return energy_diff_img
     
     def render_rho_difference(self, rho_difference):
-        rho_diff_img = cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=0, vmax=0.02), cmap="gist_gray").to_rgba(rho_difference) 
+        rho_diff_img = cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=0, vmax=0.01), cmap="gist_gray").to_rgba(rho_difference) 
         return rho_diff_img
 
     def make_frame(self):
         
         # first row - rho
+        
         rho_cpu = self.solver.rho.to_numpy()
         rho_img = self.render_rho(rho_cpu)
-
-        self.rho_history.add_snapshot(rho_cpu) # add vel_mag_image to cpu history
+        image1 = img_as_float(self.rho_history.buffer[self.rho_history.index - 2])
+        image2 = img_as_float(rho_cpu)
+        ssim_index = ssim(image1, image2, data_range=image1.max() - image1.min())
+        self.rho_history.add_snapshot(rho_cpu, mean_squared_error(self.rho_history.buffer[self.rho_history.index - 2], rho_cpu), ssim_index, self.solver.iterations_counter) 
 
         if self.is_rho_checked:
             rho_energy_spectrum = self.render_rho_energy_spectrum(rho_cpu) 
@@ -147,17 +194,20 @@ class CanvasPlotter:
             rho_energy_spectrum = self.dummy_canvas
 
         # second row - rho
+
         vel_cpu = self.solver.vel.to_numpy()
         vel_img = self.render_vel_mag(vel_cpu)
-
         vel_mag_img = self.return_vel_mag(vel_cpu)
-        self.energy_history.add_snapshot(vel_mag_img) # add vel_mag_image to cpu history
+        image1 = img_as_float(self.energy_history.buffer[self.energy_history.index - 2])
+        image2 = img_as_float(vel_mag_img)
+        ssim_index = ssim(image1, image2, data_range=image1.max() - image1.min())
+        self.energy_history.add_snapshot(vel_mag_img, mean_squared_error(self.energy_history.buffer[self.energy_history.index - 2], vel_mag_img), ssim_index, self.solver.iterations_counter) 
 
         if self.is_u_checked:
             vel_energy_spectrum = self.render_vel_energy_spectrum(vel_cpu)
         else:
             vel_energy_spectrum = self.compute_divergence(vel_cpu[:, :, 0], vel_cpu[:, :, 1])
-        
+    
         force_cpu = self.solver.Force.to_numpy()
         force_img = self.render_force_mag(force_cpu)
         if self.is_f_checked:
@@ -168,9 +218,10 @@ class CanvasPlotter:
         # rho_histogram_rgb = make_canvas_histogram(rho_cpu, gray_min, gray_max)
         # rho_histogram_rgba = cm.ScalarMappable().to_rgba(np.flip(np.transpose(rho_histogram_rgb, (1, 0, 2)), axis=1)) 
 
+
+
         # third row - metrics
 
-        
         # Initialize img_energy_difference outside the rendering loop to hold its value between updates
         img_energy_difference = None  # Start with None or an appropriate initial image
 
@@ -212,12 +263,58 @@ class CanvasPlotter:
         if img_energy_difference is None:
             img_energy_difference = np.zeros(vel_img.shape)
 
+
+        # fourth row
+        if self.solver.iterations_counter < 2:
+            # For the first two iterations, initialize with a zero image or keep the last known value
+            mse_rho_image = self.dummy_canvas
+            ssim_rho_image = self.dummy_canvas
+
+            mse_energy_image = self.dummy_canvas
+            ssim_energy_image = self.dummy_canvas
+
+        else:
+            if self.is_rho_MSE_checked:
+                mse_values, ssim_values = self.rho_history.get_metrics()
+                iteration_numbers = self.rho_history.get_iterations()
+                mse_plotter = MSEPlotter(title='rho - MSE(Iterations)')
+                mse_rho_image = mse_plotter(iteration_numbers, mse_values)
+            else:
+                mse_rho_image = self.dummy_canvas
+
+            if self.is_rho_SSIM_checked:
+                mse_values, ssim_values = self.rho_history.get_metrics()
+                iteration_numbers = self.rho_history.get_iterations()
+                ssim_plotter = SSIMPlotter(title='rho - SSIM(Iterations)')
+                ssim_rho_image = ssim_plotter(iteration_numbers,ssim_values)
+            else:
+                ssim_rho_image = self.dummy_canvas
+
+            if self.is_energy_MSE_checked:
+                mse_values, ssim_values = self.energy_history.get_metrics()
+                iteration_numbers = self.energy_history.get_iterations()
+                mse_plotter = MSEPlotter(title='Kinetic energy - MSE(Iterations)')
+                mse_energy_image = mse_plotter(iteration_numbers, mse_values)
+            else:
+                mse_energy_image = self.dummy_canvas
+
+            if self.is_energy_SSIM_checked:
+                mse_values, ssim_values = self.energy_history.get_metrics()
+                iteration_numbers = self.energy_history.get_iterations()
+                ssim_plotter = SSIMPlotter(title='Kinetic energy - SSIM(Iterations)')
+                ssim_energy_image = ssim_plotter(iteration_numbers,ssim_values)
+            else:
+                ssim_energy_image = self.dummy_canvas
+
     
         img_col1 = np.concatenate((rho_img, vel_img, force_img), axis=1)
         img_col2 = np.concatenate((rho_energy_spectrum, vel_energy_spectrum, force_energy_spectrum), axis=1)
-        img_col3 = np.concatenate((img_energy_difference, img_rho_difference, img_energy_difference), axis=1)
+        img_col3 = np.concatenate((self.dummy_canvas, img_rho_difference, img_energy_difference), axis=1)
+        img_col4 = np.concatenate((mse_rho_image, mse_energy_image, self.dummy_canvas), axis=1)
+        img_col5 = np.concatenate((ssim_rho_image, ssim_energy_image, self.dummy_canvas), axis=1)
 
-        img = np.concatenate((img_col1, img_col2, img_col3), axis=0)
+
+        img = np.concatenate((img_col1, img_col2, img_col3, img_col4, img_col5), axis=0)
         return img
 
     def write_canvas_to_file(self, img, filepath):

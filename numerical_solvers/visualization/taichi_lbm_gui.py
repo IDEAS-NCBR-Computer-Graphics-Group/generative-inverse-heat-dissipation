@@ -8,7 +8,7 @@ from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
 
     
 def run_with_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show_gui=True):
-    window = ti.ui.Window('CG - Renderer', res=(3*solver.nx, 3 * solver.ny))
+    window = ti.ui.Window('CG - Renderer', res=(5*solver.nx, 3 * solver.ny))
     gui = window.get_gui()
     canvas = window.get_canvas()
     
@@ -29,6 +29,10 @@ def run_with_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show
             canvasPlotter.is_f_checked = gui.checkbox('plot f', canvasPlotter.is_f_checked)
             canvasPlotter.is_u_checked = gui.checkbox('plot u', canvasPlotter.is_u_checked)
             canvasPlotter.is_rho_checked = gui.checkbox('plot rho', canvasPlotter.is_rho_checked)
+            canvasPlotter.is_rho_MSE_checked = gui.checkbox('plot rho MSE', canvasPlotter.is_rho_MSE_checked)
+            canvasPlotter.is_rho_SSIM_checked = gui.checkbox('plot rho SSIM', canvasPlotter.is_rho_SSIM_checked)
+            canvasPlotter.is_energy_MSE_checked = gui.checkbox('plot energy MSE', canvasPlotter.is_energy_MSE_checked)
+            canvasPlotter.is_energy_SSIM_checked = gui.checkbox('plot energy SSIM', canvasPlotter.is_energy_SSIM_checked)
                               
         solver.solve(iter_per_frame)      
         img = canvasPlotter.make_frame()
