@@ -5,6 +5,7 @@ import numpy as np
 def get_config():
     config = default_mnist_configs.get_default_configs()
     model = config.model
+    
     model.blur_sigma_max = 20
     model.blur_sigma_min = 0.5
     model.model_channels = 64
@@ -16,7 +17,8 @@ def get_config():
         [0] + list(model.blur_schedule))  # Add the k=0 timestep
     
     
-    
+    config.training.n_iters = 1001
+    config.training.snapshot_freq = 1000
     config.training.snapshot_freq_for_preemption = 100
     config.training.sampling_freq = 100
     return config

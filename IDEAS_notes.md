@@ -156,7 +156,7 @@ unzip ffhq-128-70k.zip -d ffhq-128-70k
 ```
 
 url:
-https://www.kaggle.com/datasets/potatohd404/ffhq-128-70k
+<https://www.kaggle.com/datasets/potatohd404/ffhq-128-70k>
 
 ### mount disk on gcp
 

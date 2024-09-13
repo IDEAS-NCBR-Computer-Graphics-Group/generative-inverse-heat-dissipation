@@ -8,7 +8,8 @@ import os, errno
 import torchvision
 import numpy as np
 from matplotlib import pyplot as plt
-
+import matplotlib.colors as mcolors
+import matplotlib.pyplot as plt
 import matplotlib
 from timeit import default_timer as timer
 
@@ -20,6 +21,7 @@ from numerical_solvers.data_holders.BlurringCorruptor import BlurringCorruptor
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
 from scripts import datasets as ihd_datasets
+from scripts.utils import save_png_norm
 
 # sys.path.insert(0, '../../')
                                 
@@ -106,10 +108,15 @@ if __name__ == '__main__':
     print('batch_size = x.shape[0]:', x.shape[0])
     print('Labels:', labels)
     print('corruption_amount:', corruption_amount)
+    
+
+    save_png_norm(current_file_path.parents[0], y, "test_norm.png")
+    
+    
     plt.imshow(torchvision.utils.make_grid(x)[0], cmap='Greys');
-    plt.imshow(torchvision.utils.make_grid(y)[0], cmap='Greys');
+    # # plt.imshow(torchvision.utils.make_grid(y)[0], cmap='Greys');
     
     plt.imshow(torchvision.utils.make_grid(y)[0], 
                norm=matplotlib.colors.Normalize(vmin=0.95, vmax=1.05),
-               cmap='Greys');
-    
+               cmap='Greys')
+

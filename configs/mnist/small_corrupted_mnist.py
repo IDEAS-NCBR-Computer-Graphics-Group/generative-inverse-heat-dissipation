@@ -28,7 +28,8 @@ def get_config():
     
     config.data.dataset = 'CORRUPTED_MNIST'
     
+    config.training.n_iters = 20001
+    config.training.snapshot_freq = 1000
     config.training.snapshot_freq_for_preemption = 100
     config.training.sampling_freq = 100
-    
     return config

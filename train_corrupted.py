@@ -77,16 +77,12 @@ def train(config, workdir):
     optimize_fn = losses.optimization_manager(config)
 
     # Get the forward process definition
-    scales = config.model.blur_schedule
-    heat_forward_module = mutils.create_forward_process_from_sigmas(
-        config, scales, config.device)
-
+    # scales = config.model.blur_schedule
+    # heat_forward_module = None
 
     # Get the loss function
-    train_step_fn = losses.get_step_lbm_fn(train=True, scales=scales, config=config, optimize_fn=optimize_fn,
-                                       heat_forward_module=heat_forward_module)
-    eval_step_fn = losses.get_step_lbm_fn(train=False, scales=scales, config=config, optimize_fn=optimize_fn,
-                                      heat_forward_module=heat_forward_module)
+    train_step_fn = losses.get_step_lbm_fn(train=True, config=config, optimize_fn=optimize_fn)
+    eval_step_fn = losses.get_step_lbm_fn(train=False, config=config, optimize_fn=optimize_fn)
 
     # Building sampling functions
     # delta = config.model.sigma*1.25
@@ -103,25 +99,35 @@ def train(config, workdir):
         solver_config,                                
         transform=transforms.Compose([transforms.ToTensor()]))
     
-    def get_initial_lbm_sampe(solver_config: LBMConfig, solver: LBM_NS_Corruptor, batch_size=None):
+    def get_initial_lbm_sample(solver_config: LBMConfig, solver: LBM_NS_Corruptor, batch_size=None):
         """Take a draw from the prior p(u_K)"""
         trainloader, _ = datasets.get_dataset(config,
                                             uniform_dequantization=config.data.uniform_dequantization,
                                             train_batch_size=batch_size)
 
-        initial_sample = next(iter(trainloader))[0].to('cpu')
+        # initial_sample = next(iter(trainloader))[0].to('cpu')
+        initial_sample, _ = datasets.prepare_batch(iter(trainloader), 'cpu')
         corrupted_sample = torch.empty_like(initial_sample)
+        # vec_corruption_amount = torch.randint(
+        #     low=solver_config.solver.min_lbm_steps, 
+        #     high=solver_config.solver.max_lbm_steps, 
+        #     size=initial_sample.shape[0], device='cpu')
+        
         for index in range(initial_sample.shape[0]):
-            corruption_amount = solver_config.solver.max_lbm_steps
-            # corruption_amount = np.random.randint(solver_config.solver.min_lbm_steps, solver_config.solver.max_lbm_steps)
-            tmp, _ = solver._corrupt(initial_sample[index], corruption_amount)
+            # corruption_amount = solver_config.solver.max_lbm_steps #TODO we shall start from completely destroyed images
+            corruption_amount = np.random.randint(solver_config.solver.min_lbm_steps, solver_config.solver.max_lbm_steps)
+            tmp, _ = solver._corrupt(initial_sample[index], 
+                                     corruption_amount #vec_corruption_amount[index]
+                                     )
+            
             corrupted_sample[index] = tmp
         return corrupted_sample
     
-    initial_sample = get_initial_lbm_sampe(solver_config, lbm_ns_Corruptor)
+    initial_sample = get_initial_lbm_sample(solver_config, lbm_ns_Corruptor)
     
     sampling_fn = sampling.get_sampling_fn_inverse_lbm_ns(
-        config, initial_sample, 
+        solver_config.solver.max_lbm_steps, # vec_corruption_amount, 
+        initial_sample, 
         intermediate_sample_indices=list(range(solver_config.solver.max_lbm_steps)),
         delta=config.model.sigma*1.25, device=config.device)
 
@@ -130,7 +136,7 @@ def train(config, workdir):
     logging.info("Running on {}".format(config.device))
 
     # For analyzing the mean values of losses over many batches, for each scale separately
-    pooled_losses = torch.zeros(len(scales))
+    # pooled_losses = torch.zeros(len(scales))
 
     for step in range(initial_step, num_train_steps + 1):
         # Train step
@@ -188,11 +194,14 @@ def train(config, workdir):
             Path(this_sample_dir).mkdir(parents=True, exist_ok=True)
             utils.save_tensor(this_sample_dir, sample, "final.np")
             utils.save_png(this_sample_dir, sample, "final.png")
+            utils.save_png_norm(this_sample_dir, sample, "final_norm.png") # TODO: make it consisten with the original pipeline
+            
             if initial_sample != None:
                 utils.save_png(this_sample_dir, initial_sample, "init.png")
+                utils.save_png_norm(this_sample_dir, initial_sample, "init_norm.png")
+                
             utils.save_gif(this_sample_dir, intermediate_samples)
             utils.save_video(this_sample_dir, intermediate_samples)
-
 
 if __name__ == "__main__":
     app.run(main)
