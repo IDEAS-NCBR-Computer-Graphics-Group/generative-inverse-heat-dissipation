@@ -126,11 +126,11 @@ class CanvasPlotter:
         return rho_energy_spectrum
     
     def render_energy_difference(self, energy_difference):
-        energy_diff_img = cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=0, vmax=0.001), cmap="gist_gray").to_rgba(energy_difference) 
+        energy_diff_img = cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=0, vmax=0.02), cmap="gist_gray").to_rgba(energy_difference) 
         return energy_diff_img
     
     def render_rho_difference(self, rho_difference):
-        rho_diff_img = cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=0, vmax=0.001), cmap="gist_gray").to_rgba(rho_difference) 
+        rho_diff_img = cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=0, vmax=0.02), cmap="gist_gray").to_rgba(rho_difference) 
         return rho_diff_img
 
     def make_frame(self):
@@ -185,17 +185,23 @@ class CanvasPlotter:
                 energy_difference = self.energy_history.buffer[self.energy_history.index - 2] - vel_mag_img
                 rho_difference = self.rho_history.buffer[self.rho_history.index - 2] - rho_cpu
 
-                # print(mean_squared_error(self.energy_history.buffer[self.energy_history.index - 2], vel_mag_img))
-                # print(mean_squared_error(self.rho_history.buffer[self.rho_history.index - 2], rho_cpu))
+                if self.solver.iterations_counter%10 ==0: 
+                    print("MSE energy: ", mean_squared_error(self.energy_history.buffer[self.energy_history.index - 2], vel_mag_img))
+                    print("MSE rho", mean_squared_error(self.rho_history.buffer[self.rho_history.index - 2], rho_cpu))
+
                 image1 = img_as_float(self.energy_history.buffer[self.energy_history.index - 2])
                 image2 = img_as_float(vel_mag_img)
                 ssim_index = ssim(image1, image2, data_range=image1.max() - image1.min())
-                print(ssim_index)
+
+                if self.solver.iterations_counter%10 ==0: 
+                    print("energy ssim", ssim_index)
+
                 image1 = img_as_float(self.rho_history.buffer[self.rho_history.index - 2])
                 image2 = img_as_float(rho_cpu)
                 ssim_index = ssim(image1, image2, data_range=image1.max() - image1.min())
 
-                print(ssim_index)
+                if self.solver.iterations_counter%10 ==0: 
+                    print("rho ssim", ssim_index)
 
 
                 img_energy_difference = self.render_energy_difference(energy_difference)
