@@ -56,14 +56,14 @@ if __name__ == '__main__':
     start = timer()
     initial_dataset = datasets.MNIST(root=input_data_dir, train=is_train_dataset, download=True)
     
-    lbmCorruptor = LBM_NS_Corruptor(
+    lbm_ns_Corruptor = LBM_NS_Corruptor(
         grid_size = initial_dataset[0][0].size,
         train=is_train_dataset, 
         transform=transform)
     
     corrupted_dataset_dir = os.path.join(output_data_dir, 'lbm_ns_pair')
     process_pairs=True
-    lbmCorruptor._preprocess_and_save_data(
+    lbm_ns_Corruptor._preprocess_and_save_data(
         initial_dataset=initial_dataset,
         save_dir=corrupted_dataset_dir,
         process_pairs = process_pairs,

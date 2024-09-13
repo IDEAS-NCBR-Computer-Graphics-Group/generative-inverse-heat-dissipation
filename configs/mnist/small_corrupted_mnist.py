@@ -1,4 +1,5 @@
 from configs.mnist import default_mnist_configs
+import ml_collections
 import numpy as np
 
 
@@ -19,4 +20,18 @@ def get_config():
     
     config.training.snapshot_freq_for_preemption = 100
     config.training.sampling_freq = 100
+    
+    # cfd solver
+    config.solver = solver = ml_collections.ConfigDict()
+    solver.niu = 0.5 * 1/6
+    solver.bulk_visc = 0.5 * 1/6
+    solver.domain_size = (1.0, 1.0)
+
+    solver.turb_intensity = 1E-4
+    solver.noise_limiter = (-1E-3, 1E-3)
+    solver.dt_turb = 5 * 1E-4
+    solver.k_min = 2.0 * np.pi / min(solver.domain_size)
+    solver.k_max = 2.0 * np.pi / (min(solver.domain_size) / 1024)
+    
+    solver.energy_spectrum= lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
     return config

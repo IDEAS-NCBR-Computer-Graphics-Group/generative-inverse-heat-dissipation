@@ -11,8 +11,8 @@ from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbul
 from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
 
 class LBM_NS_Corruptor(BaseCorruptor):
-    def __init__(self, grid_size, train=True, transform=None, target_transform=None):
-        super(LBM_NS_Corruptor, self).__init__(train, transform, target_transform)
+    def __init__(self, config, grid_size, transform=None, target_transform=None):
+        super(LBM_NS_Corruptor, self).__init__(transform, target_transform)
 
         ti.init(arch=ti.gpu)
         domain_size = (1.0, 1.0)
