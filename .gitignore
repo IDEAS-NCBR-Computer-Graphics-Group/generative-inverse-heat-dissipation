@@ -19,4 +19,10 @@ data/
 
 __pycache__
 
+
+# extras
+.conda/
+.venv/
+imgui.ini
+
 *.pyc

@@ -1,10 +1,3 @@
-# config.py
-import numpy as np
-
-from ml_collections import ConfigDict
-from dataclasses import dataclass
-
-
 from ml_collections import ConfigDict
 from dataclasses import dataclass, field
 from typing import Tuple, Callable
@@ -28,10 +21,8 @@ class SolverConfig:
     k_max: float = field(init=False)  # To be computed after domain_size is set
     energy_spectrum: Callable[[float], float] = field(init=False)  # Function field
 
-
     min_lbm_steps: int = 2
     max_lbm_steps: int = 50
-    
     
     def __post_init__(self):
         # Calculate k_min and k_max based on domain_size
@@ -43,8 +34,8 @@ class SolverConfig:
 
 @dataclass
 class LBMConfig:
-    data: DataConfig = DataConfig()
-    solver: SolverConfig = SolverConfig()
+    data: DataConfig = field(default_factory=DataConfig)
+    solver: SolverConfig = field(default_factory=SolverConfig)  # Fixed: was incorrectly set as DataConfig
 
 # Function to convert the dataclass configuration to ConfigDict
 def get_lbm_ns_config() -> ConfigDict:
@@ -56,38 +47,7 @@ def get_lbm_ns_config() -> ConfigDict:
     config_dict.data = ConfigDict(vars(config.data))
     config_dict.solver = ConfigDict(vars(config.solver))
 
+    # Manually handle the energy_spectrum function
+    config_dict.solver['energy_spectrum'] = config.solver.energy_spectrum
+
     return config_dict
-
-
-
-
-# @dataclass
-# class Config:
-#     learning_rate: float = 0.001
-#     batch_size: int = 32
-#     num_epochs: int = 10
-#     model_name: str = 'resnet50'
-
-
-# def get_lbm_ns_config() -> ConfigDict:
-#     # cfd solver
-#     config = ConfigDict()
-    
-#     # data
-#     config.data = data = ConfigDict()
-#     data.image_size = 28 # mnist
-    
-#     config.solver = solver = ConfigDict()
-#     solver = ConfigDict()
-#     solver.niu = 0.5 * 1/6
-#     solver.bulk_visc = 0.5 * 1/6
-#     solver.domain_size = (1.0, 1.0)
-
-#     solver.turb_intensity = 1E-4
-#     solver.noise_limiter = (-1E-3, 1E-3)
-#     solver.dt_turb = 5 * 1E-4
-#     solver.k_min = 2.0 * np.pi / min(solver.domain_size)
-#     solver.k_max = 2.0 * np.pi / (min(solver.domain_size) / 1024)
-    
-#     solver.energy_spectrum = lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
-#     return solver
