@@ -92,8 +92,10 @@ class LBM_NS_Corruptor(BaseCorruptor):
         """
         file_name = f"{'train' if is_train_dataset else 'test'}_data.pt"
         file_path = os.path.join(save_dir, file_name)
- 
- 
+        
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+            
         if os.path.exists(file_path):
             warnings.warn("[EXIT] Data not generated. Reason: file exist {file_path} ")
             return
