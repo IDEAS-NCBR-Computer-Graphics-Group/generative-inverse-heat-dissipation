@@ -16,12 +16,11 @@ from timeit import default_timer as timer
 import sys
 from pathlib import Path
 
-from numerical_solvers.data_holders.BlurringCorruptor import BlurringCorruptor
-# from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
 from scripts import datasets as ihd_datasets
 from scripts.utils import save_png_norm
+from configs.mnist.lbm_ns_turb_config import get_lbm_ns_config
 
 # sys.path.insert(0, '../../')
                                 
@@ -55,7 +54,7 @@ if __name__ == '__main__':
     start = timer()
     initial_dataset = datasets.MNIST(root=input_data_dir, train=is_train_dataset, download=True)
     
-    from configs.mnist.lbm_ns_config import get_lbm_ns_config
+    
     
     solver_config = get_lbm_ns_config()
     lbm_ns_Corruptor = LBM_NS_Corruptor(

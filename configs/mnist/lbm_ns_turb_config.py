@@ -19,9 +19,9 @@ class DataConfig:
 class SolverConfig:
     niu: float = 0.5 * 1/6
     bulk_visc: float = 0.5 * 1/6
-
+    
     domain_size: Tuple[float, float] = (1.0, 1.0)
-    turb_intensity: float = 0*1E-4
+    turb_intensity: float = 1E-4
     noise_limiter: Tuple[float, float] = (-1E-3, 1E-3)
     dt_turb: float = 5 * 1E-4
     k_min: float = field(init=False)  # To be computed after domain_size is set

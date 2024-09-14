@@ -92,7 +92,7 @@ def train(config, workdir):
     # TODO: draw a sample by lbm-destroying some rand images?
     from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
     from torchvision import transforms
-    from configs.mnist.lbm_ns_config import get_lbm_ns_config, LBMConfig
+    from configs.mnist.lbm_ns_turb_config import get_lbm_ns_config, LBMConfig
     # lbm_corruptor = LBM_NS_Corruptor() 
     solver_config = get_lbm_ns_config()
     lbm_ns_Corruptor = LBM_NS_Corruptor(
