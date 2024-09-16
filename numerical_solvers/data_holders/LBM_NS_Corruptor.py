@@ -66,19 +66,23 @@ class LBM_NS_Corruptor(BaseCorruptor):
         self.solver.init(np_gray_img)
         self.solver.iterations_counter = 0  # Reset counter
 
-        # Solve up to lbm_steps - step_difference if generating pairs, else directly to lbm_steps
-        self.solver.solve(lbm_steps - step_difference if generate_pair else lbm_steps)
-        rho_cpu = self.solver.rho.to_numpy()
-        x_noisy_pre_t = torch.tensor(rho_cpu).unsqueeze(0)
-
         if generate_pair:
+            # Solve up to (lbm_steps - step_difference) if generating pairs
+            self.solver.solve(lbm_steps - step_difference)
+            rho_cpu = self.solver.rho.to_numpy()
+            less_noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
+            
             # Solve the remaining steps for the pair generation
             self.solver.solve(step_difference)
             rho_cpu = self.solver.rho.to_numpy()
-            x_noisy_t = torch.tensor(rho_cpu).unsqueeze(0)
-            return x_noisy_pre_t, x_noisy_t
-        
-        return x_noisy_pre_t, None
+            noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
+            return noisy_x, less_noisy_x,
+        else:
+            # Solve up to lbm_steps - step_difference if generating pairs, else directly to lbm_steps
+            self.solver.solve(lbm_steps)
+            rho_cpu = self.solver.rho.to_numpy()
+            noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
+            return noisy_x, None
 
     def _preprocess_and_save_data(self, initial_dataset, save_dir, is_train_dataset: bool, process_pairs=False, process_all=True):
         """
