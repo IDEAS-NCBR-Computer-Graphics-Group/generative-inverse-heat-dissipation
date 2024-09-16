@@ -7,11 +7,12 @@ import cv2
 from skimage import data, img_as_float
 from skimage.metrics import structural_similarity as ssim
 from skimage.metrics import mean_squared_error
+from scipy.stats import maxwell
 
 from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
 from numerical_solvers.visualization.KolmogorovSpectrumPlotter import KolmogorovSpectrumPlotter
 from numerical_solvers.visualization.MetricPlotter import MSEPlotter, SSIMPlotter
-
+from numerical_solvers.visualization.histogram_plotter import VelocityHistogramPlotter
 class CircularBuffer:
     def __init__(self, buffer_size, array_shape):
         """
@@ -215,7 +216,7 @@ class CanvasPlotter:
         else:
             force_energy_spectrum =  self.dummy_canvas   
         
-        # rho_histogram_rgb = make_canvas_histogram(rho_cpu, gray_min, gray_max)
+        # rho_histogram_rgb = make_canvas_histogram(rho_cpu, rho_cpu.min(), rho_cpu.max(), "rho")
         # rho_histogram_rgba = cm.ScalarMappable().to_rgba(np.flip(np.transpose(rho_histogram_rgb, (1, 0, 2)), axis=1)) 
 
 
@@ -230,6 +231,7 @@ class CanvasPlotter:
             if img_energy_difference is None:  # Only set initially if it's not already initialized
                 img_energy_difference = self.render_rho(np.zeros(vel_img.shape))
                 img_rho_difference = self.render_rho(np.zeros(vel_img.shape))
+                
         else:
             
                 # Update img_energy_difference only on every second step
@@ -264,7 +266,19 @@ class CanvasPlotter:
             img_energy_difference = np.zeros(vel_img.shape)
 
 
+        vel_histogram_rgb = make_canvas_histogram(vel_mag_img, vel_mag_img.min(), vel_mag_img.max(), "velocity")
+        vel_histogram_rgba = cm.ScalarMappable().to_rgba(np.flip(np.transpose(vel_histogram_rgb, (1, 0, 2)), axis=1)) 
+
+
+
+        # n_particles = 256 * 256  # Total number of "particles" or grid points
+        # vel_cpu_reshaped = vel_cpu.reshape((n_particles, 2))  # Shape becomes (65536, 2)
+        # velocity_plotter = VelocityHistogramPlotter(title='Vel')
+        # velocity_histogram_image = velocity_plotter(vel_cpu_reshaped, bins=50, temperature=1.0, mass=1.0)
+        # print(velocity_histogram_image.shape)
+        
         # fourth row
+
         if self.solver.iterations_counter < 2:
             # For the first two iterations, initialize with a zero image or keep the last known value
             mse_rho_image = self.dummy_canvas
@@ -306,11 +320,13 @@ class CanvasPlotter:
             else:
                 ssim_energy_image = self.dummy_canvas
 
+        
     
+
         img_col1 = np.concatenate((rho_img, vel_img, force_img), axis=1)
         img_col2 = np.concatenate((rho_energy_spectrum, vel_energy_spectrum, force_energy_spectrum), axis=1)
-        img_col3 = np.concatenate((self.dummy_canvas, img_rho_difference, img_energy_difference), axis=1)
-        img_col4 = np.concatenate((mse_rho_image, mse_energy_image, self.dummy_canvas), axis=1)
+        img_col3 = np.concatenate((img_rho_difference, img_energy_difference,  self.dummy_canvas), axis=1)
+        img_col4 = np.concatenate((mse_rho_image, mse_energy_image, vel_histogram_rgba), axis=1)
         img_col5 = np.concatenate((ssim_rho_image, ssim_energy_image, self.dummy_canvas), axis=1)
 
 
@@ -325,7 +341,7 @@ class CanvasPlotter:
         cv2.imwrite(filepath, np.rot90(img_bgr))
     
     
-def make_canvas_histogram(image_array, min_val, max_val):
+def make_canvas_histogram(image_array, min_val, max_val, title):
     matplotlib.use('Agg')
     # Calculate the histogram
     
@@ -340,23 +356,23 @@ def make_canvas_histogram(image_array, min_val, max_val):
     entropy = -np.sum([p * np.log2(p) for p in probability_distribution if p > 0])
 
     # Display the histogram
-    my_dpi = 100
+    my_dpi = 70
     w, h = uint8_image.shape
     fig = plt.figure(figsize=(w/my_dpi, h/my_dpi), dpi=my_dpi)
     
     # Create Axes with space for the title and labels
     # ax = fig.add_axes([0, 0, 1, 1])  # [left, bottom, width, height] as fractions of the figure size
-    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])  # [left, bottom, width, height] as fractions of the figure size
+    ax = fig.add_axes([0.18, 0.12, 0.8, 0.8])  # [left, bottom, width, height] as fractions of the figure size
     
     # Plot the histogram
-    ax.set_xlim([0, 255])
-    ax.set_ylim([0, 0.015])
-    ax.hist(uint8_image.flatten(), bins=256, density=True)
+    ax.set_xlim([0, 100])
+    ax.set_ylim([0, 0.1])
+    ax.hist(uint8_image.flatten(), bins=64, density=True)
 
     # Set title and labels
     # ax.text(10, 10, "Sample Text", color='white', fontsize=14, ha='left', va='top')
 
-    ax.set_title(f'Entropy = {entropy:.4f} bits', fontsize=9) 
+    ax.set_title(f'{title} Entropy = {entropy:.4f} bits', fontsize=9) 
     ax.set_xlabel('Pixel Value')
     ax.set_ylabel('Frequency')
     
