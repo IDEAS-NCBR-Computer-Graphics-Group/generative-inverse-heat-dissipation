@@ -52,25 +52,30 @@ if __name__ == '__main__':
     
     # %% lbmize
     start = timer()
-    initial_dataset = datasets.MNIST(root=input_data_dir, train=is_train_dataset, download=True)
-    
-    
-    
+    process_all=True
     solver_config = get_lbm_ns_config()
+
+    corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
+
+    
     lbm_ns_Corruptor = LBM_NS_Corruptor(
         solver_config,                                
-        transform=transform)
-    
-    corrupted_dataset_dir = os.path.join(output_data_dir, 'lbm_ns_pair')
-    process_pairs=True
-    
+        transform=transforms.Compose([torchvision.transforms.ToTensor()]))
+
     lbm_ns_Corruptor._preprocess_and_save_data(
-        initial_dataset=initial_dataset,
+        initial_dataset=datasets.MNIST(root=input_data_dir, train=True, download=True),
         save_dir=corrupted_dataset_dir,
-        is_train_dataset = is_train_dataset,
-        process_pairs = process_pairs,
+        is_train_dataset = True,
+        process_pairs = solver_config.data.process_pairs,
         process_all=True)
-    
+
+    lbm_ns_Corruptor._preprocess_and_save_data(
+        initial_dataset=datasets.MNIST(root=input_data_dir, train=False, download=True),
+        save_dir=corrupted_dataset_dir,
+        is_train_dataset = False,
+        process_pairs = solver_config.data.process_pairs,
+        process_all=True)    
+
     end = timer()
     print(f"Time in seconds: {end - start:.2f}")
 
@@ -95,7 +100,7 @@ if __name__ == '__main__':
 
     
     corrupted_dataloader = DataLoader(lbm_mnist_pairs, batch_size=8, shuffle=True)
-    if process_pairs:
+    if solver_config.data.process_pairs:
         print(f"==processing pairs===")
         # x, (y, pre_y, corruption_amount, labels) = next(iter(corrupted_dataloader))
         # alternatively

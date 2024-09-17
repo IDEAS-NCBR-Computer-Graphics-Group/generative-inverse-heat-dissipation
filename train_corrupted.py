@@ -14,11 +14,16 @@ from absl import flags
 from ml_collections.config_flags import config_flags
 import numpy as np
 
+from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
+from torchvision import transforms
+from configs.mnist.lbm_ns_turb_config import get_lbm_ns_config, LBMConfig
+
 FLAGS = flags.FLAGS
 
-config_flags.DEFINE_config_file("config", None, "Training configuration.", lock_config=True)
+config_flags.DEFINE_config_file("config", None, "NN Training configuration.", lock_config=True)
 flags.DEFINE_string("workdir", None, "Work directory.")
-flags.mark_flags_as_required(["workdir", "config"])
+flags.DEFINE_string("forwardsolver", None, "Forward solver configuration.")
+flags.mark_flags_as_required(["workdir", "config", "forwardsolver"])
 #flags.DEFINE_string("initialization", "prior", "How to initialize sampling")
 
 
@@ -90,40 +95,12 @@ def train(config, workdir):
     #     config, heat_forward_module, delta)
     
     # TODO: draw a sample by lbm-destroying some rand images?
-    from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
-    from torchvision import transforms
-    from configs.mnist.lbm_ns_turb_config import get_lbm_ns_config, LBMConfig
-    # lbm_corruptor = LBM_NS_Corruptor() 
     solver_config = get_lbm_ns_config()
     lbm_ns_Corruptor = LBM_NS_Corruptor(
         solver_config,                                
         transform=transforms.Compose([transforms.ToTensor()]))
     
-    def get_initial_lbm_sample(solver_config: LBMConfig, solver: LBM_NS_Corruptor, batch_size=None):
-        """Take a draw from the prior p(u_K)"""
-        trainloader, _ = datasets.get_dataset(config,
-                                            uniform_dequantization=config.data.uniform_dequantization,
-                                            train_batch_size=batch_size)
-
-        # initial_sample = next(iter(trainloader))[0].to('cpu')
-        initial_sample, _ = datasets.prepare_batch(iter(trainloader), 'cpu')
-        corrupted_sample = torch.empty_like(initial_sample)
-        # vec_corruption_amount = torch.randint(
-        #     low=solver_config.solver.min_lbm_steps, 
-        #     high=solver_config.solver.max_lbm_steps, 
-        #     size=initial_sample.shape[0], device='cpu')
-        
-        for index in range(initial_sample.shape[0]):
-            # corruption_amount = solver_config.solver.max_lbm_steps #TODO we shall start from completely destroyed images
-            corruption_amount = np.random.randint(solver_config.solver.min_lbm_steps, solver_config.solver.max_lbm_steps)
-            tmp, _ = solver._corrupt(initial_sample[index], 
-                                     corruption_amount #vec_corruption_amount[index]
-                                     )
-            
-            corrupted_sample[index] = tmp
-        return corrupted_sample
-    
-    initial_sample = get_initial_lbm_sample(solver_config, lbm_ns_Corruptor)
+    initial_sample = sampling.get_initial_lbm_sample(config, solver_config, lbm_ns_Corruptor)
     
     sampling_fn = sampling.get_sampling_fn_inverse_lbm_ns(
         solver_config.solver.max_lbm_steps, # vec_corruption_amount, 

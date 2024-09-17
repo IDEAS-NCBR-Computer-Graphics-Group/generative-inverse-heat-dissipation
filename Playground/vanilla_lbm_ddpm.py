@@ -40,29 +40,29 @@ print(f"Input data folder: {input_data_dir}")
 process_pairs=False
 process_all=True
 # solver_config = get_lbm_ns_config()
-# corrupted_dataset_dir = os.path.join(output_data_dir, 'lbm_ns')
+# corrupted_dataset_dir = os.path.join(output_data_dir, 'lbm_ns_pairs') if process_pairs else os.path.join(output_data_dir, 'lbm_ns')
+
 solver_config = get_lbm_ns_turb_config()
-corrupted_dataset_dir = os.path.join(output_data_dir, 'lbm_ns_turb')
+corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
 
 start = timer()
 
 lbm_ns_Corruptor = LBM_NS_Corruptor(
     solver_config,                                
-    transform=transforms.Compose([torchvision.transforms.ToTensor()])
-    )
+    transform=transforms.Compose([torchvision.transforms.ToTensor()]))
 
 lbm_ns_Corruptor._preprocess_and_save_data(
     initial_dataset=datasets.MNIST(root=input_data_dir, train=True, download=True),
     save_dir=corrupted_dataset_dir,
     is_train_dataset = True,
-    process_pairs = process_pairs,
+    process_pairs = solver_config.data.process_pairs,
     process_all=True)
 
 lbm_ns_Corruptor._preprocess_and_save_data(
     initial_dataset=datasets.MNIST(root=input_data_dir, train=False, download=True),
     save_dir=corrupted_dataset_dir,
     is_train_dataset = False,
-    process_pairs = process_pairs,
+    process_pairs = solver_config.data.process_pairs,
     process_all=True)    
 
 end = timer()
@@ -84,7 +84,7 @@ testDataset = CorruptedDataset(train=False,
                                transform=None, # the dataset is saved as torchtensor
                                target_transform=None, 
                                load_dir=corrupted_dataset_dir)
-test_dataloader = DataLoader(trainDataset, batch_size=batch_size, shuffle=True)
+test_dataloader = DataLoader(testDataset, batch_size=batch_size, shuffle=True)
 
 x, (y, corruption_amount, label) = next(iter(train_dataloader))
 # x, (y, corruption_amount, label) = next(iter(test_dataloader))

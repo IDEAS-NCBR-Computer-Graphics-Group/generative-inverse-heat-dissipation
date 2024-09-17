@@ -32,7 +32,7 @@ class BlurringCorruptor(BaseCorruptor):
         # pil_image = transforms.ToPILImage()(image)
         modified_pil_image = pil_image.filter(ImageFilter.GaussianBlur(radius=corruption_amount))
         return modified_pil_image
-        
+
     def _preprocess_and_save_data(self, initial_dataset, file_path):
         data = []
         modified_images = []

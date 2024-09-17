@@ -64,7 +64,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         transform = transforms.Compose(transform)
         # transform = None
 
-        corrupted_dataset_dir = os.path.join('data', 'corrupted_MNIST', 'lbm_ns_pair')
+        corrupted_dataset_dir = os.path.join('data', 'corrupted_MNIST', 'lbm_ns_pairs') # TODO: 'lbm_ns_pairs' shall be passed in some config
         training_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=True, transform=transform)
         test_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=False, transform=transform)
     elif config.data.dataset == 'CIFAR10':

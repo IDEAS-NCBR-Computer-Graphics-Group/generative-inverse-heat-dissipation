@@ -47,7 +47,7 @@ class CorruptedDataset(Dataset):
         original_image = self.data[index]
         
         if len(self.targets[index]) == 4:  # Check if there are pre-modified images
-            modified_image, pre_modified_image, corruption_amount, label = self.targets[index]
+            modified_image, less_modified_image, corruption_amount, label = self.targets[index]
             # Convert numpy array to PIL Image directly with mode 'L' for grayscale images
             # original_image = Image.fromarray(original_image.astype('uint8'), mode='RGB')
             # modified_image = Image.fromarray(modified_image.astype('uint8'), mode='RGB')
@@ -57,9 +57,9 @@ class CorruptedDataset(Dataset):
             if self.transform is not None:
                 original_image = self.transform(original_image)
                 modified_image = self.transform(modified_image)
-                pre_modified_image = self.transform(pre_modified_image)
+                less_modified_image = self.transform(less_modified_image)
 
-            return original_image, (modified_image, pre_modified_image, corruption_amount.item(), label.item())
+            return original_image, (modified_image, less_modified_image, corruption_amount.item(), label.item())
         else:
             modified_image, corruption_amount, label = self.targets[index]
             

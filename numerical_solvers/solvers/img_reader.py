@@ -10,7 +10,7 @@ def read_img_in_grayscale(img_path, target_size=None):
     np_gray_image = np.array(gray_image)
     return np.float32(np_gray_image)
 
-def normalize_grayscale_image_range(image, min_val, max_val):
+def normalize_grayscale_image_range(image, min_val, max_val) -> np.array:
     """
     Normalize the ixel values of a grayscale image to have a specified range [min_val, max_val].
 
@@ -35,11 +35,11 @@ def normalize_grayscale_image_range(image, min_val, max_val):
     standardized_image = (image - original_mean) / original_std
     
     # Scale standardized image to fit in range [0, 1]
-    min_std = np.min(standardized_image)
-    max_std = np.max(standardized_image)
-    scaled_image = (standardized_image - min_std) / (max_std - min_std)
+    # min_std = np.min(standardized_image)
+    # max_std = np.max(standardized_image)
+    # scaled_image = (standardized_image - min_std) / (max_std - min_std)
     
     # Scale to the desired range [min_val, max_val]
-    normalized_image = scaled_image * (max_val - min_val) + min_val
+    normalized_image = standardized_image * (max_val - min_val) + min_val
     
     return normalized_image
