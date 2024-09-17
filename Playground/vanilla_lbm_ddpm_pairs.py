@@ -37,12 +37,12 @@ print(f"Input data folder: {input_data_dir}")
 
 # %% lbmize
 
-process_pairs=False
+process_pairs=True
 process_all=True
-# solver_config = get_lbm_ns_config()
-# corrupted_dataset_dir = os.path.join(output_data_dir, 'lbm_ns')
-solver_config = get_lbm_ns_turb_config()
-corrupted_dataset_dir = os.path.join(output_data_dir, 'lbm_ns_turb')
+solver_config = get_lbm_ns_config()
+corrupted_dataset_dir = os.path.join(output_data_dir, 'lbm_ns_pairs')
+# solver_config = get_lbm_ns_turb_config()
+# corrupted_dataset_dir = os.path.join(output_data_dir, 'lbm_ns_turb')
 
 start = timer()
 
@@ -86,7 +86,7 @@ testDataset = CorruptedDataset(train=False,
                                load_dir=corrupted_dataset_dir)
 test_dataloader = DataLoader(trainDataset, batch_size=batch_size, shuffle=True)
 
-x, (y, corruption_amount, label) = next(iter(train_dataloader))
+x, (y, y_less, corruption_amount, label) = next(iter(train_dataloader))
 # x, (y, corruption_amount, label) = next(iter(test_dataloader))
 print('Input shape:', x.shape)
 print('batch_size = x.shape[0]:', x.shape[0])
@@ -144,7 +144,7 @@ print(f"batch_size={batch_size},\n"
 start = timer()
 for epoch in range(n_epochs):
     counter = 0 
-    for clean_x, (noisy_x, corruption_amount, label) in train_dataloader:
+    for clean_x, (noisy_x, less_noisy_x, corruption_amount, label) in train_dataloader:
         if counter % 50 == 0:
           print(f"batch counter = {counter}/{len(train_dataloader)}")
           
@@ -162,6 +162,7 @@ for epoch in range(n_epochs):
         # normal corrupt
   
         noisy_x = noisy_x.to(device)   
+        less_noisy_x = less_noisy_x.to(device)
         clean_x = clean_x.to(device)     
         # Get the model prediction
         # pred = net(noisy_x, 0).sample #<<< Using timestep 0 always, adding .sample
@@ -170,7 +171,7 @@ for epoch in range(n_epochs):
         pred = net(noisy_x, corruption_amount).sample #<<< Using timestep 0 always, adding .sample
 
         # Calculate the loss
-        loss = loss_fn(pred, clean_x) # How close is the output to the true 'clean' x?
+        loss = loss_fn(pred, less_noisy_x) # How close is the output to the true 'less_noisy_x'?
 
         # Backprop and update the params:
         opt.zero_grad()
@@ -189,7 +190,7 @@ end = timer()
 print(f"Training time in seconds: {end - start:.2f}")
 
 # %% Save the trained model's state_dict
-model_save_path =  os.path.join(current_file_path.parents[0], "unet_model.pth")
+model_save_path =  os.path.join(current_file_path.parents[0], "unet_model_pairs.pth")
 
 torch.save(net.state_dict(), model_save_path)
 print(f"Model saved to {model_save_path}")
@@ -212,10 +213,10 @@ plt.show()
 fig, axs = plt.subplots(1, 3, figsize=(16, 10))
 
 # Samples
-n_steps = 1
+n_steps = 50
 # noisy_x = torch.rand(64, 1, 28, 28).to(device) # pure noise
 # x, (noisy_x, corruption_amount, label) = next(iter(train_dataloader))
-x, (noisy_x, corruption_amount, label) = next(iter(test_dataloader))
+x, (noisy_x, less_noisy_x, corruption_amount, label) = next(iter(test_dataloader))
 
 noisy_x = noisy_x.to(device)
 corruption_amount = corruption_amount.to(device)
@@ -225,7 +226,10 @@ denoised_x = noisy_x.clone()
 for i in range(n_steps):
   # noise_amount = torch.ones((noisy_x.shape[0], )).to(device) * (1-(i/n_steps)) # Starting high going low
   with torch.no_grad():
+    # pred = net(denoised_x, 0).sample
     pred = net(denoised_x, corruption_amount).sample
+    
+  corruption_amount = corruption_amount - i  
   mix_factor = 1/(n_steps - i)
   denoised_x = denoised_x*(1-mix_factor) + pred*mix_factor
 
