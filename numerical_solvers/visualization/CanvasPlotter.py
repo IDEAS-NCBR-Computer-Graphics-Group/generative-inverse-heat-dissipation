@@ -8,6 +8,7 @@ from skimage import data, img_as_float
 from skimage.metrics import structural_similarity as ssim
 from skimage.metrics import mean_squared_error
 from scipy.stats import maxwell
+from scipy.optimize import curve_fit
 
 from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
 from numerical_solvers.visualization.KolmogorovSpectrumPlotter import KolmogorovSpectrumPlotter
@@ -341,12 +342,28 @@ class CanvasPlotter:
         cv2.imwrite(filepath, np.rot90(img_bgr))
     
     
-def make_canvas_histogram(image_array, min_val, max_val, title):
-    matplotlib.use('Agg')
-    # Calculate the histogram
+def maxwell_boltzmann(v, T):
+    """
+    Maxwell-Boltzmann distribution function with adjustable temperature.
     
+    Parameters:
+    - v: Speed
+    - T: Temperature
+    
+    Returns:
+    - Probability density at speed v.
+    """
+    m = 1  # Mass
+    k_B = 1  # Boltzmann constant (set to 1 for simplicity)
+    return np.sqrt(2/np.pi) * (m / (k_B * T))**(3/2) * v**2 * np.exp(-m * v**2 / (2 * k_B * T))
+
+def make_canvas_histogram(image_array, min_val, max_val, title):
+    # Use the 'Agg' backend for headless environments (no GUI)
+    matplotlib.use('Agg')  # This must be inside the function to be effective here
+
+    # Calculate the histogram
     uint8_image = ((image_array - min_val) / (max_val - min_val) * 255).astype(np.uint8)
-    counts, bins = np.histogram(uint8_image, bins=256, range=(0, 255))
+    counts, bins = np.histogram(uint8_image, bins=32, range=(0, 255))
 
     # Calculate the probability distribution
     total_pixels = uint8_image.size
@@ -358,34 +375,40 @@ def make_canvas_histogram(image_array, min_val, max_val, title):
     # Display the histogram
     my_dpi = 70
     w, h = uint8_image.shape
-    fig = plt.figure(figsize=(w/my_dpi, h/my_dpi), dpi=my_dpi)
+    fig = plt.figure(figsize=(w / my_dpi, h / my_dpi), dpi=my_dpi)
     
     # Create Axes with space for the title and labels
-    # ax = fig.add_axes([0, 0, 1, 1])  # [left, bottom, width, height] as fractions of the figure size
     ax = fig.add_axes([0.18, 0.12, 0.8, 0.8])  # [left, bottom, width, height] as fractions of the figure size
     
     # Plot the histogram
     ax.set_xlim([0, 100])
     ax.set_ylim([0, 0.1])
-    ax.hist(uint8_image.flatten(), bins=64, density=True)
+    hist_data, bins, _ = ax.hist(uint8_image.flatten(), bins=128, range=(0, 100), density=True, alpha=0.5, label='Data Histogram')
+
+    # Generate data points for fitting within the same range as the histogram
+    bin_centers = (bins[:-1] + bins[1:]) / 2  # Use bin centers for fitting
+
+    # Fit the Maxwell-Boltzmann distribution to the histogram data
+    popt, _ = curve_fit(maxwell_boltzmann, bin_centers, hist_data, p0=[10])  # Initial guess for T is 10
+
+    # Generate a smooth curve for the fitted Maxwell-Boltzmann distribution
+    v = np.linspace(0.1, 100, 300)  # Avoid zero to prevent division by zero
+    mb_fit = maxwell_boltzmann(v, *popt)
+
+    # Plot the fitted Maxwell-Boltzmann distribution
+    ax.plot(v, mb_fit, 'r-', lw=2, label=f'Maxwell-Boltzmann Fit (T={popt[0]:.2f})')
 
     # Set title and labels
-    # ax.text(10, 10, "Sample Text", color='white', fontsize=14, ha='left', va='top')
-
     ax.set_title(f'{title} Entropy = {entropy:.4f} bits', fontsize=9) 
     ax.set_xlabel('Pixel Value')
     ax.set_ylabel('Frequency')
-    
-    # plt.show() 
+    ax.legend()
+
     # Render the figure to a NumPy array
     fig.canvas.draw()
     canvas = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
     canvas = canvas.reshape(fig.canvas.get_width_height()[::-1] + (3,))
     
     plt.close(fig)  # Close the Matplotlib figure
-    
-    # Convert RGB to RGBA by adding an alpha channel
-    # canvas_rgba = np.concatenate([canvas, 255 * np.ones((*canvas.shape[:2], 1), dtype=np.uint8)], axis=2)
 
-    # cv2.imwrite(f'output/histogram.jpg', canvas_rgba)
     return canvas
