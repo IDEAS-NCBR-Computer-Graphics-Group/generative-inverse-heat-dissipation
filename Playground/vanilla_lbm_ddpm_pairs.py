@@ -17,9 +17,11 @@ print(f'Using device: {device}')
 
 # %% dataset
 
+from numerical_solvers.data_holders.BlurringCorruptor import BlurringCorruptor
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
 from configs.mnist.lbm_ns_config import get_lbm_ns_config
+from configs.mnist.blurring_configs import get_blurr_config
 # from configs.mnist.lbm_ns_turb_config import get_lbm_ns_config as get_lbm_ns_turb_config
 
 # %% figure out paths
@@ -36,34 +38,55 @@ output_data_dir = os.path.join(input_data_dir, 'corrupted_MNIST')
 print(f"Input data folder: {input_data_dir}")
 
 # %% lbmize
-solver_config = get_lbm_ns_config()
-
+start = timer()
 process_all=True
-corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
+
+# solver_config = get_lbm_ns_config()
+# corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
 
 # solver_config = get_lbm_ns_turb_config()
 # corrupted_dataset_dir = os.path.join(output_data_dir, 'lbm_ns_turb')
 
-start = timer()
 
-lbm_ns_Corruptor = LBM_NS_Corruptor(
-    solver_config,                                
+# corruptor = LBM_NS_Corruptor(
+#     solver_config,                                
+#     transform=transforms.Compose([torchvision.transforms.ToTensor()]))
+
+# corruptor._preprocess_and_save_data(
+#     initial_dataset=datasets.MNIST(root=input_data_dir, train=True, download=True),
+#     save_dir=corrupted_dataset_dir,
+#     is_train_dataset = True,
+#     process_pairs = solver_config.data.process_pairs,
+#     process_all=True)
+
+# corruptor._preprocess_and_save_data(
+#     initial_dataset=datasets.MNIST(root=input_data_dir, train=False, download=True),
+#     save_dir=corrupted_dataset_dir,
+#     is_train_dataset = False,
+#     process_pairs = solver_config.data.process_pairs,
+#     process_all=True)    
+
+solver_config = get_blurr_config()
+corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
+
+corruptor = BlurringCorruptor(
+    solver_config, 
     transform=transforms.Compose([torchvision.transforms.ToTensor()]))
 
-lbm_ns_Corruptor._preprocess_and_save_data(
+corruptor._preprocess_and_save_data(
     initial_dataset=datasets.MNIST(root=input_data_dir, train=True, download=True),
     save_dir=corrupted_dataset_dir,
     is_train_dataset = True,
     process_pairs = solver_config.data.process_pairs,
     process_all=True)
 
-lbm_ns_Corruptor._preprocess_and_save_data(
+corruptor._preprocess_and_save_data(
     initial_dataset=datasets.MNIST(root=input_data_dir, train=False, download=True),
     save_dir=corrupted_dataset_dir,
     is_train_dataset = False,
     process_pairs = solver_config.data.process_pairs,
-    process_all=True)    
-
+    process_all=True) 
+    
 end = timer()
 print(f"Data preprocessing time in seconds: {end - start:.2f}")
 
@@ -87,11 +110,23 @@ test_dataloader = DataLoader(testDataset, batch_size=8, shuffle=True)
 clean_x, (noisy_x, less_noisy_x, corruption_amount, label) = next(iter(train_dataloader))
 # x, (y, corruption_amount, label) = next(iter(test_dataloader))
 print('Input shape:', clean_x.shape)
+print('corruption_amount:', corruption_amount)
 print('batch_size = x.shape[0]:', clean_x.shape[0])
 print('Labels:', label.shape)
-plt.imshow(torchvision.utils.make_grid(clean_x)[0], cmap='Greys');
-plt.imshow(torchvision.utils.make_grid(noisy_x, nrow=8)[0].clip(0.95, 1.05), cmap='Greys')
+# plt.imshow(torchvision.utils.make_grid(clean_x)[0], cmap='Greys');
+# plt.imshow(torchvision.utils.make_grid(noisy_x, nrow=8)[0].clip(0.95, 1.05), cmap='Greys')
 # plt.imshow(torchvision.utils.make_grid(noisy_x)[0], cmap='Greys');
+
+fig, axs = plt.subplots(1, 3, figsize=(20, 20), sharex=True)
+axs[0].set_title('clean x')
+axs[1].set_title('noisy x')
+axs[2].set_title('less noisy x')
+
+# plt.imshow(torchvision.utils.make_grid(clean_x)[0], cmap='Greys')
+# axs[0, 0].imshow(clean_x, cmap='Greys')
+axs[0].imshow(torchvision.utils.make_grid(clean_x)[0], cmap='Greys');
+axs[1].imshow(torchvision.utils.make_grid(noisy_x)[0].clip(0.95, 1.05), cmap='Greys')
+axs[2].imshow(torchvision.utils.make_grid(less_noisy_x)[0].clip(0.95, 1.05), cmap='Greys')
 
 
 # %% The model
@@ -208,12 +243,15 @@ plt.show()
 
 
 # %% Generate samples
-fig, axs = plt.subplots(1, 3, figsize=(16, 10))
+fig, axs = plt.subplots(1, 3, figsize=(20, 16))
 
-n_steps = solver_config.solver.max_lbm_steps # 10
+# n_steps = solver_config.solver.max_lbm_steps # 10
+# n_steps = int(solver_config.solver.max_blurr)
+n_steps = 5
 # noisy_x = torch.rand(64, 1, 28, 28).to(device) # pure noise
-# x, (noisy_x, corruption_amount, label) = next(iter(train_dataloader))
+# x, (noisy_x, less_noisy_x, corruption_amount, label) = next(iter(test_dataloader))
 clean_x, (_, _, _, _) = next(iter(test_dataloader))
+
 
 # noisy_x = noisy_x.to(device)
 # corruption_amount = corruption_amount.to(device)
@@ -221,7 +259,7 @@ clean_x, (_, _, _, _) = next(iter(test_dataloader))
 
 noisy_x = torch.empty_like(clean_x)
 for index in range(clean_x.shape[0]):
-    tmp, _ = lbm_ns_Corruptor._corrupt(clean_x[index], solver_config.solver.max_lbm_steps) # blur to the max level
+    tmp, _ = corruptor._corrupt(clean_x[index], n_steps) # blur to the max level
     noisy_x[index] = tmp
 
 step_history = [noisy_x.detach().cpu()]
@@ -238,7 +276,7 @@ for i in range(n_steps):
     # pred = net(denoised_x, 0).sample
     pred = net(denoised_x, corruption_amount).sample
      
-  # mix_factor = 1/(n_steps - i)
+#   mix_factor = 1/(n_steps - i)
   mix_factor = 1
   denoised_x = denoised_x*(1-mix_factor) + pred*mix_factor
   
@@ -256,7 +294,9 @@ axs[1].set_title('Denoised');
 
 axs[2].imshow(torchvision.utils.make_grid(noisy_x.detach().cpu(), nrow=8)[0].clip(0.95, 1.05), cmap='Greys')
 axs[2].set_title('Noise to sample from');
-# %%
+
+# for ax in axs:
+#     ax.axis('off')# %%
 
 fig, axs = plt.subplots(n_steps, 2, figsize=(20, 20), sharex=True)
 axs[0,0].set_title('x (model input)')
@@ -265,6 +305,8 @@ for i in range(n_steps):
     axs[i, 0].imshow(torchvision.utils.make_grid(step_history[i])[0].clip(0.95, 1.05), cmap='Greys')
     axs[i, 1].imshow(torchvision.utils.make_grid(pred_output_history[i])[0].clip(0.95, 1.05), cmap='Greys')
 
+# for ax in axs:
+#     ax.axis('off')
 # stuff = denoised_x.detach().cpu()[0]
 # print(stuff[0])
 # %%

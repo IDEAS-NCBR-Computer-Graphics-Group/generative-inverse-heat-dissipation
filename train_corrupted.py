@@ -16,22 +16,22 @@ import numpy as np
 
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from torchvision import transforms
-from configs.mnist.lbm_ns_turb_config import get_lbm_ns_config, LBMConfig
+from configs.mnist.lbm_ns_turb_config import LBMConfig
 
 FLAGS = flags.FLAGS
 
 config_flags.DEFINE_config_file("config", None, "NN Training configuration.", lock_config=True)
 flags.DEFINE_string("workdir", None, "Work directory.")
-flags.DEFINE_string("forwardsolver", None, "Forward solver configuration.")
-flags.mark_flags_as_required(["workdir", "config", "forwardsolver"])
+flags.DEFINE_string("forwardsolverconfig", None, "Forward solver configuration.")
+flags.mark_flags_as_required(["workdir", "config", "forwardsolverconfig"])
 #flags.DEFINE_string("initialization", "prior", "How to initialize sampling")
 
 
 def main(argv):
-    train(FLAGS.config, FLAGS.workdir)
+    train(FLAGS.config, FLAGS.workdir, FLAGS.forwardsolver)
 
 
-def train(config, workdir):
+def train(config, workdir, solver_config):
     """Runs the training pipeline. 
     Based on code from https://github.com/yang-song/score_sde_pytorch
 
@@ -95,7 +95,7 @@ def train(config, workdir):
     #     config, heat_forward_module, delta)
     
     # TODO: draw a sample by lbm-destroying some rand images?
-    solver_config = get_lbm_ns_config()
+    # solver_config = get_lbm_ns_config()
     lbm_ns_Corruptor = LBM_NS_Corruptor(
         solver_config,                                
         transform=transforms.Compose([transforms.ToTensor()]))
