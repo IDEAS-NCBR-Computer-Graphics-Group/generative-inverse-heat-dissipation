@@ -247,7 +247,7 @@ fig, axs = plt.subplots(1, 3, figsize=(20, 16))
 
 # n_steps = solver_config.solver.max_lbm_steps # 10
 # n_steps = int(solver_config.solver.max_blurr)
-n_steps = 5
+n_steps = 3
 # noisy_x = torch.rand(64, 1, 28, 28).to(device) # pure noise
 # x, (noisy_x, less_noisy_x, corruption_amount, label) = next(iter(test_dataloader))
 clean_x, (_, _, _, _) = next(iter(test_dataloader))
