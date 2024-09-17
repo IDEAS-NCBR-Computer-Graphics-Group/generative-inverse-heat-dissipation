@@ -57,7 +57,7 @@ if __name__ == '__main__':
     grid_size = np_gray_image.shape
     turb_intensity = 1E-4
     noise_limiter = (-1E-3, 1E-3)
-    dt_turb = 5E-4 
+    dt_turb = 3E-3
 
     # turb_intensity = 1E-3
     # energy_spectrum = lambda k: np.where(np.isinf(k), 0, k)
@@ -72,7 +72,6 @@ if __name__ == '__main__':
         energy_spectrum=energy_spectrum, frequency_range=frequency_range, 
         dt_turb=dt_turb, 
         is_div_free = False)
-    
     
     niu = 0.5*1/6
     bulk_visc = 0.5*1/6

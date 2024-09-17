@@ -9,13 +9,20 @@ from numerical_solvers.solvers.GaussianTurbulenceGenerator import get_gaussian_n
 # Fluid solver based on lattice boltzmann method using taichi language
 # Inspired by: https://github.com/hietwll/LBM_Taichi
 
-
 @ti.data_oriented
 class LBM_NS_Solver(LBM_SolverBase):
-    def __init__(self, name, domain_size, kin_visc, bulk_visc, turbulenceGenerator: SpectralTurbulenceGenerator):
-        self.omega_bulk = 1.0 / (3.0 * bulk_visc + 0.5) 
+    def __init__(
+            self,
+            name,
+            domain_size,
+            kin_visc,
+            bulk_visc,
+            turbulenceGenerator: SpectralTurbulenceGenerator,
+            debug = False
+            ):
         super().__init__(name, domain_size, kin_visc, turbulenceGenerator)
-            
+        self.debug = False        
+        self.omega_bulk = 1.0 / (3.0 * bulk_visc + 0.5) 
             
     def init(self, np_gray_image): 
         self.rho.from_numpy(np_gray_image)
@@ -34,6 +41,7 @@ class LBM_NS_Solver(LBM_SolverBase):
             # self.collide()
             self.collide_cm()
              
+            # TODO: Turn this on to add advection.
             u_turb, v_turb = self.turbulenceGenerator.generate_turbulence(self.iterations_counter)     
             turb_numpy = np.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
             self.Force.from_numpy(turb_numpy)
@@ -42,11 +50,9 @@ class LBM_NS_Solver(LBM_SolverBase):
             self.apply_bb()
             self.iterations_counter = self.iterations_counter +1
             
-        if self.iterations_counter % 10 == 0:
+        if self.iterations_counter % 10 == 0 and self.debug:
             print(f"iterations: {self.iterations_counter}")
-                            
-
-               
+                             
         # periodic wip
         # for j in range(0, self.ny):
         # # right bc to left bc
@@ -64,8 +70,6 @@ class LBM_NS_Solver(LBM_SolverBase):
             for k in ti.static(range(9)):
                 feq = self.f_eq(i, j)
                 self.f_new[i, j][k] = (1 - self.omega_kin) * self.f[i, j][k] + feq[k] * self.omega_kin
-    
-
         
     @ti.kernel
     def collide_cm(self):
@@ -76,7 +80,6 @@ class LBM_NS_Solver(LBM_SolverBase):
             # noise = 0.1*get_gaussian_noise(0,1)
             # self.vel[i, j] = ti.Vector([noise[0], noise[1]]) # run as ade
             
-            
             #=== THIS IS AUTOMATICALLY GENERATED CODE ===
             ux = self.vel[i, j][0]
             uy = self.vel[i, j][1]
@@ -84,7 +87,6 @@ class LBM_NS_Solver(LBM_SolverBase):
             uxuy = self.vel[i, j][0]*self.vel[i, j][1]
             ux2 = self.vel[i, j][0]*self.vel[i, j][0]
             uy2 = self.vel[i, j][1]*self.vel[i, j][1]
-            
             
             #raw moments from density-probability functions
             self.f_new[i,j][0] = self.f[i,j][0] + self.f[i,j][1] + self.f[i,j][2] + self.f[i,j][3] + self.f[i,j][4] + self.f[i,j][5] + self.f[i,j][6] + self.f[i,j][7] + self.f[i,j][8]
