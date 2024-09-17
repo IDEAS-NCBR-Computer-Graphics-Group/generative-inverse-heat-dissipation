@@ -188,7 +188,8 @@ end = timer()
 print(f"Training time in seconds: {end - start:.2f}")
 
 # %% Save the trained model's state_dict
-model_save_path = "unet_model.pth"
+model_save_path =  os.path.join(current_file_path, "unet_model.pth")
+
 torch.save(net.state_dict(), model_save_path)
 print(f"Model saved to {model_save_path}")
 
