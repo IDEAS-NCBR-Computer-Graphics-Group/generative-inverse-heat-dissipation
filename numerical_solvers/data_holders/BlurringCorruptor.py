@@ -41,8 +41,8 @@ class BlurringCorruptor(BaseCorruptor):
         
         # for index in range(10000): 
         for index in range(len(initial_dataset)):     # Process all data points
-            if index % 1000 == 0:
-                print(f"Preprocessing (blurring) {index}")
+            # if index % 1000 == 0:
+                # print(f"Preprocessing (blurring) {index}")
             corruption_amount = np.random.randint(2,7)
             original_pil_image, label = initial_dataset[index]
             modified_image = self._corrupt(original_pil_image, corruption_amount)

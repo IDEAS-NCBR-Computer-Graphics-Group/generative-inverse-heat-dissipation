@@ -5,11 +5,7 @@ https://github.com/openai/improved-diffusion"""
 Various utilities for neural networks.
 """
 
-
 # PyTorch 1.7 has SiLU, but we support PyTorch 1.5.
-
-
-
 
 import math
 import torch as th

@@ -79,7 +79,8 @@ if __name__ == '__main__':
     solver = LBM_NS_Solver(
         case_name,
         np_gray_image.shape,
-        niu, bulk_visc,
+        niu,
+        bulk_visc,
         spectralTurbulenceGenerator
         )
     

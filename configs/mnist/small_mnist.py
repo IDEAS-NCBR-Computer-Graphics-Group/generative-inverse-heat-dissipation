@@ -16,7 +16,6 @@ def get_config():
     model.blur_schedule = np.array(
         [0] + list(model.blur_schedule))  # Add the k=0 timestep
     
-    
     config.training.n_iters = 1001
     config.training.snapshot_freq = 1000
     config.training.snapshot_freq_for_preemption = 100
