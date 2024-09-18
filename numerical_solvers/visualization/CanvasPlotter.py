@@ -11,7 +11,7 @@ from scipy.stats import maxwell
 from scipy.optimize import curve_fit
 
 from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
-from numerical_solvers.visualization.KolmogorovSpectrumPlotter import KolmogorovSpectrumPlotter
+from numerical_solvers.visualization.KolmogorovSpectrumPlotter import KolmogorovSpectrumPlotter, SpectrumHeatmapPlotter
 from numerical_solvers.visualization.MetricPlotter import MSEPlotter, SSIMPlotter
 from numerical_solvers.visualization.histogram_plotter import VelocityHistogramPlotter
 class CircularBuffer:
@@ -108,6 +108,7 @@ class CanvasPlotter:
         self.rho_kolmogorov_plotter = KolmogorovSpectrumPlotter(title='rho spectrum')
         self.u_kolmogorov_plotter = KolmogorovSpectrumPlotter(title='u spectrum')
         self.force_kolmogorov_plotter = KolmogorovSpectrumPlotter(title='force spectrum')
+
         
         self.is_rho_checked = False
         self.is_u_checked = False
@@ -122,6 +123,8 @@ class CanvasPlotter:
         self.array_shape = (solver.nx, solver.ny)
         self.energy_history = CircularBuffer(self.buffer_size, self.array_shape)
         self.rho_history = CircularBuffer(self.buffer_size, self.array_shape)
+
+        self.heatmap_plotter = SpectrumHeatmapPlotter(self.buffer_size)
     
     def compute_divergence(self, u, v, dx=1, dy=1):
         """
@@ -220,8 +223,8 @@ class CanvasPlotter:
         # rho_histogram_rgb = make_canvas_histogram(rho_cpu, rho_cpu.min(), rho_cpu.max(), "rho")
         # rho_histogram_rgba = cm.ScalarMappable().to_rgba(np.flip(np.transpose(rho_histogram_rgb, (1, 0, 2)), axis=1)) 
 
-
-
+        self.heatmap_plotter.add_spectrum(vel_cpu[:, :, 0], vel_cpu[:, :, 1], self.solver.iterations_counter)
+        heatmap_energy  = self.heatmap_plotter.plot_heatmap_rgba()
         # third row - metrics
 
         # Initialize img_energy_difference outside the rendering loop to hold its value between updates
@@ -326,7 +329,7 @@ class CanvasPlotter:
 
         img_col1 = np.concatenate((rho_img, vel_img, force_img), axis=1)
         img_col2 = np.concatenate((rho_energy_spectrum, vel_energy_spectrum, force_energy_spectrum), axis=1)
-        img_col3 = np.concatenate((img_rho_difference, img_energy_difference,  self.dummy_canvas), axis=1)
+        img_col3 = np.concatenate((img_rho_difference, img_energy_difference,  heatmap_energy), axis=1)
         img_col4 = np.concatenate((mse_rho_image, mse_energy_image, vel_histogram_rgba), axis=1)
         img_col5 = np.concatenate((ssim_rho_image, ssim_energy_image, self.dummy_canvas), axis=1)
 
@@ -363,7 +366,7 @@ def make_canvas_histogram(image_array, min_val, max_val, title):
 
     # Calculate the histogram
     uint8_image = ((image_array - min_val) / (max_val - min_val) * 255).astype(np.uint8)
-    counts, bins = np.histogram(uint8_image, bins=32, range=(0, 255))
+    counts, bins = np.histogram(uint8_image, bins=32, range=(0, 100))
 
     # Calculate the probability distribution
     total_pixels = uint8_image.size
@@ -381,9 +384,9 @@ def make_canvas_histogram(image_array, min_val, max_val, title):
     ax = fig.add_axes([0.18, 0.12, 0.8, 0.8])  # [left, bottom, width, height] as fractions of the figure size
     
     # Plot the histogram
-    ax.set_xlim([0, 100])
-    ax.set_ylim([0, 0.1])
-    hist_data, bins, _ = ax.hist(uint8_image.flatten(), bins=128, range=(0, 100), density=True, alpha=0.5, label='Data Histogram')
+    ax.set_xlim([0, 30])
+    ax.set_ylim([0, 0.3])
+    hist_data, bins, _ = ax.hist(uint8_image.flatten(), bins=64, range=(0, 100), density=True, alpha=0.5, label='Data Histogram')
 
     # Generate data points for fitting within the same range as the histogram
     bin_centers = (bins[:-1] + bins[1:]) / 2  # Use bin centers for fitting
