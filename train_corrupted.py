@@ -15,20 +15,22 @@ from ml_collections.config_flags import config_flags
 import numpy as np
 
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
+from numerical_solvers.data_holders.BlurringCorruptor import BlurringCorruptor
+
 from torchvision import transforms
 from configs.mnist.lbm_ns_turb_config import LBMConfig
 
 FLAGS = flags.FLAGS
 
 config_flags.DEFINE_config_file("config", None, "NN Training configuration.", lock_config=True)
+config_flags.DEFINE_config_file("forwardsolverconfig", None, "Forward solver configuration.", lock_config=True)
 flags.DEFINE_string("workdir", None, "Work directory.")
-flags.DEFINE_string("forwardsolverconfig", None, "Forward solver configuration.")
 flags.mark_flags_as_required(["workdir", "config", "forwardsolverconfig"])
 #flags.DEFINE_string("initialization", "prior", "How to initialize sampling")
 
 
 def main(argv):
-    train(FLAGS.config, FLAGS.workdir, FLAGS.forwardsolver)
+    train(FLAGS.config, FLAGS.workdir, FLAGS.forwardsolverconfig)
 
 
 def train(config, workdir, solver_config):
@@ -94,18 +96,21 @@ def train(config, workdir, solver_config):
     # initial_sample, _ = sampling.get_initial_sample(
     #     config, heat_forward_module, delta)
     
-    # TODO: draw a sample by lbm-destroying some rand images?
-    # solver_config = get_lbm_ns_config()
-    lbm_ns_Corruptor = LBM_NS_Corruptor(
-        solver_config,                                
+    # draw a sample by lbm-destroying some rand images
+    # corruptor = LBM_NS_Corruptor(
+    #     solver_config,                                
+    #     transform=transforms.Compose([transforms.ToTensor()]))
+   
+    corruptor = BlurringCorruptor(
+        solver_config, 
         transform=transforms.Compose([transforms.ToTensor()]))
-    
-    initial_sample = sampling.get_initial_lbm_sample(config, solver_config, lbm_ns_Corruptor)
+        
+    initial_sample = sampling.get_initial_corrupted_sample(config, solver_config.solver.max_steps, corruptor)
     
     sampling_fn = sampling.get_sampling_fn_inverse_lbm_ns(
-        solver_config.solver.max_lbm_steps, # vec_corruption_amount, 
+        int(solver_config.solver.max_steps), # vec_corruption_amount, 
         initial_sample, 
-        intermediate_sample_indices=list(range(solver_config.solver.max_lbm_steps)),
+        intermediate_sample_indices=list(range(int(solver_config.solver.max_steps))),
         delta=config.model.sigma*1.25, device=config.device)
 
     num_train_steps = config.training.n_iters

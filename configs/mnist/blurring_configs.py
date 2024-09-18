@@ -15,8 +15,7 @@ import numpy as np
 class DataConfig:
     image_size: int = 28  # for MNIST
     # min_init_gray_scale: float = 0.95
-    # max_init_gray_scale: float = 1.05
-    
+    # max_init_gray_scale: float = 1.05    
     min_init_gray_scale: float = 0.0
     max_init_gray_scale: float = 1.0
     
@@ -28,8 +27,8 @@ class DataConfig:
 
 @dataclass
 class SolverConfig:
-    min_blurr: float = 1.
-    max_blurr: float = 5.
+    min_steps: float = 1. # min anount of blurr
+    max_steps: float = 5. # max anount of blurr
 
 @dataclass
 class BlurrConfig:
@@ -37,7 +36,7 @@ class BlurrConfig:
     solver: SolverConfig = field(default_factory=SolverConfig)  # Fixed: was incorrectly set as DataConfig
 
 # Function to convert the dataclass configuration to ConfigDict
-def get_blurr_config() -> ConfigDict:
+def get_config() -> ConfigDict:
     # Create an instance of the typed LBMConfig class
     config = BlurrConfig()
 

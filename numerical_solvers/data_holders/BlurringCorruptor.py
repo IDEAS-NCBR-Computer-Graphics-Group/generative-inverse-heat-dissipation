@@ -26,8 +26,8 @@ class BlurringCorruptor(BaseCorruptor):
         self.max_init_gray_scale = config.data.max_init_gray_scale
         
         
-        self.min_blurr = config.solver.min_blurr
-        self.max_blurr = config.solver.max_blurr
+        self.min_blurr = config.solver.min_steps
+        self.max_blurr = config.solver.max_steps
         
     def _corrupt(self, x, corruption_amount, generate_pair=False):
         """

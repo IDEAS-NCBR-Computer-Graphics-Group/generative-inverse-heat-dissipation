@@ -2,7 +2,8 @@ import torch
 import numpy as np
 import logging
 from scripts import datasets
-from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
+# from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
+from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
 from configs.mnist.lbm_ns_config import LBMConfig
 from torchvision import transforms
 
@@ -30,8 +31,8 @@ def get_sampling_fn_inverse_lbm_ns(denoising_steps, initial_sample,
                 vec_fwd_steps = torch.ones(initial_sample.shape[0], device=device, dtype=torch.long) * i # todo: keep attention to dtype
                 
                 # Predict less blurry img
-                # u_pred =  model(u, vec_fwd_steps) + u # original
-                u_pred =  model(u, vec_fwd_steps) # TODO just make one step backward 
+                # u_pred =  model(u, vec_fwd_steps) + u # original, shall be divided by 2 to get mean
+                u_pred =  model(u, vec_fwd_steps) 
 
                 # Sampling step
                 if share_noise:
@@ -39,10 +40,7 @@ def get_sampling_fn_inverse_lbm_ns(denoising_steps, initial_sample,
                 else:
                     noise = torch.randn_like(u)
                 # u = u_pred #+ noise*delta #TODO: do we need Gaussian noise here? Or shall do a kind of destruction-step with numerical solver
-                
-                # mix_factor = 1/(denoising_steps - i) # TODO: it seems to be a trick for time-unaware ddpms
-                mix_factor = 1.
-                u = u*(1-mix_factor) + u_pred*mix_factor
+                u = u_pred
                 
                 # Save trajectory
                 if intermediate_sample_indices != None and i-1 in intermediate_sample_indices:
@@ -155,7 +153,8 @@ def get_initial_sample(config, forward_heat_module, delta, batch_size=None):
     initial_sample = forward_heat_module(initial_sample, config.model.K * torch.ones(initial_sample.shape[0], dtype=torch.long).to(config.device))
     return initial_sample, original_images
 
-def get_initial_lbm_sample(dataset_config, solver_config: LBMConfig, solver: LBM_NS_Corruptor, batch_size=None):
+
+def get_initial_corrupted_sample(dataset_config, corruption_amount, solver: BaseCorruptor, batch_size=None):
     """Take a draw from the prior p(u_K)"""
     trainloader, _ = datasets.get_dataset(
         dataset_config, 
@@ -164,16 +163,10 @@ def get_initial_lbm_sample(dataset_config, solver_config: LBMConfig, solver: LBM
 
     initial_sample, _ = datasets.prepare_batch(iter(trainloader), 'cpu')
     noisy_sample = torch.empty_like(initial_sample)
-    # vec_corruption_amount = torch.randint(
-    #     low=solver_config.solver.min_lbm_steps, 
-    #     high=solver_config.solver.max_lbm_steps, 
-    #     size=initial_sample.shape[0], device='cpu')
-    
+  
     for index in range(initial_sample.shape[0]):
-        corruption_amount = solver_config.solver.max_lbm_steps #we shall start from completely destroyed images
         # corruption_amount = np.random.randint(solver_config.solver.min_lbm_steps, solver_config.solver.max_lbm_steps)
-        tmp, _ = solver._corrupt(initial_sample[index], 
-                                    corruption_amount)
+        tmp, _ = solver._corrupt(initial_sample[index], corruption_amount)
         
         noisy_sample[index] = tmp
     return noisy_sample

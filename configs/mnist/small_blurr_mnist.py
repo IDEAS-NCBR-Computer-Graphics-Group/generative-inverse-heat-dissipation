@@ -17,7 +17,7 @@ def get_config():
     model.blur_schedule = np.array(
         [0] + list(model.blur_schedule))  # Add the k=0 timestep
     
-    config.data.dataset = 'CORRUPTED_NS_MNIST'
+    config.data.dataset = 'CORRUPTED_BLURR_MNIST'
     
     config.training.n_iters = 10001
     config.training.snapshot_freq = 1000
