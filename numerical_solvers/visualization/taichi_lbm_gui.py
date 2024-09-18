@@ -19,8 +19,8 @@ def run_with_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show
     solver.iterations_counter=0 # reset counter
     img = canvasPlotter.make_frame()
     
-    Path("output/").mkdir(parents=True, exist_ok=True)
-    canvasPlotter.write_canvas_to_file(img, f'output/iteration_{solver.iterations_counter}.jpg')
+    # Path("output/").mkdir(parents=True, exist_ok=True)
+    # canvasPlotter.write_canvas_to_file(img, f'output/iteration_{solver.iterations_counter}.jpg')
        
     while window.running:
         with gui.sub_window('MAIN MENU', x=0, y=0, width=0.2, height=0.1):

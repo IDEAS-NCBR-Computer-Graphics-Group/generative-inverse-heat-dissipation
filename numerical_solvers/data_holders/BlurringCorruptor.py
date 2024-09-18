@@ -2,7 +2,7 @@ import numpy as np
 import os
 import torch
 from PIL import Image, ImageFilter
-
+import torchvision
 
 import numpy as np
 import matplotlib
@@ -23,10 +23,11 @@ class BlurringCorruptor(BaseCorruptor):
     def __init__(self, initial_dataset, train=True, transform=None, target_transform=None, save_dir='./blurred_mnist'):
         super(BlurringCorruptor, self).__init__(train, transform, target_transform)
         
-        file_path = os.path.join(save_dir, f"{'train' if self.train else 'test'}_data.pt")
+        file_path = os.path.join(save_dir, f"{'train' if train else 'test'}_data.pt")
         if not os.path.exists(file_path):
             os.makedirs(save_dir, exist_ok=True)
             self._preprocess_and_save_data(initial_dataset, file_path)
+        selftransform = torchvision.transforms.Compose([])
                   
     def _corrupt(self, pil_image, corruption_amount):
         # pil_image = transforms.ToPILImage()(image)

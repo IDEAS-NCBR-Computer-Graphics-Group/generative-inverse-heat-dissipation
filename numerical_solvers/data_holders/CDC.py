@@ -12,6 +12,8 @@ import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import matplotlib
 from timeit import default_timer as timer
+from absl import app
+
 
 import sys
 from pathlib import Path
@@ -26,7 +28,8 @@ from configs.mnist.lbm_ns_turb_config import get_lbm_ns_config
                                 
 # %% dataset
 # Create the DiffusedMNIST dataset
-if __name__ == '__main__': 
+
+def main(argv):
     print(f"Current working directory \t {os.getcwd()}")
     current_file_path = Path(__file__).resolve()
     # Determine the base folder (project root)
@@ -48,13 +51,11 @@ if __name__ == '__main__':
     print('Input shape:', x.shape)
     print('batch_size = x.shape[0]:', x.shape[0])
     print('Labels:', y.shape)
-    plt.imshow(torchvision.utils.make_grid(x)[0], cmap='Greys');
+    plt.imshow(torchvision.utils.make_grid(x)[0], cmap='Greys')
     
     # %% lbmize
     start = timer()
     initial_dataset = datasets.MNIST(root=input_data_dir, train=is_train_dataset, download=True)
-    
-    
     
     solver_config = get_lbm_ns_config()
     lbm_ns_Corruptor = LBM_NS_Corruptor(
@@ -74,7 +75,6 @@ if __name__ == '__main__':
     end = timer()
     print(f"Time in seconds: {end - start:.2f}")
 
-    
     # use same transform as in ihd code
     # transform = [
     #             torchvision.transforms.ToPILImage()
@@ -91,9 +91,6 @@ if __name__ == '__main__':
                                        target_transform=None, 
                                        load_dir=corrupted_dataset_dir)
 
-
-
-    
     corrupted_dataloader = DataLoader(lbm_mnist_pairs, batch_size=8, shuffle=True)
     if process_pairs:
         print(f"==processing pairs===")
@@ -108,9 +105,7 @@ if __name__ == '__main__':
     print('Labels:', labels)
     print('corruption_amount:', corruption_amount)
     
-
     save_png_norm(current_file_path.parents[0], y, "test_norm.png")
-    
     
     plt.imshow(torchvision.utils.make_grid(x)[0], cmap='Greys');
     # # plt.imshow(torchvision.utils.make_grid(y)[0], cmap='Greys');
@@ -118,3 +113,6 @@ if __name__ == '__main__':
     plt.imshow(torchvision.utils.make_grid(y)[0], 
                norm=matplotlib.colors.Normalize(vmin=0.95, vmax=1.05),
                cmap='Greys')
+    
+if __name__ == '__main__': 
+    app.run(main)

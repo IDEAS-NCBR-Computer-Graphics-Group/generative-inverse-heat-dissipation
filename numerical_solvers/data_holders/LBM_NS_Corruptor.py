@@ -9,6 +9,7 @@ from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
 from configs.mnist.lbm_ns_turb_config import LBMConfig
+import logging
 
 class LBM_NS_Corruptor(BaseCorruptor):
     def __init__(self, config: LBMConfig, transform=None, target_transform=None):
@@ -101,7 +102,7 @@ class LBM_NS_Corruptor(BaseCorruptor):
             os.makedirs(save_dir)
             
         if os.path.exists(file_path):
-            warnings.warn("[EXIT] Data not generated. Reason: file exist {file_path} ")
+            warnings.warn(f"[EXIT] Data not generated. Reason: file exist {file_path} ")
             return
       
 
@@ -118,8 +119,8 @@ class LBM_NS_Corruptor(BaseCorruptor):
             dataset_length = 500 # process just a bit 
             
         for index in range(dataset_length):
-            # if index % 100 == 0:
-                # print(f"Preprocessing (lbm) {index}")
+            if index % 100 == 0:
+                logging.info(f"[LBM] Preprocessing: {index}.")
             
             corruption_amount = np.random.randint(self.min_lbm_steps, self.max_lbm_steps)
             original_pil_image, label = initial_dataset[index]

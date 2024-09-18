@@ -6,12 +6,14 @@ from torch.utils.data import DataLoader
 from timeit import default_timer as timer
 from pathlib import Path
 import os
+import logging
 
+
+from configs.cifar10.lbm_ns_turb_config import get_lbm_ns_config
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
 from scripts import datasets as ihd_datasets
 from scripts.utils import save_png_norm
-from configs.mnist.lbm_ns_turb_config import get_lbm_ns_config
 
 FLAGS = flags.FLAGS
 
@@ -24,16 +26,15 @@ def corrupt_dataset(dataset, transform, output_dataset_dir, is_train_dataset):
         solver_config,
         transform=transform
         )
-    process_pairs=True
     lbm_ns_Corruptor._preprocess_and_save_data(
         initial_dataset=dataset,
         save_dir=output_dataset_dir,
         is_train_dataset = is_train_dataset,
-        process_pairs = process_pairs,
+        process_pairs = True,
         process_all=True
         )
 
-def cdc(config):
+def preprocess_dataset(config):
     # Get the chosen dataset
     trainloader, testloader = ihd_datasets.get_dataset(config, uniform_dequantization=config.data.uniform_dequantization)
 
@@ -43,19 +44,23 @@ def cdc(config):
     base_folder = current_file_path.parents[2]
 
     input_data_dir = os.path.join(base_folder, "data")
-    output_data_dir = os.path.join(input_data_dir, 'corrupted_MNIST_test')
+    dataset_name = f'corrupted_{config.data.dataset}'
+    output_data_dir = os.path.join(input_data_dir, dataset_name)
     corrupted_dataset_dir = os.path.join(output_data_dir, 'lbm_ns_pair')
 
     transform = transforms.Compose([])
 
     # LBMize and save the dataset
-    # start = timer()
+    start = timer()
+    logging.info(f"Corrupting {dataset_name} dataset.")
+    logging.info("Corrupting train data.")
     corrupt_dataset(trainloader.dataset, transform, corrupted_dataset_dir, True)
+    logging.info("Corrupting test data.")
     corrupt_dataset(testloader.dataset, transform, corrupted_dataset_dir, False)
-    # end = timer()
-    # print(f"Time in seconds: {end - start:.2f}")
+    end = timer()
+    logging.info(f"Corrupting took {end - start:.2f} seconds.")
 
-    # Load and return the created dataset 
+    logging.info(f"Saving datset.") 
     transform = None
     lbm_train_pairs = CorruptedDataset(
         train=True, 
@@ -73,9 +78,9 @@ def cdc(config):
     corrupted_test_dataloader = DataLoader(lbm_test_pairs, batch_size=8, shuffle=True)
 
     return corrupted_train_dataloader, corrupted_test_dataloader
-    
+
 def main(argv): 
-    cdc(FLAGS.config)
+    preprocess_dataset(FLAGS.config)
 
 if __name__ == '__main__': 
     app.run(main)

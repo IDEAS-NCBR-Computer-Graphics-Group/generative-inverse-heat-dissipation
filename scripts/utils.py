@@ -132,6 +132,7 @@ def save_png(save_dir, data, name, nrow=None):
     with open(os.path.join(save_dir, name), "wb") as fout:
         save_image(image_grid, fout)
 
+
 def save_png_norm(save_dir, data, name, nrow=None):
     """Save tensor 'data' as a PNG with specified normalization and colormap."""
     if nrow is None:
