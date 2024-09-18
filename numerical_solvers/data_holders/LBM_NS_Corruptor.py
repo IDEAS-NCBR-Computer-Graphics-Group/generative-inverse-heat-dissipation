@@ -49,7 +49,7 @@ class LBM_NS_Corruptor(BaseCorruptor):
         self.max_init_gray_scale = config.data.max_init_gray_scale
         
         
-    def _corrupt(self, x, lbm_steps, generate_pair=False):
+    def _corrupt(self, x, steps, generate_pair=False):
         """
         Corrupts the input image using LBM solver.
 
@@ -72,7 +72,7 @@ class LBM_NS_Corruptor(BaseCorruptor):
 
         if generate_pair:
             # Solve up to (lbm_steps - step_difference) if generating pairs
-            self.solver.solve(lbm_steps - step_difference)
+            self.solver.solve(steps - step_difference)
             rho_cpu = self.solver.rho.to_numpy()
             less_noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
             
@@ -83,7 +83,7 @@ class LBM_NS_Corruptor(BaseCorruptor):
             return noisy_x, less_noisy_x,
         else:
             # Solve up to lbm_steps - step_difference if generating pairs, else directly to lbm_steps
-            self.solver.solve(lbm_steps)
+            self.solver.solve(steps)
             rho_cpu = self.solver.rho.to_numpy()
             noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
             return noisy_x, None

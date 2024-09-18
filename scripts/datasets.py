@@ -52,7 +52,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
             root="data", train=True, download=True, transform=transform)
         test_data = datasets.MNIST(
             root="data", train=False, download=True, transform=transform)
-    elif config.data.dataset == 'CORRUPTED_MNIST':
+    elif config.data.dataset == 'CORRUPTED_NS_MNIST':
         # TODO: make it consistent
         transform = [
                 transforms.ToPILImage(), 
@@ -63,10 +63,23 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
                 ]
         transform = transforms.Compose(transform)
         # transform = None
-
-        corrupted_dataset_dir = os.path.join('data', 'corrupted_MNIST', 'lbm_ns_pairs') # TODO: 'lbm_ns_pairs' shall be passed in some config
+        corrupted_dataset_dir = os.path.join('data', 'corrupted_MNIST', 'lbm_ns_pairs')
         training_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=True, transform=transform)
         test_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=False, transform=transform)
+    elif config.data.dataset == 'CORRUPTED_BLUR_MNIST':
+        # TODO: make it consistent
+        transform = [
+                transforms.ToPILImage(), 
+                transforms.Resize(config.data.image_size),
+                transforms.CenterCrop(config.data.image_size),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor()
+                ]
+        transform = transforms.Compose(transform)
+        # transform = None
+        corrupted_dataset_dir = os.path.join('data', 'corrupted_MNIST', 'blurr_pairs') 
+        training_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=True, transform=transform)
+        test_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=False, transform=transform) 
     elif config.data.dataset == 'CIFAR10':
         training_data = datasets.CIFAR10(
             root="data", train=True, download=True, transform=transform)

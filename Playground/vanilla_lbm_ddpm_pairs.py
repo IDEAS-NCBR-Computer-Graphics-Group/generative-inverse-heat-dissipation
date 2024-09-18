@@ -20,8 +20,8 @@ print(f'Using device: {device}')
 from numerical_solvers.data_holders.BlurringCorruptor import BlurringCorruptor
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
-from configs.mnist.lbm_ns_config import get_lbm_ns_config
-from configs.mnist.blurring_configs import get_blurr_config
+# from configs.mnist.lbm_ns_config import get_config
+from configs.mnist.blurring_configs import get_config
 # from configs.mnist.lbm_ns_turb_config import get_lbm_ns_config as get_lbm_ns_turb_config
 
 # %% figure out paths
@@ -257,9 +257,8 @@ plt.show()
 # %% Generate samples
 fig, axs = plt.subplots(1, 3, figsize=(20, 16))
 
-# n_steps = solver_config.solver.max_lbm_steps # 10
-# n_steps = int(solver_config.solver.max_blurr) # 5
-n_steps = 5
+n_steps = int(solver_config.solver.max_steps) # 5
+# n_steps = 5
 # noisy_x = torch.rand(64, 1, 28, 28).to(device) # pure noise
 # x, (noisy_x, less_noisy_x, corruption_amount, label) = next(iter(test_dataloader))
 clean_x, (_, _, _, _) = next(iter(test_dataloader))
