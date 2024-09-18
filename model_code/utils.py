@@ -5,7 +5,7 @@ import logging
 import numpy as np
 from model_code.unet import UNetModel
 from model_code import torch_dct
-
+from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 
 class DCTBlur(nn.Module):
 
@@ -31,6 +31,11 @@ def create_forward_process_from_sigmas(config, sigmas, device):
     forward_process_module = DCTBlur(sigmas, config.data.image_size, device)
     return forward_process_module
 
+
+def create_forward_lbm_ns_solver(config):
+        lbm_ns_Corruptor = LBM_NS_Corruptor(
+        grid_size = (config.data.image_size, config.data.image_size), 
+        transform=None)
 
 """Utilities related to log-likelihood evaluation"""
 

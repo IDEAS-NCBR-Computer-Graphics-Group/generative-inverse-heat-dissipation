@@ -12,21 +12,26 @@ from scripts import utils
 from absl import app
 from absl import flags
 from ml_collections.config_flags import config_flags
+import numpy as np
+
+from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
+from torchvision import transforms
+from configs.mnist.lbm_ns_turb_config import LBMConfig
 
 FLAGS = flags.FLAGS
 
-config_flags.DEFINE_config_file(
-    "config", None, "Training configuration.", lock_config=True)
+config_flags.DEFINE_config_file("config", None, "NN Training configuration.", lock_config=True)
 flags.DEFINE_string("workdir", None, "Work directory.")
-flags.mark_flags_as_required(["workdir", "config"])
+flags.DEFINE_string("forwardsolverconfig", None, "Forward solver configuration.")
+flags.mark_flags_as_required(["workdir", "config", "forwardsolverconfig"])
 #flags.DEFINE_string("initialization", "prior", "How to initialize sampling")
 
 
 def main(argv):
-    train(FLAGS.config, FLAGS.workdir)
+    train(FLAGS.config, FLAGS.workdir, FLAGS.forwardsolver)
 
 
-def train(config, workdir):
+def train(config, workdir, solver_config):
     """Runs the training pipeline. 
     Based on code from https://github.com/yang-song/score_sde_pytorch
 
@@ -77,40 +82,52 @@ def train(config, workdir):
     optimize_fn = losses.optimization_manager(config)
 
     # Get the forward process definition
-    scales = config.model.blur_schedule
-    heat_forward_module = mutils.create_forward_process_from_sigmas(
-        config, scales, config.device)
+    # scales = config.model.blur_schedule
+    # heat_forward_module = None
 
     # Get the loss function
-    train_step_fn = losses.get_step_fn(train=True, scales=scales, config=config, optimize_fn=optimize_fn,
-                                       heat_forward_module=heat_forward_module)
-    eval_step_fn = losses.get_step_fn(train=False, scales=scales, config=config, optimize_fn=optimize_fn,
-                                      heat_forward_module=heat_forward_module)
+    train_step_fn = losses.get_step_lbm_fn(train=True, config=config, optimize_fn=optimize_fn)
+    eval_step_fn = losses.get_step_lbm_fn(train=False, config=config, optimize_fn=optimize_fn)
 
     # Building sampling functions
-    delta = config.model.sigma*1.25
-    initial_sample, _ = sampling.get_initial_sample(config, heat_forward_module, delta)
-    sampling_fn = sampling.get_sampling_fn_inverse_heat(config,
-                                                        initial_sample, intermediate_sample_indices=list(
-                                                            range(config.model.K+1)),
-                                                        delta=config.model.sigma*1.25, device=config.device)
+    # delta = config.model.sigma*1.25
+    # initial_sample, _ = sampling.get_initial_sample(
+    #     config, heat_forward_module, delta)
+    
+    # TODO: draw a sample by lbm-destroying some rand images?
+    # solver_config = get_lbm_ns_config()
+    lbm_ns_Corruptor = LBM_NS_Corruptor(
+        solver_config,                                
+        transform=transforms.Compose([transforms.ToTensor()]))
+    
+    initial_sample = sampling.get_initial_lbm_sample(config, solver_config, lbm_ns_Corruptor)
+    
+    sampling_fn = sampling.get_sampling_fn_inverse_lbm_ns(
+        solver_config.solver.max_lbm_steps, # vec_corruption_amount, 
+        initial_sample, 
+        intermediate_sample_indices=list(range(solver_config.solver.max_lbm_steps)),
+        delta=config.model.sigma*1.25, device=config.device)
 
     num_train_steps = config.training.n_iters
     logging.info("Starting training loop at step %d." % (initial_step,))
     logging.info("Running on {}".format(config.device))
 
     # For analyzing the mean values of losses over many batches, for each scale separately
-    pooled_losses = torch.zeros(len(scales))
+    # pooled_losses = torch.zeros(len(scales))
 
     for step in range(initial_step, num_train_steps + 1):
         # Train step
         try:
-            batch = next(train_iter)[0].to(config.device).float()
+            # batch = next(train_iter)[0].to(config.device).float()
+            # _, batch = next(train_iter).to(config.device).float() # not that easy if batch has mutltiple elements
+            # x, (y, pre_y, corruption_amount, labels) = next(train_iter)
+            _, batch = datasets.prepare_batch(train_iter, config.device)
+            
         except StopIteration:  # Start new epoch if run out of data
-            print(f"new epoch {step}")
             train_iter = iter(trainloader)
-            batch = next(train_iter)[0].to(config.device).float()
-        loss, losses_batch, fwd_steps_batch = train_step_fn(state, batch)
+            # batch = next(train_iter)[0].to(config.device).float()
+            _, batch = datasets.prepare_batch(train_iter, config.device)
+        loss, _, _ = train_step_fn(state, batch)
 
         writer.add_scalar("training_loss", loss.item(), step)
 
@@ -126,11 +143,12 @@ def train(config, workdir):
             N_evals = 25
             for i in range(N_evals):
                 try:
-                    eval_batch = next(eval_iter)[0].to(config.device).float()
+                    # eval_batch = next(eval_iter)[0].to(config.device).float()
+                    _, eval_batch = datasets.prepare_batch(eval_iter, config.device)
                 except StopIteration:  # Start new epoch
                     eval_iter = iter(testloader)
-                    eval_batch = next(eval_iter)[0].to(config.device).float()
-                eval_loss, losses_batch, fwd_steps_batch = eval_step_fn(state, eval_batch)
+                    _, eval_batch = datasets.prepare_batch(eval_iter, config.device)
+                eval_loss, _, _ = eval_step_fn(state, eval_batch)
                 eval_loss = eval_loss.detach()
             logging.info("step: %d, eval_loss: %.5e" % (step, eval_loss.item()))
 
@@ -153,11 +171,14 @@ def train(config, workdir):
             Path(this_sample_dir).mkdir(parents=True, exist_ok=True)
             utils.save_tensor(this_sample_dir, sample, "final.np")
             utils.save_png(this_sample_dir, sample, "final.png")
+            utils.save_png_norm(this_sample_dir, sample, "final_norm.png") # TODO: make it consisten with the original pipeline
+            
             if initial_sample != None:
                 utils.save_png(this_sample_dir, initial_sample, "init.png")
+                utils.save_png_norm(this_sample_dir, initial_sample, "init_norm.png")
+                
             utils.save_gif(this_sample_dir, intermediate_samples)
             utils.save_video(this_sample_dir, intermediate_samples)
-
 
 if __name__ == "__main__":
     app.run(main)

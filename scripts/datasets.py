@@ -2,7 +2,7 @@
 
 from torch.utils.data import DataLoader, Dataset
 import numpy as np
-from mpi4py import MPI
+# from mpi4py import MPI
 import blobfile as bf
 from torch.utils.data import Dataset, DataLoader
 from torchvision import datasets
@@ -10,6 +10,8 @@ from torchvision import transforms, datasets
 import torch
 from PIL import Image
 
+import os
+from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
 
 class UniformDequantize(object):
     def __init__(self):
@@ -50,6 +52,21 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
             root="data", train=True, download=True, transform=transform)
         test_data = datasets.MNIST(
             root="data", train=False, download=True, transform=transform)
+    elif config.data.dataset == 'CORRUPTED_MNIST':
+        # TODO: make it consistent
+        transform = [
+                transforms.ToPILImage(), 
+                transforms.Resize(config.data.image_size),
+                transforms.CenterCrop(config.data.image_size),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor()
+                ]
+        transform = transforms.Compose(transform)
+        # transform = None
+
+        corrupted_dataset_dir = os.path.join('data', 'corrupted_MNIST', 'lbm_ns_pairs') # TODO: 'lbm_ns_pairs' shall be passed in some config
+        training_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=True, transform=transform)
+        test_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=False, transform=transform)
     elif config.data.dataset == 'CIFAR10':
         training_data = datasets.CIFAR10(
             root="data", train=True, download=True, transform=transform)
@@ -65,6 +82,14 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
                                 batch_size=train_batch_size, image_size=config.data.image_size,
                                 random_flip=config.data.random_flip)
         testloader = load_data(data_dir="data/ffhq-dataset/images1024x1024",
+                               batch_size=eval_batch_size, image_size=config.data.image_size,
+                               random_flip=False)
+        return trainloader, testloader
+    elif config.data.dataset == 'FFHQ_128':
+        trainloader = load_data(data_dir="data/ffhq-128-70k",
+                                batch_size=train_batch_size, image_size=config.data.image_size,
+                                random_flip=config.data.random_flip)
+        testloader = load_data(data_dir="data/ffhq-128-70k",
                                batch_size=eval_batch_size, image_size=config.data.image_size,
                                random_flip=False)
         return trainloader, testloader
@@ -122,12 +147,22 @@ def load_data(
         class_names = [bf.basename(path).split("_")[0] for path in all_files]
         sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
         classes = [sorted_classes[x] for x in class_names]
+    # dataset = ImageDataset(
+    #     image_size,
+    #     all_files,
+    #     classes=classes,
+    #     shard=MPI.COMM_WORLD.Get_rank(),
+    #     num_shards=MPI.COMM_WORLD.Get_size(),
+    #     random_flip=random_flip
+    # )
+    
+    #
     dataset = ImageDataset(
         image_size,
         all_files,
         classes=classes,
-        shard=MPI.COMM_WORLD.Get_rank(),
-        num_shards=MPI.COMM_WORLD.Get_size(),
+        shard=0,
+        num_shards=1,
         random_flip=random_flip
     )
     if deterministic:
@@ -202,3 +237,46 @@ class ImageDataset(Dataset):
         if self.local_classes is not None:
             out_dict["y"] = np.array(self.local_classes[idx], dtype=np.int64)
         return np.transpose(arr, [2, 0, 1]), out_dict
+
+
+def prepare_batch(data_loader_iterator, device):
+    """
+    Retrieves a batch from the DataLoader iterator, unpacks it, and moves all tensors to the specified device.
+    
+    Args:
+        data_loader_iterator (iterator): Iterator from DataLoader.
+        device (torch.device): Device to move tensors to (e.g., 'cuda' or 'cpu').
+
+    Returns:
+        tuple: Tuple containing original image tensor and a tuple of modified images and other data, all moved to the specified device.
+    """
+    # Get a batch from the DataLoader
+    original_image, batch = next(data_loader_iterator)
+
+    # Move original_image to the desired device
+    original_image = original_image.to(device).float()
+
+    # Unpack eval_batch and move each tensor to the GPU
+    if len(batch) == 4:  # Case with pre-modified images
+        modified_image, pre_modified_image, corruption_amount, label = batch
+        
+        # Move everything to the GPU
+        modified_image = modified_image.to(device).float()
+        pre_modified_image = pre_modified_image.to(device).float()
+        corruption_amount = corruption_amount.to(device)  # Already float32
+        label = label.to(device)  # Already long
+
+        # Efficient packing after moving to GPU
+        batch = (modified_image, pre_modified_image, corruption_amount, label)
+    else:  # Case without pre-modified images
+        modified_image, corruption_amount, label = batch
+        
+        # Move everything to the GPU
+        modified_image = modified_image.to(device).float()
+        corruption_amount = corruption_amount.to(device)  # Already float32
+        label = label.to(device)  # Already long
+
+        # Efficient packing after moving to GPU
+        batch = (modified_image, corruption_amount, label)
+
+    return original_image, batch
