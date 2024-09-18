@@ -14,8 +14,11 @@ import numpy as np
 @dataclass
 class DataConfig:
     image_size: int = 28  # for MNIST
-    min_init_gray_scale: float = 0.95
-    max_init_gray_scale: float = 1.05
+    # min_init_gray_scale: float = 0.95
+    # max_init_gray_scale: float = 1.05
+    
+    min_init_gray_scale: float = 0.0
+    max_init_gray_scale: float = 1.0
     
     process_pairs: bool = True
     

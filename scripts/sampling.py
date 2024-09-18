@@ -83,7 +83,7 @@ def get_sampling_fn_inverse_heat(config, initial_sample,
                     noise = noises[i-1]
                 else:
                     noise = torch.randn_like(u)
-                u = u_mean + noise*delta 
+                u = u_mean + noise*delta #TODO run without noise and check what happens
                 # Save trajectory
                 if intermediate_sample_indices != None and i-1 in intermediate_sample_indices:
                     intermediate_samples_out.append((u, u_mean))

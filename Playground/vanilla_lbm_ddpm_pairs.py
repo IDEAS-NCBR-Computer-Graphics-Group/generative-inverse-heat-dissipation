@@ -125,8 +125,11 @@ axs[2].set_title('less noisy x')
 # plt.imshow(torchvision.utils.make_grid(clean_x)[0], cmap='Greys')
 # axs[0, 0].imshow(clean_x, cmap='Greys')
 axs[0].imshow(torchvision.utils.make_grid(clean_x)[0], cmap='Greys');
-axs[1].imshow(torchvision.utils.make_grid(noisy_x)[0].clip(0.95, 1.05), cmap='Greys')
-axs[2].imshow(torchvision.utils.make_grid(less_noisy_x)[0].clip(0.95, 1.05), cmap='Greys')
+# axs[1].imshow(torchvision.utils.make_grid(noisy_x)[0].clip(0.95, 1.05), cmap='Greys')
+# axs[2].imshow(torchvision.utils.make_grid(less_noisy_x)[0].clip(0.95, 1.05), cmap='Greys')
+
+axs[1].imshow(torchvision.utils.make_grid(noisy_x)[0].clip(solver_config.data.min_init_gray_scale, solver_config.data.max_init_gray_scale), cmap='Greys')
+axs[2].imshow(torchvision.utils.make_grid(less_noisy_x)[0].clip(solver_config.data.min_init_gray_scale, solver_config.data.max_init_gray_scale), cmap='Greys')
 
 
 # %% The model
@@ -147,6 +150,8 @@ net = UNet2DModel(
         "UpBlock2D",          # a regular ResNet upsampling block
       ),
 )
+
+model_save_path =  os.path.join(current_file_path.parents[0], "unet_model_pairs.pth")
 
 # print(net)
 
@@ -175,6 +180,14 @@ print(f"batch_size={training_batch_size},\n"
       f"no of datapoints={len(train_dataloader.sampler)}")
 
 start = timer()
+
+def add_noise(x, amount):
+    # https://colab.research.google.com/github/huggingface/diffusion-models-class/blob/main/unit1/02_diffusion_models_from_scratch.ipynb#scrollTo=crLhiM4xMRoZ
+  """Corrupt the input `x` by mixing it with noise according to `amount`"""
+  noise = torch.rand_like(x)
+  amount = amount.view(-1, 1, 1, 1) # Sort shape so broadcasting works
+  return x*(1.-amount) + noise*amount 
+
 for epoch in range(n_epochs):
     counter = 0 
     for clean_x, (noisy_x, less_noisy_x, corruption_amount, label) in train_dataloader:
@@ -223,13 +236,12 @@ end = timer()
 print(f"Training time in seconds: {end - start:.2f}")
 
 # %% Save the trained model's state_dict
-model_save_path =  os.path.join(current_file_path.parents[0], "unet_model_pairs.pth")
 
 torch.save(net.state_dict(), model_save_path)
 print(f"Model saved to {model_save_path}")
 
 
-# Load the state_dict into the model
+# %%  Load the state_dict into the model
 net.load_state_dict(torch.load(model_save_path))
 net.to(device)  # Send model to the appropriate device (GPU or CPU)
 print(f"Model loaded from {model_save_path}")
@@ -246,8 +258,8 @@ plt.show()
 fig, axs = plt.subplots(1, 3, figsize=(20, 16))
 
 # n_steps = solver_config.solver.max_lbm_steps # 10
-# n_steps = int(solver_config.solver.max_blurr)
-n_steps = 3
+# n_steps = int(solver_config.solver.max_blurr) # 5
+n_steps = 5
 # noisy_x = torch.rand(64, 1, 28, 28).to(device) # pure noise
 # x, (noisy_x, less_noisy_x, corruption_amount, label) = next(iter(test_dataloader))
 clean_x, (_, _, _, _) = next(iter(test_dataloader))
@@ -266,20 +278,25 @@ step_history = [noisy_x.detach().cpu()]
 pred_output_history = []
 noisy_x = noisy_x.to(device)
 
-denoised_x = noisy_x.clone() # just take from dataset
+denoised_x = noisy_x.clone() 
+
+
 
 print("corruption_amount[0].item(), n_steps, i, mix_factor")
+# torch.linspace(0, 1, x.shape[0])
+
 for i in range(n_steps):
-  # noise_amount = torch.ones((noisy_x.shape[0], )).to(device) * (1-(i/n_steps)) # Starting high going low
-  corruption_amount = torch.ones(noisy_x.shape[0], device=device, dtype=torch.int) *(n_steps - i)
+  noise_amount = torch.ones((noisy_x.shape[0], )).to(device) * (1-(i/n_steps)) # Starting high going low
+  corruption_amount = torch.ones(noisy_x.shape[0], device=device, dtype=torch.float) *(n_steps - i)
   with torch.no_grad():
     # pred = net(denoised_x, 0).sample
     pred = net(denoised_x, corruption_amount).sample
      
 #   mix_factor = 1/(n_steps - i)
-  mix_factor = 1
+  mix_factor = 1.
   denoised_x = denoised_x*(1-mix_factor) + pred*mix_factor
-  
+#   denoised_x = add_noise(denoised_x, 1E-2)
+
   pred_output_history.append(pred.detach().cpu())
   step_history.append(denoised_x.detach().cpu())
   print(corruption_amount[0].item(), n_steps, i, mix_factor)
@@ -289,10 +306,14 @@ for i in range(n_steps):
 axs[0].imshow(torchvision.utils.make_grid(clean_x, nrow=8)[0].clip(0, 1), cmap='Greys')
 axs[0].set_title('Clean input');
 
-axs[1].imshow(torchvision.utils.make_grid(denoised_x.detach().cpu(), nrow=8)[0].clip(0.95, 1.05), cmap='Greys')
+axs[1].imshow(torchvision.utils.make_grid(
+    denoised_x.detach().cpu(), nrow=8)[0].clip(solver_config.data.min_init_gray_scale, 
+                                               solver_config.data.max_init_gray_scale), cmap='Greys')
 axs[1].set_title('Denoised');
 
-axs[2].imshow(torchvision.utils.make_grid(noisy_x.detach().cpu(), nrow=8)[0].clip(0.95, 1.05), cmap='Greys')
+axs[2].imshow(torchvision.utils.make_grid(
+    noisy_x.detach().cpu(), nrow=8)[0].clip(solver_config.data.min_init_gray_scale, 
+                                            solver_config.data.max_init_gray_scale), cmap='Greys')
 axs[2].set_title('Noise to sample from');
 
 # for ax in axs:
@@ -302,8 +323,13 @@ fig, axs = plt.subplots(n_steps, 2, figsize=(20, 20), sharex=True)
 axs[0,0].set_title('x (model input)')
 axs[0,1].set_title('model prediction')
 for i in range(n_steps):
-    axs[i, 0].imshow(torchvision.utils.make_grid(step_history[i])[0].clip(0.95, 1.05), cmap='Greys')
-    axs[i, 1].imshow(torchvision.utils.make_grid(pred_output_history[i])[0].clip(0.95, 1.05), cmap='Greys')
+    axs[i, 0].imshow(torchvision.utils.make_grid(
+        step_history[i])[0].clip(solver_config.data.min_init_gray_scale, 
+                                 solver_config.data.max_init_gray_scale), cmap='Greys')
+    axs[i, 1].imshow(torchvision.utils.make_grid(
+        pred_output_history[i])[0].clip(
+            solver_config.data.min_init_gray_scale, 
+            solver_config.data.max_init_gray_scale), cmap='Greys')
 
 # for ax in axs:
 #     ax.axis('off')

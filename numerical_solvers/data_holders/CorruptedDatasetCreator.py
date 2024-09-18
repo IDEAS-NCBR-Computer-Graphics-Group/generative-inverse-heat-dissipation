@@ -106,7 +106,7 @@ if __name__ == '__main__':
         process_pairs = solver_config.data.process_pairs,
         process_all=process_all)    
 
-    end = timer()
+    # end = timer()
     print(f"Time in seconds: {end - start:.2f}")
     
     
