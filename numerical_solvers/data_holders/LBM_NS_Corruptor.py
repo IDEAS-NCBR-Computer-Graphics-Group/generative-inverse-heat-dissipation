@@ -20,16 +20,13 @@ class LBM_NS_Corruptor(BaseCorruptor):
         grid_size = (config.data.image_size, config.data.image_size)
         
         # energy_spectrum = lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
-        energy_spectrum = config.solver.energy_spectrum
-        frequency_range = {
-            'k_min': config.solver.k_min, 
-            'k_max': config.solver.k_max
-        }
+        # frequency_range = {'k_min': config.solver.k_min, 'k_max': config.solver.k_max }
 
         spectralTurbulenceGenerator = SpectralTurbulenceGenerator(
             config.solver.domain_size, grid_size, 
             config.solver.turb_intensity, config.solver.noise_limiter,
-            energy_spectrum=energy_spectrum, frequency_range=frequency_range, 
+            energy_spectrum=config.solver.energy_spectrum, 
+            frequency_range={'k_min': config.solver.k_min, 'k_max': config.solver.k_max}, 
             dt_turb=config.solver.dt_turb, 
             is_div_free=False
         )
@@ -47,6 +44,10 @@ class LBM_NS_Corruptor(BaseCorruptor):
         self.min_lbm_steps = config.solver.min_lbm_steps
         self.max_lbm_steps = config.solver.max_lbm_steps
         
+        self.min_init_gray_scale = config.data.min_init_gray_scale
+        self.max_init_gray_scale = config.data.max_init_gray_scale
+        
+        
     def _corrupt(self, x, lbm_steps, generate_pair=False):
         """
         Corrupts the input image using LBM solver.
@@ -62,7 +63,8 @@ class LBM_NS_Corruptor(BaseCorruptor):
         """
         step_difference = 1  # Step difference for generating pairs
         np_gray_img = x.numpy()[0, :, :]
-        np_gray_img = normalize_grayscale_image_range(np_gray_img, 0.95, 1.05)
+        np_gray_img = normalize_grayscale_image_range(
+            np_gray_img, self.min_init_gray_scale, self.max_init_gray_scale)
         
         self.solver.init(np_gray_img)
         self.solver.iterations_counter = 0  # Reset counter

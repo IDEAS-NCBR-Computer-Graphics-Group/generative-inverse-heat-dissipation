@@ -11,7 +11,7 @@ import taichi.math as tm
 import itertools
 
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
-from numerical_solvers.solvers.img_reader import read_img_in_grayscale, normalize_grayscale_image_range
+from numerical_solvers.solvers.img_reader import read_img_in_grayscale, normalize_grayscale_image_range, standarize_grayscale_image_range
 from numerical_solvers.visualization.taichi_lbm_gui import run_with_gui
 
 from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
