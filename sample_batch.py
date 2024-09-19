@@ -6,14 +6,9 @@ from torch.utils.data import DataLoader
 import torch
 from timeit import default_timer as timer
 from pathlib import Path
-import os
-import numpy as np
 
-from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
-from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
 from scripts import datasets as ihd_datasets
 from scripts.utils import save_png_norm, save_png
-from configs.mnist.lbm_ns_turb_config import get_lbm_ns_config
 from numerical_solvers.data_holders.CorruptedDatasetCreator import preprocess_dataset
 from matplotlib import pyplot as plt
 import torchvision
@@ -25,7 +20,7 @@ config_flags.DEFINE_config_file("config", None, "Training configuration.", lock_
 flags.mark_flags_as_required(["config"])
 
 def main(config):
-    train, test = preprocess_dataset(FLAGS.config)
+    (fluid_train, fluid_test), (blur_train, blur_test) = preprocess_dataset(FLAGS.config)
     save_dir = 'runs/test'
 
     process_pairs = True
@@ -34,7 +29,7 @@ def main(config):
         print(f"==processing pairs===")
         # x, (y, pre_y, corruption_amount, labels) = next(iter(corrupted_dataloader))
         # alternatively
-        x, batch = ihd_datasets.prepare_batch(iter(train),'cpu')
+        x, batch = ihd_datasets.prepare_batch(iter(fluid_train),'cpu')
         y, pre_y, corruption_amount, labels = batch
     # else:
     #     x, (y, corruption_amount, labels) = next(iter(corrupted_dataloader))
@@ -53,19 +48,6 @@ def main(config):
     plt.imshow(torchvision.utils.make_grid(y)[0], 
                norm=matplotlib.colors.Normalize(vmin=0.95, vmax=1.05),
                cmap='Greys')
-    
-
-    
-    # for i in d:
-
-        # b = i
-        # print(b)
-        # save_dir = './runs/test'
-        # save_png(save_dir, b, 't0.png')
-
-        # exit(0)
-    
-
 
 if __name__ == '__main__':
     app.run(main)

@@ -6,8 +6,15 @@ import numpy as np
 # Define the nested configurations as dataclasses
 @dataclass
 class DataConfig:
-    image_size: int = 32  # for CIFAR
-
+    image_size: int = 32  # for MNIST
+    min_init_gray_scale: float = 0.95
+    max_init_gray_scale: float = 1.05
+    
+    process_pairs: bool = True
+    
+    def __post_init__(self):
+        self.processed_filename = 'lbm_ns_turb_pairs' if self.process_pairs else 'lbm_ns_turb'
+    
 @dataclass
 class SolverConfig:
     niu: float = 0.5 * 1/6
@@ -21,8 +28,8 @@ class SolverConfig:
     k_max: float = field(init=False)  # To be computed after domain_size is set
     energy_spectrum: Callable[[float], float] = field(init=False)  # Function field
 
-    min_lbm_steps: int = 2
-    max_lbm_steps: int = 50
+    min_lbm_steps: int = 1
+    max_lbm_steps: int = 10
     
     def __post_init__(self):
         # Calculate k_min and k_max based on domain_size
