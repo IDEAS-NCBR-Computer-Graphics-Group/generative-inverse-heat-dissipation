@@ -92,10 +92,8 @@ def train(config, workdir, solver_config):
     eval_step_fn = losses.get_step_lbm_fn(train=False, config=config, optimize_fn=optimize_fn)
 
     # Building sampling functions
-    # delta = config.model.sigma*1.25
-    # initial_sample, _ = sampling.get_initial_sample(
-    #     config, heat_forward_module, delta)
-    
+    delta = config.model.sigma*1.25
+
     # draw a sample by lbm-destroying some rand images
     # corruptor = LBM_NS_Corruptor(
     #     solver_config,                                
@@ -107,11 +105,14 @@ def train(config, workdir, solver_config):
         
     initial_sample = sampling.get_initial_corrupted_sample(config, solver_config.solver.max_steps, corruptor)
     
+    n_denoising_steps = int(solver_config.solver.max_steps / solver_config.solver.step_size)
+    
     sampling_fn = sampling.get_sampling_fn_inverse_lbm_ns(
-        int(solver_config.solver.max_steps), # vec_corruption_amount, 
-        initial_sample, 
-        intermediate_sample_indices=list(range(int(solver_config.solver.max_steps))),
-        delta=config.model.sigma*1.25, device=config.device)
+        max_noise_level=int(solver_config.solver.max_steps), # max noise level, 
+        n_denoising_steps = n_denoising_steps,
+        initial_sample = initial_sample, 
+        intermediate_sample_indices=list(range(int(n_denoising_steps))),
+        delta=delta, device=config.device)
 
     num_train_steps = config.training.n_iters
     logging.info("Starting training loop at step %d." % (initial_step,))

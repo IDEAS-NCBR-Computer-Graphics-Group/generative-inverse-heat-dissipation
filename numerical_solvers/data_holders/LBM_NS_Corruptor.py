@@ -66,6 +66,7 @@ class LBM_NS_Corruptor(BaseCorruptor):
         np_gray_img = x.numpy()[0, :, :]
         np_gray_img = normalize_grayscale_image_range(
             np_gray_img, self.min_init_gray_scale, self.max_init_gray_scale)
+        # TODO: normalize after simulation as well, to keep data in 0-1 range consistently
         
         self.solver.init(np_gray_img)
         self.solver.iterations_counter = 0  # Reset counter

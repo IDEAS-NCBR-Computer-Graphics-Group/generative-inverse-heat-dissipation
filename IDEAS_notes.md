@@ -222,5 +222,5 @@ python train.py --config configs/mnist/small_mnist.py --workdir runs/mnist/small
 
 python train_corrupted.py --config configs/mnist/small_corrupted_mnist.py  --workdir runs/mnist/small_lbm_mnist  --forwardsolverconfig=configs/mnist/lbm_ns_config.py
 
-python train_corrupted.py --config configs/mnist/small_corrupted_mnist.py  --workdir runs/mnist/small_blurr_mnist  --forwardsolverconfig=configs/mnist/blurring_configs.py
+python train_corrupted.py --config configs/mnist/small_blurr_mnist.py  --workdir runs/mnist/small_blurr_mnist  --forwardsolverconfig=configs/mnist/blurring_configs.py
 ```
