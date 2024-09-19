@@ -28,6 +28,7 @@ class BlurringCorruptor(BaseCorruptor):
         
         self.min_blurr = config.solver.min_steps
         self.max_blurr = config.solver.max_steps
+        self.step_size = config.solver.step_size
         
     def _corrupt(self, x, corruption_amount, generate_pair=False):
         """
@@ -60,7 +61,7 @@ class BlurringCorruptor(BaseCorruptor):
 
         if generate_pair:
             # For the pair, use the normalized image before blurring
-            less_blurred_img = gaussian_filter(np_gray_img, sigma=(corruption_amount-1.))
+            less_blurred_img = gaussian_filter(np_gray_img, sigma=(corruption_amount-self.step_size))
             less_noisy_x = torch.tensor(less_blurred_img).unsqueeze(0).float()
             
             return noisy_x, less_noisy_x

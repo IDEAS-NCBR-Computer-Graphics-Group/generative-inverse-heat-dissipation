@@ -19,7 +19,7 @@ def get_config():
     
     config.data.dataset = 'CORRUPTED_BLURR_MNIST'
     
-    config.training.n_iters = 10001
+    config.training.n_iters = 1001
     config.training.snapshot_freq = 1000
     config.training.snapshot_freq_for_preemption = 100 # store additional checkpoints for preemption in cloud computing environments 
     config.training.log_freq = 50

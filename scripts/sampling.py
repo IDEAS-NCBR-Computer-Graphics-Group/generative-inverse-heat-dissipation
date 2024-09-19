@@ -31,17 +31,15 @@ def get_sampling_fn_inverse_lbm_ns(denoising_steps, initial_sample,
                 vec_fwd_steps = torch.ones(initial_sample.shape[0], device=device, dtype=torch.long) * i # todo: keep attention to dtype
                 
                 # Predict less blurry img
-                # u_pred =  model(u, vec_fwd_steps) + u # original, shall be divided by 2 to get mean
-                u_pred =  model(u, vec_fwd_steps) 
+                u_pred =  model(u, vec_fwd_steps) + u # the NN predicts the difference between blurry_x and less_blurry_x
 
                 # Sampling step
                 if share_noise:
                     noise = noises[i-1]
                 else:
                     noise = torch.randn_like(u)
-                # u = u_pred #+ noise*delta #TODO: do we need Gaussian noise here? Or shall do a kind of destruction-step with numerical solver
-                u = u_pred
-                
+                u = u_pred + noise*delta #TODO: do we need Gaussian noise here? Or shall do a kind of destruction-step with numerical solver
+
                 # Save trajectory
                 if intermediate_sample_indices != None and i-1 in intermediate_sample_indices:
                     intermediate_samples_out.append((u, u_pred))
@@ -75,13 +73,13 @@ def get_sampling_fn_inverse_heat(config, initial_sample,
             for i in range(K, 0, -1):
                 vec_fwd_steps = torch.ones(initial_sample.shape[0], device=device, dtype=torch.long) * i
                 # Predict less blurry mean
-                u_mean = model(u, vec_fwd_steps) + u #TODO: mean?! shall be averaged
+                u_mean = model(u, vec_fwd_steps) + u # mean is as the NN learn difference between blurred_x and less_blurred_x
                 # Sampling step
                 if share_noise:
                     noise = noises[i-1]
                 else:
                     noise = torch.randn_like(u)
-                u = u_mean + noise*delta #TODO run without noise and check what happens
+                u = u_mean + noise*delta
                 # Save trajectory
                 if intermediate_sample_indices != None and i-1 in intermediate_sample_indices:
                     intermediate_samples_out.append((u, u_mean))
