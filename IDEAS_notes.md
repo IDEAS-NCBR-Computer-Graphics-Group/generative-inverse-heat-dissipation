@@ -24,13 +24,25 @@ first time...`sudo apt-get install python3-dev`
 then
 
 ```.sh
+
 /usr/bin/python3.9 -m venv py-ihd-env
 source ./py-ihd-env/bin/activate
 
+pip install -r ihd_requirements.txt
+pip install -r taichi_requirements.txt
+
+
+
+python -m ipykernel install --user --name=py-ihd-env --display-name "py-ihd-env"
+
+
+
+#if you face issues with cuda version
 $ nvcc --version # check your version
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu113 # and install the right one
 
-pip install -r gcp_requirements.txt
+
+
 ```
 
 ### athena cluster
