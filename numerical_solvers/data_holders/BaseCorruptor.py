@@ -9,3 +9,7 @@ class BaseCorruptor(ABC):
     @abstractmethod
     def _preprocess_and_save_data(self):
         pass
+    
+    @abstractmethod
+    def _corrupt(self, x, steps, generate_pair=False):
+        pass

@@ -41,7 +41,8 @@
             "console": "integratedTerminal",
             "args": [
                 "--config", "configs/mnist/small_corrupted_mnist.py",
-                "--workdir", "runs/mnist/small_lbm_mnist"
+                "--workdir", "runs/mnist/small_lbm_mnist",
+                "--forwardsolverconfig", "configs/mnist/lbm_ns_config.py"
             ]
         }
     ]

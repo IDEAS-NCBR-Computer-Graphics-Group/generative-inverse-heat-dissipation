@@ -14,6 +14,14 @@ import numpy as np
 @dataclass
 class DataConfig:
     image_size: int = 28  # for MNIST
+    min_init_gray_scale: float = 0.95
+    max_init_gray_scale: float = 1.05
+    
+    process_pairs: bool = True
+    
+    def __post_init__(self):
+        self.processed_filename = 'lbm_ns_pairs' if self.process_pairs else 'lbm_ns'
+
 
 @dataclass
 class SolverConfig:
@@ -29,9 +37,8 @@ class SolverConfig:
     energy_spectrum: Callable[[float], float] = field(init=False)  # Function field
 
 
-    min_lbm_steps: int = 2
-    max_lbm_steps: int = 50
-    
+    min_steps: int = 1
+    max_steps: int = 10
     
     def __post_init__(self):
         # Calculate k_min and k_max based on domain_size
@@ -46,8 +53,9 @@ class LBMConfig:
     data: DataConfig = field(default_factory=DataConfig)
     solver: SolverConfig = field(default_factory=SolverConfig)  # Fixed: was incorrectly set as DataConfig
 
+
 # Function to convert the dataclass configuration to ConfigDict
-def get_lbm_ns_config() -> ConfigDict:
+def get_config() -> ConfigDict:
     # Create an instance of the typed LBMConfig class
     config = LBMConfig()
 

@@ -14,19 +14,26 @@ from absl import flags
 from ml_collections.config_flags import config_flags
 import numpy as np
 
+from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
+from numerical_solvers.data_holders.BlurringCorruptor import BlurringCorruptor
+
+from torchvision import transforms
+from configs.mnist.lbm_ns_turb_config import LBMConfig
+
 FLAGS = flags.FLAGS
 
-config_flags.DEFINE_config_file("config", None, "Training configuration.", lock_config=True)
+config_flags.DEFINE_config_file("config", None, "NN Training configuration.", lock_config=True)
+config_flags.DEFINE_config_file("forwardsolverconfig", None, "Forward solver configuration.", lock_config=True)
 flags.DEFINE_string("workdir", None, "Work directory.")
-flags.mark_flags_as_required(["workdir", "config"])
+flags.mark_flags_as_required(["workdir", "config", "forwardsolverconfig"])
 #flags.DEFINE_string("initialization", "prior", "How to initialize sampling")
 
 
 def main(argv):
-    train(FLAGS.config, FLAGS.workdir)
+    train(FLAGS.config, FLAGS.workdir, FLAGS.forwardsolverconfig)
 
 
-def train(config, workdir):
+def train(config, workdir, solver_config):
     """Runs the training pipeline. 
     Based on code from https://github.com/yang-song/score_sde_pytorch
 
@@ -89,46 +96,21 @@ def train(config, workdir):
     # initial_sample, _ = sampling.get_initial_sample(
     #     config, heat_forward_module, delta)
     
-    # TODO: draw a sample by lbm-destroying some rand images?
-    from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
-    from torchvision import transforms
-    from configs.mnist.lbm_ns_turb_config import get_lbm_ns_config, LBMConfig
-    # lbm_corruptor = LBM_NS_Corruptor() 
-    solver_config = get_lbm_ns_config()
-    lbm_ns_Corruptor = LBM_NS_Corruptor(
-        solver_config,                                
+    # draw a sample by lbm-destroying some rand images
+    # corruptor = LBM_NS_Corruptor(
+    #     solver_config,                                
+    #     transform=transforms.Compose([transforms.ToTensor()]))
+   
+    corruptor = BlurringCorruptor(
+        solver_config, 
         transform=transforms.Compose([transforms.ToTensor()]))
-    
-    def get_initial_lbm_sample(solver_config: LBMConfig, solver: LBM_NS_Corruptor, batch_size=None):
-        """Take a draw from the prior p(u_K)"""
-        trainloader, _ = datasets.get_dataset(config,
-                                            uniform_dequantization=config.data.uniform_dequantization,
-                                            train_batch_size=batch_size)
-
-        # initial_sample = next(iter(trainloader))[0].to('cpu')
-        initial_sample, _ = datasets.prepare_batch(iter(trainloader), 'cpu')
-        corrupted_sample = torch.empty_like(initial_sample)
-        # vec_corruption_amount = torch.randint(
-        #     low=solver_config.solver.min_lbm_steps, 
-        #     high=solver_config.solver.max_lbm_steps, 
-        #     size=initial_sample.shape[0], device='cpu')
         
-        for index in range(initial_sample.shape[0]):
-            # corruption_amount = solver_config.solver.max_lbm_steps #TODO we shall start from completely destroyed images
-            corruption_amount = np.random.randint(solver_config.solver.min_lbm_steps, solver_config.solver.max_lbm_steps)
-            tmp, _ = solver._corrupt(initial_sample[index], 
-                                     corruption_amount #vec_corruption_amount[index]
-                                     )
-            
-            corrupted_sample[index] = tmp
-        return corrupted_sample
-    
-    initial_sample = get_initial_lbm_sample(solver_config, lbm_ns_Corruptor)
+    initial_sample = sampling.get_initial_corrupted_sample(config, solver_config.solver.max_steps, corruptor)
     
     sampling_fn = sampling.get_sampling_fn_inverse_lbm_ns(
-        solver_config.solver.max_lbm_steps, # vec_corruption_amount, 
+        int(solver_config.solver.max_steps), # vec_corruption_amount, 
         initial_sample, 
-        intermediate_sample_indices=list(range(solver_config.solver.max_lbm_steps)),
+        intermediate_sample_indices=list(range(int(solver_config.solver.max_steps))),
         delta=config.model.sigma*1.25, device=config.device)
 
     num_train_steps = config.training.n_iters

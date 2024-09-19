@@ -206,5 +206,8 @@ export PYTHONPATH=$(pwd) # may be helpfull
 python numerical_solvers/data_holders/CorruptedDatasetCreator.py
 python numerical_solvers/runners/taichi_lbm_NS_picture_diffuser.py
 
-python train.py --config configs/mnist/default_mnist_configs.py --workdir runs/mnist/default
+python train.py --config configs/mnist/small_mnist.py --workdir runs/mnist/small_mnist
+
+python train_corrupted.py --config configs/mnist/small_corrupted_mnist.py  --workdir runs/mnist/small_lbm_mnist  --forwardsolverconfig=configs/mnist/lbm_ns_config.py
+python train_corrupted.py --config configs/mnist/small_corrupted_mnist.py  --workdir runs/mnist/small_blurr_mnist  --forwardsolverconfig=configs/mnist/blurring_configs.py
 ```
