@@ -32,7 +32,14 @@ def run_with_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show
             canvasPlotter.is_rho_MSE_checked = gui.checkbox('plot rho MSE', canvasPlotter.is_rho_MSE_checked)
             canvasPlotter.is_rho_SSIM_checked = gui.checkbox('plot rho SSIM', canvasPlotter.is_rho_SSIM_checked)
             canvasPlotter.is_energy_MSE_checked = gui.checkbox('plot energy MSE', canvasPlotter.is_energy_MSE_checked)
+            canvasPlotter.is_rho_diff_checked = gui.checkbox('rho difference', canvasPlotter.is_rho_diff_checked)
+            canvasPlotter.is_energy_diff_checked = gui.checkbox('energy difference', canvasPlotter.is_energy_diff_checked)
             canvasPlotter.is_energy_SSIM_checked = gui.checkbox('plot energy SSIM', canvasPlotter.is_energy_SSIM_checked)
+            canvasPlotter.is_v_distribution_checked = gui.checkbox('plot 1D v distribution', canvasPlotter.is_v_distribution_checked)
+            
+            canvasPlotter.is_heatmap_checked = gui.checkbox('heatmap', canvasPlotter.is_heatmap_checked)
+            canvasPlotter.is_vel_mag_distribution_checked = gui.checkbox('plot norm(v) ', canvasPlotter.is_vel_mag_distribution_checked)
+            
                               
         solver.solve(iter_per_frame)      
         img = canvasPlotter.make_frame()

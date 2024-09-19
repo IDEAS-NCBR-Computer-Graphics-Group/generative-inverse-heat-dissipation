@@ -9,6 +9,7 @@ from skimage.metrics import structural_similarity as ssim
 from skimage.metrics import mean_squared_error
 from scipy.stats import maxwell
 from scipy.optimize import curve_fit
+from scipy.stats import norm, chi
 
 from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
 from numerical_solvers.visualization.KolmogorovSpectrumPlotter import KolmogorovSpectrumPlotter, SpectrumHeatmapPlotter
@@ -115,6 +116,12 @@ class CanvasPlotter:
         self.is_f_checked = False
         self.is_rho_MSE_checked = False
         self.is_rho_SSIM_checked = False
+        self.is_v_distribution_checked = False
+        self.is_heatmap_checked = False
+        self.is_rho_diff_checked = False
+        self.is_energy_diff_checked = False
+
+        self.is_vel_mag_distribution_checked = False
 
         self.is_energy_MSE_checked = False
         self.is_energy_SSIM_checked = False
@@ -201,8 +208,11 @@ class CanvasPlotter:
         # second row - rho
 
         vel_cpu = self.solver.vel.to_numpy()
+        vx = vel_cpu[:,:,0]
+        vy = vel_cpu[:,:,1]
         vel_img = self.render_vel_mag(vel_cpu)
         vel_mag_img = self.return_vel_mag(vel_cpu)
+        
         image1 = img_as_float(self.energy_history.buffer[self.energy_history.index - 2])
         image2 = img_as_float(vel_mag_img)
         ssim_index = ssim(image1, image2, data_range=image1.max() - image1.min())
@@ -220,66 +230,52 @@ class CanvasPlotter:
         else:
             force_energy_spectrum =  self.dummy_canvas   
         
-        # rho_histogram_rgb = make_canvas_histogram(rho_cpu, rho_cpu.min(), rho_cpu.max(), "rho")
-        # rho_histogram_rgba = cm.ScalarMappable().to_rgba(np.flip(np.transpose(rho_histogram_rgb, (1, 0, 2)), axis=1)) 
+        
 
-        self.heatmap_plotter.add_spectrum(vel_cpu[:, :, 0], vel_cpu[:, :, 1], self.solver.iterations_counter)
-        heatmap_energy  = self.heatmap_plotter.plot_heatmap_rgba()
-        # third row - metrics
+        # third row - heatmap + differences
 
-        # Initialize img_energy_difference outside the rendering loop to hold its value between updates
-        img_energy_difference = None  # Start with None or an appropriate initial image
 
+        if self.is_heatmap_checked:
+            self.heatmap_plotter.add_spectrum(vel_cpu[:, :, 0], vel_cpu[:, :, 1], self.solver.iterations_counter)
+            heatmap_energy  = self.heatmap_plotter.plot_heatmap_rgba()
+        else:
+            heatmap_energy = self.dummy_canvas
+
+        img_energy_difference = None
         if self.solver.iterations_counter < 2:
-            # For the first two iterations, initialize with a zero image or keep the last known value
-            if img_energy_difference is None:  # Only set initially if it's not already initialized
+            if img_energy_difference is None:  
                 img_energy_difference = self.render_rho(np.zeros(vel_img.shape))
                 img_rho_difference = self.render_rho(np.zeros(vel_img.shape))
-                
         else:
             
                 # Update img_energy_difference only on every second step
-                energy_difference = self.energy_history.buffer[self.energy_history.index - 2] - vel_mag_img
-                rho_difference = self.rho_history.buffer[self.rho_history.index - 2] - rho_cpu
+                if self.is_rho_diff_checked:
+                    rho_difference = self.rho_history.buffer[self.rho_history.index - 2] - rho_cpu
+                    img_rho_difference  = self.render_energy_difference(rho_difference)
+                else:
+                    img_rho_difference = self.dummy_canvas
 
-                if self.solver.iterations_counter%10 ==0: 
-                    print("MSE energy: ", mean_squared_error(self.energy_history.buffer[self.energy_history.index - 2], vel_mag_img))
-                    print("MSE rho", mean_squared_error(self.rho_history.buffer[self.rho_history.index - 2], rho_cpu))
+                if self.is_energy_diff_checked:
+                    energy_difference = self.energy_history.buffer[self.energy_history.index - 2] - vel_mag_img        
+                    img_energy_difference = self.render_energy_difference(energy_difference)
+                else:
+                    img_energy_difference = self.dummy_canvas
 
                 image1 = img_as_float(self.energy_history.buffer[self.energy_history.index - 2])
                 image2 = img_as_float(vel_mag_img)
                 ssim_index = ssim(image1, image2, data_range=image1.max() - image1.min())
 
-                if self.solver.iterations_counter%10 ==0: 
-                    print("energy ssim", ssim_index)
-
                 image1 = img_as_float(self.rho_history.buffer[self.rho_history.index - 2])
                 image2 = img_as_float(rho_cpu)
                 ssim_index = ssim(image1, image2, data_range=image1.max() - image1.min())
 
-                if self.solver.iterations_counter%10 ==0: 
-                    print("rho ssim", ssim_index)
+        if self.is_vel_mag_distribution_checked:
 
+            vel_mag_histogram_rgb = make_canvas_histogram(vel_mag_img, vel_mag_img.min(), vel_mag_img.max(), "velocity")
+            vel_mag_histogram_rgba = cm.ScalarMappable().to_rgba(np.flip(np.transpose(vel_mag_histogram_rgb, (1, 0, 2)), axis=1)) 
 
-                img_energy_difference = self.render_energy_difference(energy_difference)
-                img_rho_difference  = self.render_energy_difference(rho_difference)
-                # print(img_energy_difference.min())
-
-        # Ensure img_energy_difference is not None at the point of use
-        if img_energy_difference is None:
-            img_energy_difference = np.zeros(vel_img.shape)
-
-
-        vel_histogram_rgb = make_canvas_histogram(vel_mag_img, vel_mag_img.min(), vel_mag_img.max(), "velocity")
-        vel_histogram_rgba = cm.ScalarMappable().to_rgba(np.flip(np.transpose(vel_histogram_rgb, (1, 0, 2)), axis=1)) 
-
-
-
-        # n_particles = 256 * 256  # Total number of "particles" or grid points
-        # vel_cpu_reshaped = vel_cpu.reshape((n_particles, 2))  # Shape becomes (65536, 2)
-        # velocity_plotter = VelocityHistogramPlotter(title='Vel')
-        # velocity_histogram_image = velocity_plotter(vel_cpu_reshaped, bins=50, temperature=1.0, mass=1.0)
-        # print(velocity_histogram_image.shape)
+        else:
+            vel_mag_histogram_rgba = self.dummy_canvas
         
         # fourth row
 
@@ -325,13 +321,19 @@ class CanvasPlotter:
                 ssim_energy_image = self.dummy_canvas
 
         
+        if self.is_v_distribution_checked:
+            v_distribution = plot_v_component_distribution(vy, "v component distribution")
+            v_distribution_rgba = cm.ScalarMappable().to_rgba(np.flip(np.transpose(v_distribution, (1, 0, 2)), axis=1)) 
+        else:
+            v_distribution_rgba = self.dummy_canvas
+
     
 
         img_col1 = np.concatenate((rho_img, vel_img, force_img), axis=1)
         img_col2 = np.concatenate((rho_energy_spectrum, vel_energy_spectrum, force_energy_spectrum), axis=1)
         img_col3 = np.concatenate((img_rho_difference, img_energy_difference,  heatmap_energy), axis=1)
-        img_col4 = np.concatenate((mse_rho_image, mse_energy_image, vel_histogram_rgba), axis=1)
-        img_col5 = np.concatenate((ssim_rho_image, ssim_energy_image, self.dummy_canvas), axis=1)
+        img_col4 = np.concatenate((mse_rho_image, mse_energy_image, vel_mag_histogram_rgba), axis=1)
+        img_col5 = np.concatenate((ssim_rho_image, ssim_energy_image, v_distribution_rgba), axis=1)
 
 
         img = np.concatenate((img_col1, img_col2, img_col3, img_col4, img_col5), axis=0)
@@ -345,20 +347,22 @@ class CanvasPlotter:
         cv2.imwrite(filepath, np.rot90(img_bgr))
     
     
-def maxwell_boltzmann(v, T):
+
+def maxwell_boltzmann(v, A):
     """
-    Maxwell-Boltzmann distribution function with adjustable temperature.
+    Maxwell-Boltzmann distribution function with a constant temperature.
     
     Parameters:
     - v: Speed
-    - T: Temperature
+    - A: Amplitude scaling factor
     
     Returns:
-    - Probability density at speed v.
+    - Probability density at speed v, scaled by A.
     """
+    T = 1  # Temperature, constant
     m = 1  # Mass
     k_B = 1  # Boltzmann constant (set to 1 for simplicity)
-    return np.sqrt(2/np.pi) * (m / (k_B * T))**(3/2) * v**2 * np.exp(-m * v**2 / (2 * k_B * T))
+    return A * np.sqrt(2/np.pi) * v**2 * np.exp(-v**2 / (2 * k_B * T))
 
 def make_canvas_histogram(image_array, min_val, max_val, title):
     # Use the 'Agg' backend for headless environments (no GUI)
@@ -366,7 +370,7 @@ def make_canvas_histogram(image_array, min_val, max_val, title):
 
     # Calculate the histogram
     uint8_image = ((image_array - min_val) / (max_val - min_val) * 255).astype(np.uint8)
-    counts, bins = np.histogram(uint8_image, bins=32, range=(0, 100))
+    counts, bins = np.histogram(uint8_image, bins=256, range=(0, 255))
 
     # Calculate the probability distribution
     total_pixels = uint8_image.size
@@ -381,25 +385,25 @@ def make_canvas_histogram(image_array, min_val, max_val, title):
     fig = plt.figure(figsize=(w / my_dpi, h / my_dpi), dpi=my_dpi)
     
     # Create Axes with space for the title and labels
-    ax = fig.add_axes([0.18, 0.12, 0.8, 0.8])  # [left, bottom, width, height] as fractions of the figure size
+    ax = fig.add_axes([0.18, 0.12, 0.78, 0.78])  # [left, bottom, width, height] as fractions of the figure size
     
     # Plot the histogram
-    ax.set_xlim([0, 30])
-    ax.set_ylim([0, 0.3])
+    ax.set_xlim([0, 100])
+    ax.set_ylim([0, 0.1])
     hist_data, bins, _ = ax.hist(uint8_image.flatten(), bins=64, range=(0, 100), density=True, alpha=0.5, label='Data Histogram')
 
     # Generate data points for fitting within the same range as the histogram
     bin_centers = (bins[:-1] + bins[1:]) / 2  # Use bin centers for fitting
 
-    # Fit the Maxwell-Boltzmann distribution to the histogram data
-    popt, _ = curve_fit(maxwell_boltzmann, bin_centers, hist_data, p0=[10])  # Initial guess for T is 10
+    # Fit the Maxwell-Boltzmann distribution to the histogram data with a constant temperature
+    popt, _ = curve_fit(maxwell_boltzmann, bin_centers, hist_data, p0=[1])  # Initial guess for amplitude A is 1
 
     # Generate a smooth curve for the fitted Maxwell-Boltzmann distribution
     v = np.linspace(0.1, 100, 300)  # Avoid zero to prevent division by zero
     mb_fit = maxwell_boltzmann(v, *popt)
 
     # Plot the fitted Maxwell-Boltzmann distribution
-    ax.plot(v, mb_fit, 'r-', lw=2, label=f'Maxwell-Boltzmann Fit (T={popt[0]:.2f})')
+    ax.plot(v, mb_fit, 'r-', lw=2, label=f'Maxwell-Boltzmann Fit (A={popt[0]:.2f})')
 
     # Set title and labels
     ax.set_title(f'{title} Entropy = {entropy:.4f} bits', fontsize=9) 
@@ -411,6 +415,49 @@ def make_canvas_histogram(image_array, min_val, max_val, title):
     fig.canvas.draw()
     canvas = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
     canvas = canvas.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    
+    plt.close(fig)  # Close the Matplotlib figure
+
+    return canvas
+
+
+def plot_v_component_distribution(v_data, title):
+    matplotlib.use('Agg')  # Use the 'Agg' backend for headless environments (no GUI)
+    
+    v_data = v_data.reshape(-1)  # Flatten the data
+
+    num_bins = 512
+    hist_data, bins = np.histogram(v_data, bins=num_bins, density=True)
+    bin_centers = (bins[:-1] + bins[1:]) / 2
+
+    # Fit Gaussian distribution to the data
+    mu, sigma = norm.fit(v_data)
+    
+    # Create an array over the full range specified
+    x_range = np.linspace(-max(v_data.max(), -v_data.min()), max(v_data.max(), -v_data.min()), 1000)
+    gaussian_fit = norm.pdf(x_range, mu, sigma)
+
+    # Display the histogram and the fit
+    fig, ax = plt.subplots(figsize=(2.56, 2.56), dpi=100)  # This will create a 256x256 pixel figure
+
+    # Plot the histogram and Gaussian fit
+    ax.hist(v_data, bins=num_bins, density=True, alpha=0.6, color='g')
+    ax.set_xlim([-max(v_data.max(), -v_data.min())/5, max(v_data.max(), -v_data.min())/5])
+    ax.plot(x_range, gaussian_fit, 'r-', lw=2)
+    ax.set_title(f'{title}', fontsize=10)
+    ax.set_xlabel('v component')
+    ax.set_ylabel('Probability Density')
+
+    plt.tight_layout(pad=1.2)
+    
+    # Render the figure to a NumPy array
+    fig.canvas.draw()
+    canvas = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+    canvas = canvas.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    
+    # Resize the canvas to 256x256 pixels if necessary
+    if canvas.shape[0] != 256 or canvas.shape[1] != 256:
+        canvas = cv2.resize(canvas, (256, 256), interpolation=cv2.INTER_AREA)
     
     plt.close(fig)  # Close the Matplotlib figure
 
