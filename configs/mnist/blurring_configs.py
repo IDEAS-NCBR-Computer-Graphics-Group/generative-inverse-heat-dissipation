@@ -29,7 +29,7 @@ class DataConfig:
 class SolverConfig:
     step_size: float = 0.1
     min_steps: float = field(init=False)  # To be computed after domain_size is set
-    max_steps: float = 5. # max amount of blurr
+    max_steps: float = 10. # max amount of blurr
 
     def __post_init__(self):
         self.min_steps: float = self.step_size # min amount of blurr
