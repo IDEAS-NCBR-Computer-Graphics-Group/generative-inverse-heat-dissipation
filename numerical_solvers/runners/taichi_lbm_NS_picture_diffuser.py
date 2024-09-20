@@ -74,8 +74,8 @@ if __name__ == '__main__':
         is_div_free = False)
     
     
-    niu = 0.5*1/5
-    bulk_visc = 0.5*1/6
+    niu = 1E-4 * 1./6
+    bulk_visc = 1E-4 * 1./6
     case_name="miau"   
     solver = LBM_NS_Solver(
         case_name,
@@ -87,9 +87,9 @@ if __name__ == '__main__':
     solver.init(np_gray_image) 
 
     # solver.init(1.*np.ones(grid_size, dtype=np.float32))
-    # solver.create_ic_hill(.1, 1E-3, int(0.5*nx), int(0.5*ny)) 
-    # solver.create_ic_hill( .05, 1E-3, int(0.25*nx), int(0.25*ny))
-    # solver.create_ic_hill(-.05, 1E-3, int(0.75*nx), int(0.75*ny))
+    # solver.create_ic_hill(.2, 1E-2, int(0.5*grid_size[0]), int(0.5*grid_size[1])) 
+    # solver.create_ic_hill(.05, 1E-3, int(0.25*grid_size[0]), int(0.25*grid_size[1]))
+    # solver.create_ic_hill(-.05, 1E-3,int(0.75*grid_size[0]), int(0.75*grid_size[1]))
     
     # for i in range(3):
     #     subiterations = 100

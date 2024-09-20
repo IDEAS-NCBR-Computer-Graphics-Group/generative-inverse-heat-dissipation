@@ -8,7 +8,7 @@ from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
 
     
 def run_with_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show_gui=True):
-    window = ti.ui.Window('CG - Renderer', res=(5*solver.nx, 3 * solver.ny))
+    window = ti.ui.Window('CG - Renderer', res=(6*solver.nx, 3 * solver.ny))
     gui = window.get_gui()
     canvas = window.get_canvas()
     

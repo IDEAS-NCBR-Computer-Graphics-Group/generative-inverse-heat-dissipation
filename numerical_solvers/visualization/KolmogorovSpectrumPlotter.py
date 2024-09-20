@@ -20,8 +20,22 @@ def compute_kolmogorov_spectrum(u, v, Lx, Ly):
         k: 1D array of wavenumbers.
         energy_spectrum: 1D array of energy spectrum values.
     """
+
+    ############333
+    #TODO: this is calculated every time:(
     # Grid dimensions
     Nx, Ny = u.shape
+
+    # Corresponding wavenumbers
+    kx = np.fft.fftfreq(Nx, d=Lx/Nx) * 2 * np.pi
+    ky = np.fft.fftfreq(Ny, d=Ly/Ny) * 2 * np.pi
+    k = np.sqrt(kx**2 + ky**2)
+
+    # Sort the spectrum by wavenumber
+    idx = np.argsort(k)
+    k_sorted = k[idx]
+    #######################
+
 
     # Compute the 2D Fourier transforms of the velocity fields
     u_hat = np.fft.fft2(u)
@@ -33,14 +47,7 @@ def compute_kolmogorov_spectrum(u, v, Lx, Ly):
     # Average the energy spectrum over one dimension (e.g., the y-dimension)
     energy_spectrum = np.mean(energy_spectrum, axis=0)
 
-    # Corresponding wavenumbers
-    kx = np.fft.fftfreq(Nx, d=Lx/Nx) * 2 * np.pi
-    ky = np.fft.fftfreq(Ny, d=Ly/Ny) * 2 * np.pi
-    k = np.sqrt(kx**2 + ky**2)
 
-    # Sort the spectrum by wavenumber
-    idx = np.argsort(k)
-    k_sorted = k[idx]
     energy_spectrum_sorted = energy_spectrum[idx]
 
     return k_sorted, energy_spectrum_sorted
@@ -188,7 +195,7 @@ class SpectrumHeatmapPlotter:
         ax.set_xlabel("Iteration")
         ax.set_ylabel("Wavenumber $k$")
         
-
+        
         # Render the figure to a NumPy array (RGB)
         fig.canvas.draw()
         canvas = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
