@@ -66,7 +66,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         corrupted_dataset_dir = os.path.join('data', 'corrupted_MNIST', 'lbm_ns_pairs')
         training_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=True, transform=transform)
         test_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=False, transform=transform)
-    elif config.data.dataset == 'CORRUPTED_BLUR_MNIST':
+    elif config.data.dataset == 'CORRUPTED_BLURR_MNIST':
         # TODO: make it consistent
         transform = [
                 transforms.ToPILImage(), 

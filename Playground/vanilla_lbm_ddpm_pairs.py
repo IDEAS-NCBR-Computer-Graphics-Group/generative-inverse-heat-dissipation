@@ -41,7 +41,7 @@ print(f"Input data folder: {input_data_dir}")
 start = timer()
 process_all=True
 
-# solver_config = get_lbm_ns_config()
+# solver_config = get_config()
 # corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
 
 # solver_config = get_lbm_ns_turb_config()
@@ -66,7 +66,7 @@ process_all=True
 #     process_pairs = solver_config.data.process_pairs,
 #     process_all=True)    
 
-solver_config = get_blurr_config()
+solver_config = get_config()
 corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
 
 corruptor = BlurringCorruptor(
@@ -107,7 +107,7 @@ testDataset = CorruptedDataset(train=False,
                                load_dir=corrupted_dataset_dir)
 test_dataloader = DataLoader(testDataset, batch_size=8, shuffle=True)
 
-clean_x, (noisy_x, less_noisy_x, corruption_amount, label) = next(iter(train_dataloader))
+clean_x, (blurred_x, less_blurred_x, corruption_amount, label) = next(iter(train_dataloader))
 # x, (y, corruption_amount, label) = next(iter(test_dataloader))
 print('Input shape:', clean_x.shape)
 print('corruption_amount:', corruption_amount)
@@ -128,8 +128,8 @@ axs[0].imshow(torchvision.utils.make_grid(clean_x)[0], cmap='Greys');
 # axs[1].imshow(torchvision.utils.make_grid(noisy_x)[0].clip(0.95, 1.05), cmap='Greys')
 # axs[2].imshow(torchvision.utils.make_grid(less_noisy_x)[0].clip(0.95, 1.05), cmap='Greys')
 
-axs[1].imshow(torchvision.utils.make_grid(noisy_x)[0].clip(solver_config.data.min_init_gray_scale, solver_config.data.max_init_gray_scale), cmap='Greys')
-axs[2].imshow(torchvision.utils.make_grid(less_noisy_x)[0].clip(solver_config.data.min_init_gray_scale, solver_config.data.max_init_gray_scale), cmap='Greys')
+axs[1].imshow(torchvision.utils.make_grid(blurred_x)[0].clip(solver_config.data.min_init_gray_scale, solver_config.data.max_init_gray_scale), cmap='Greys')
+axs[2].imshow(torchvision.utils.make_grid(less_blurred_x)[0].clip(solver_config.data.min_init_gray_scale, solver_config.data.max_init_gray_scale), cmap='Greys')
 
 
 # %% The model
@@ -172,7 +172,7 @@ opt = torch.optim.Adam(net.parameters(), lr=1e-3)
 losses = []
 
 # How many runs through the data should we do?
-n_epochs = 5
+n_epochs = 6
 
 # %% Run training
 print(f"batch_size={training_batch_size},\n" 
@@ -188,9 +188,12 @@ def add_noise(x, amount):
   amount = amount.view(-1, 1, 1, 1) # Sort shape so broadcasting works
   return x*(1.-amount) + noise*amount 
 
+sigma = 0.01 # traing noise
+delta = sigma*1.25 # sampling noise
+
 for epoch in range(n_epochs):
     counter = 0 
-    for clean_x, (noisy_x, less_noisy_x, corruption_amount, label) in train_dataloader:
+    for clean_x, (blurred_x, less_blurred_x, corruption_amount, label) in train_dataloader:
         if counter % 50 == 0:
           print(f"batch counter = {counter}/{len(train_dataloader)}")
           
@@ -207,17 +210,22 @@ for epoch in range(n_epochs):
         # noisy_x = corrupt(x, noise_amount) # Create our noisy x
         # normal corrupt
   
-        noisy_x = noisy_x.to(device)   
-        less_noisy_x = less_noisy_x.to(device)
+        blurred_x = blurred_x.to(device)   
+        less_blurred_x = less_blurred_x.to(device)
         clean_x = clean_x.to(device)     
         # Get the model prediction
         # pred = net(noisy_x, 0).sample #<<< Using timestep 0 always, adding .sample
         
         corruption_amount = corruption_amount.to(device)
-        pred = net(noisy_x, corruption_amount).sample #<<< Using timestep 0 always, adding .sample
-
+        # pred = net(noisy_x, corruption_amount).sample #<<< Using timestep 0 always, adding .sample
+        
+        noise = torch.randn_like(blurred_x) * sigma
+        perturbed_data = blurred_x + noise # add training noise
+        diff = net(blurred_x, corruption_amount).sample #<<< Using timestep 0 always, adding .sample
+        pred = blurred_x + diff #instead of less noisy learn the diff
+        
         # Calculate the loss
-        loss = loss_fn(pred, less_noisy_x) # How close is the output to the true 'less_noisy_x'?
+        loss = loss_fn(pred, less_blurred_x) # How close is the output to the true 'less_noisy_x'?
 
         # Backprop and update the params:
         opt.zero_grad()
@@ -245,6 +253,7 @@ print(f"Model saved to {model_save_path}")
 net.load_state_dict(torch.load(model_save_path))
 net.to(device)  # Send model to the appropriate device (GPU or CPU)
 print(f"Model loaded from {model_save_path}")
+
 # %% visualize training loss
 # Losses
 plt.plot(losses)
@@ -257,48 +266,41 @@ plt.show()
 # %% Generate samples
 fig, axs = plt.subplots(1, 3, figsize=(20, 16))
 
-n_steps = int(solver_config.solver.max_steps) # 5
-# n_steps = 5
+# n_steps = int(solver_config.solver.max_steps) # 5
+n_steps = 20
 # noisy_x = torch.rand(64, 1, 28, 28).to(device) # pure noise
 # x, (noisy_x, less_noisy_x, corruption_amount, label) = next(iter(test_dataloader))
 clean_x, (_, _, _, _) = next(iter(test_dataloader))
 
-
-# noisy_x = noisy_x.to(device)
-# corruption_amount = corruption_amount.to(device)
-# denoised_x = noisy_x.clone() # just take from dataset
-
-noisy_x = torch.empty_like(clean_x)
+max_noise_level = 3
+blurred_x = torch.empty_like(clean_x)
 for index in range(clean_x.shape[0]):
-    tmp, _ = corruptor._corrupt(clean_x[index], n_steps) # blur to the max level
-    noisy_x[index] = tmp
+    tmp, _ = corruptor._corrupt(clean_x[index], max_noise_level) # blur to the max level
+    blurred_x[index] = tmp
 
-step_history = [noisy_x.detach().cpu()]
+step_history = [blurred_x.detach().cpu()]
 pred_output_history = []
-noisy_x = noisy_x.to(device)
+blurred_x = blurred_x.to(device)
 
-denoised_x = noisy_x.clone() 
+deblurred_x = blurred_x.clone() 
 
 
 
-print("corruption_amount[0].item(), n_steps, i, mix_factor")
-# torch.linspace(0, 1, x.shape[0])
+print("corruption_amount[0].item(), n_steps, i")
 
 for i in range(n_steps):
-  noise_amount = torch.ones((noisy_x.shape[0], )).to(device) * (1-(i/n_steps)) # Starting high going low
-  corruption_amount = torch.ones(noisy_x.shape[0], device=device, dtype=torch.float) *(n_steps - i)
+#   noise_amount = torch.ones((noisy_x.shape[0], )).to(device) * (1-(i/n_steps)) # Starting high going low
+  corruption_amount = torch.ones(blurred_x.shape[0], device=device, dtype=torch.float) *(max_noise_level - i/n_steps)
   with torch.no_grad():
-    # pred = net(denoised_x, 0).sample
-    pred = net(denoised_x, corruption_amount).sample
-     
-#   mix_factor = 1/(n_steps - i)
-  mix_factor = 1.
-  denoised_x = denoised_x*(1-mix_factor) + pred*mix_factor
-#   denoised_x = add_noise(denoised_x, 1E-2)
+    diff = net(deblurred_x, corruption_amount).sample
 
-  pred_output_history.append(pred.detach().cpu())
-  step_history.append(denoised_x.detach().cpu())
-  print(corruption_amount[0].item(), n_steps, i, mix_factor)
+  deblurred_x = deblurred_x + diff
+  noise = torch.randn_like(deblurred_x)
+  u = deblurred_x + noise*delta # add sampling noise
+   
+  pred_output_history.append(diff.detach().cpu())
+  step_history.append(deblurred_x.detach().cpu())
+  print(corruption_amount[0].item(), n_steps, i)
 
   
 
@@ -306,12 +308,12 @@ axs[0].imshow(torchvision.utils.make_grid(clean_x, nrow=8)[0].clip(0, 1), cmap='
 axs[0].set_title('Clean input');
 
 axs[1].imshow(torchvision.utils.make_grid(
-    denoised_x.detach().cpu(), nrow=8)[0].clip(solver_config.data.min_init_gray_scale, 
+    deblurred_x.detach().cpu(), nrow=8)[0].clip(solver_config.data.min_init_gray_scale, 
                                                solver_config.data.max_init_gray_scale), cmap='Greys')
 axs[1].set_title('Denoised');
 
 axs[2].imshow(torchvision.utils.make_grid(
-    noisy_x.detach().cpu(), nrow=8)[0].clip(solver_config.data.min_init_gray_scale, 
+    blurred_x.detach().cpu(), nrow=8)[0].clip(solver_config.data.min_init_gray_scale, 
                                             solver_config.data.max_init_gray_scale), cmap='Greys')
 axs[2].set_title('Noise to sample from');
 
@@ -320,7 +322,7 @@ axs[2].set_title('Noise to sample from');
 
 fig, axs = plt.subplots(n_steps, 2, figsize=(20, 20), sharex=True)
 axs[0,0].set_title('x (model input)')
-axs[0,1].set_title('model prediction')
+axs[0,1].set_title('NN prediction')
 for i in range(n_steps):
     axs[i, 0].imshow(torchvision.utils.make_grid(
         step_history[i])[0].clip(solver_config.data.min_init_gray_scale, 
@@ -334,4 +336,6 @@ for i in range(n_steps):
 #     ax.axis('off')
 # stuff = denoised_x.detach().cpu()[0]
 # print(stuff[0])
+
+
 # %%

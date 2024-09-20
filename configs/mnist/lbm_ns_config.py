@@ -18,6 +18,7 @@ class DataConfig:
     max_init_gray_scale: float = 1.05
     
     process_pairs: bool = True
+    processed_filename: str = field(init=False) # To be computed in post_init
     
     def __post_init__(self):
         self.processed_filename = 'lbm_ns_pairs' if self.process_pairs else 'lbm_ns'
