@@ -1,9 +1,11 @@
 from configs.mnist import default_mnist_configs
+import ml_collections
 import numpy as np
 
 
 def get_config():
     config = default_mnist_configs.get_default_configs()
+    
     model = config.model
     model.blur_sigma_max = 20
     model.blur_sigma_min = 0.5
@@ -15,8 +17,12 @@ def get_config():
     model.blur_schedule = np.array(
         [0] + list(model.blur_schedule))  # Add the k=0 timestep
     
-    model.data.dataset = 'CORRUPTED_MNIST'
+    config.data.dataset = 'CORRUPTED_NS_MNIST'
     
-    config.training.snapshot_freq_for_preemption = 100
+    config.training.n_iters = 10001
+    config.training.snapshot_freq = 1000
+    config.training.snapshot_freq_for_preemption = 100 # store additional checkpoints for preemption in cloud computing environments 
+    config.training.log_freq = 50
+    config.training.eval_freq = 100
     config.training.sampling_freq = 100
     return config

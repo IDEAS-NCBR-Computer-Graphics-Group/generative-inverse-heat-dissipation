@@ -1,12 +1,15 @@
 from abc import ABC, abstractmethod
 
 class BaseCorruptor(ABC):
-    def __init__(self, train=True, transform=None, target_transform=None, save_dir='./corrupted_mnist'):
+    def __init__(self, transform=None, target_transform=None, save_dir='./corrupted_mnist'):
 
-        self.train = train
         self.transform = transform
         self.target_transform = target_transform
  
     @abstractmethod
     def _preprocess_and_save_data(self):
+        pass
+    
+    @abstractmethod
+    def _corrupt(self, x, steps, generate_pair=False):
         pass

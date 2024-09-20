@@ -67,12 +67,16 @@ def get_inverse_heat_loss_fn(config, train, scales, device, heat_forward_module)
         model_fn = mutils.get_model_fn(
             model, train=train)  # get train/eval model
         fwd_steps = label_sampling_fn(batch.shape[0], batch.device)
+        
         blurred_batch = heat_forward_module(batch, fwd_steps).float()
         less_blurred_batch = heat_forward_module(batch, fwd_steps-1).float()
+        
         noise = torch.randn_like(blurred_batch) * sigma
         perturbed_data = noise + blurred_batch
+        
         diff = model_fn(perturbed_data, fwd_steps)
         prediction = perturbed_data + diff
+        
         losses = (less_blurred_batch - prediction)**2
         losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1)
         loss = torch.mean(losses)
@@ -81,28 +85,30 @@ def get_inverse_heat_loss_fn(config, train, scales, device, heat_forward_module)
     return loss_fn
 
 
-def get_inverse_lbm_ns_loss_fn(config, train, heat_forward_module):
+def get_inverse_lbm_ns_loss_fn(train):
 
-    sigma = config.model.sigma #todo: fix variance in STG
-    label_sampling_fn = get_label_sampling_function(config.model.K) #todo: this is just number of forward steps, isnt it?
+    # sigma = config.model.sigma # TODO: fix variance in STG
+    # label_sampling_fn = get_label_sampling_function(config.model.K) # TODO: this is just number of forward steps, isnt it?
 
     def loss_fn(model, batch):
         model_fn = mutils.get_model_fn(model, train=train)  # get train/eval model
         
+         # TODO: load a duo-pack from dataloader
+        blurred_batch, less_blurred_batch, fwd_steps, labels = batch
         
-        #todo: load a duo-pack from dataloader
-        fwd_steps = label_sampling_fn(batch.shape[0], batch.device)
-        blurred_batch = heat_forward_module(batch, fwd_steps).float()
-        less_blurred_batch = heat_forward_module(batch, fwd_steps-1).float()
+        # fwd_steps = label_sampling_fn(batch.shape[0], batch.device)
+        # blurred_batch = heat_forward_module(batch, fwd_steps).float()
+        # less_blurred_batch = heat_forward_module(batch, fwd_steps-1).float()
         
-        #todo add same noise as in corruptor?
-        noise = torch.randn_like(blurred_batch) * sigma
         
-        perturbed_data = noise + blurred_batch
-        diff = model_fn(perturbed_data, fwd_steps)
         
-        prediction = perturbed_data + diff
+        # TODO: the corruptor is nondeterministic, so we may skip adding more noise here
+        # noise = torch.randn_like(blurred_batch) * sigma
+        # perturbed_data = noise + blurred_batch
+        # diff = model_fn(perturbed_data, fwd_steps)
+        # prediction = perturbed_data + diff
         
+        prediction = model_fn(blurred_batch, fwd_steps)
         losses = (less_blurred_batch - prediction)**2
         losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1)
         loss = torch.mean(losses)
@@ -110,17 +116,16 @@ def get_inverse_lbm_ns_loss_fn(config, train, heat_forward_module):
 
     return loss_fn
 
-def get_step_lbm_fn(train, scales, config, optimize_fn=None,
-                heat_forward_module=None, device=None):
+def get_step_lbm_fn(train, config, 
+                    optimize_fn=None,
+                    device=None):
     """A wrapper for loss functions in training or evaluation
     Based on code from https://github.com/yang-song/score_sde_pytorch"""
     if device == None:
         device = config.device
 
-    loss_fn = get_inverse_lbm_ns_loss_fn(
-        config, train, heat_forward_module=heat_forward_module) # todo: pass corrupted dataloader instead of heat_forward_module
+    loss_fn = get_inverse_lbm_ns_loss_fn(train)
     
-
     # For automatic mixed precision
     scaler = torch.cuda.amp.GradScaler()
 

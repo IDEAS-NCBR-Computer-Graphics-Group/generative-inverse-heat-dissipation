@@ -35,7 +35,7 @@ pip install -r gcp_requirements.txt
 
 ### athena cluster
 
-```
+```.sh
 srun -N1 -n8 --account=plgclb2024-gpu-a100 --partition=plgrid-gpu-a100 --gres=gpu:1 --time=08:00:00 --pty /bin/bash -l
 srun -N1 -n8 --account=plgclb2024-gpu-a100 --partition=plgrid-gpu-a100 --gres=gpu:1 --time=01:00:00 --pty /bin/bash -l
 
@@ -50,9 +50,11 @@ python -m venv py-ihd-env
 source $SCRATCH/py-ihd-env/bin/activate
 $SCRATCH/py-ihd-env/bin/python -m pip install --upgrade pip
 
-export MPICC=mpicc
-export MPI4PY_CC=mpicc
-pip install --no-binary=mpi4py mpi4py
+
+## skip the mpi4py part , we dont use it
+#export MPICC=mpicc
+#export MPI4PY_CC=mpicc
+#pip install --no-binary=mpi4py mpi4py
 
 #pip install mpi4py torch torchvision #--index-url https://download.pytorch.org/whl/cu124 # 116
 pip install -r generative-inverse-heat-dissipation/athena_requirements.txt
@@ -63,14 +65,10 @@ cd /net/tscratch/people/plgmuaddieb/generative-inverse-heat-dissipation
 python train.py --config configs/mnist/default_mnist_configs.py --workdir runs/mnist/default
 ```
 
-
-
-
 #### some useless experiments
 
-Generally mpi4py doesnt seem to work properly.
+Generally mpi4py doesnt seem to work properly the pytorch code.
 Just commented it away.
-
 
 ```.bash
 #module load libtirpc/1.3.2
@@ -82,7 +80,6 @@ run interactive job
 ```.bash
 srun -N1 -n8 --account=plgclb2024-gpu-a100 --partition=plgrid-gpu-a100 --gres=gpu:1 --time=08:00:00 --pty /bin/bash -l
 ```
-
 
 ```.bash
 export CPPFLAGS="-I/path/to/mpi/include"
@@ -120,15 +117,13 @@ mpiexec python -c "from mpi4py import MPI; print('mpi4py is installed correctly.
 echo "mpi4py installation completed."
 ```
 
-
 mpicc -o mpi_hello_world mpi_hello_world.c
 mpiexec ./mpi_hello_world
-
-
 
 ## datasets download
 
 ### afhq
+
 https://github.com/clovaai/stargan-v2
 
 in stargan-v2/download.sh
@@ -161,18 +156,16 @@ unzip ffhq-128-70k.zip -d ffhq-128-70k
 ```
 
 url:
-https://www.kaggle.com/datasets/potatohd404/ffhq-128-70k
-
+<https://www.kaggle.com/datasets/potatohd404/ffhq-128-70k>
 
 ### mount disk on gcp
 
 lsblk  
-sudo fdisk -l 
+sudo fdisk -l
 
 sudo fdisk -l /dev/nvme0n2 # Check the Disk for Partitions or Filesystem:
 sudo mkfs.ext4 /dev/nvme0n2 # Create a Filesystem on the Disk (if needed):
 sudo mount /dev/nvme0n2 /mnt/datadisk/
-
 
 ### qpa error
 
@@ -184,10 +177,11 @@ This application failed to start because no Qt platform plugin could be initiali
 
 Available platform plugins are: xcb, eglfs, minimal, minimalegl, offscreen, vnc, webgl.
 
-https://stackoverflow.com/questions/71088095/opencv-could-not-load-the-qt-platform-plugin-xcb-in-even-though-it-was-fou
+<https://stackoverflow.com/questions/71088095/opencv-could-not-load-the-qt-platform-plugin-xcb-in-even-though-it-was-fou>
 
 it was enought to reinstall:
-```
+
+```.sh
 pip uninstall PyQt5
 pip uninstall opencv-python
 pip install opencv-python
@@ -197,16 +191,23 @@ maybe `pip install opencv-python-headless`
 
 # check disk usage
 
-sudo df -h 
+```.sh
+sudo df -h
 du -sh * | sort -hr | head -n10
 ncdu $HOME
 hpc-fs # athena util
+```
 
+# runs
 
-
-# run
-
+```.sh
 conda activate ihd-env
-export PYTHONPATH=$(pwd)
-python numerical_solvers/data_holders/CorruptedDatasetCreator.py 
-python numerical_solvers/runners/taichi_lbm_NS_picture_diffuser.py 
+export PYTHONPATH=$(pwd) # may be helpfull
+python numerical_solvers/data_holders/CorruptedDatasetCreator.py
+python numerical_solvers/runners/taichi_lbm_NS_picture_diffuser.py
+
+python train.py --config configs/mnist/small_mnist.py --workdir runs/mnist/small_mnist
+
+python train_corrupted.py --config configs/mnist/small_corrupted_mnist.py  --workdir runs/mnist/small_lbm_mnist  --forwardsolverconfig=configs/mnist/lbm_ns_config.py
+python train_corrupted.py --config configs/mnist/small_corrupted_mnist.py  --workdir runs/mnist/small_blurr_mnist  --forwardsolverconfig=configs/mnist/blurring_configs.py
+```

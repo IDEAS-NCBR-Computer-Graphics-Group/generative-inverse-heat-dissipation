@@ -89,8 +89,7 @@ def train(config, workdir):
 
     # Building sampling functions
     delta = config.model.sigma*1.25
-    initial_sample, _ = sampling.get_initial_sample(
-        config, heat_forward_module, delta)
+    initial_sample, _ = sampling.get_initial_sample(config, heat_forward_module, delta)
     sampling_fn = sampling.get_sampling_fn_inverse_heat(config,
                                                         initial_sample, intermediate_sample_indices=list(
                                                             range(config.model.K+1)),
@@ -108,6 +107,7 @@ def train(config, workdir):
         try:
             batch = next(train_iter)[0].to(config.device).float()
         except StopIteration:  # Start new epoch if run out of data
+            print(f"new epoch {step}")
             train_iter = iter(trainloader)
             batch = next(train_iter)[0].to(config.device).float()
         loss, losses_batch, fwd_steps_batch = train_step_fn(state, batch)
