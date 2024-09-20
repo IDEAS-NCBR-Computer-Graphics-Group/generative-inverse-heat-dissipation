@@ -9,6 +9,7 @@ from torchvision import datasets
 from torchvision import transforms, datasets
 import torch
 from PIL import Image
+import logging
 
 import os
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
@@ -49,66 +50,98 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
 
     if config.data.dataset == 'MNIST':
         training_data = datasets.MNIST(
-            root="data", train=True, download=True, transform=transform)
+            root="data",
+            train=True,
+            download=True,
+            transform=transform
+            )
         test_data = datasets.MNIST(
-            root="data", train=False, download=True, transform=transform)
-    # elif config.data.dataset == 'CORRUPTED_MNIST':
-    #     # TODO: make it consistent
-    #     transform = [
-    #             transforms.ToPILImage(), 
-    #             transforms.Resize(config.data.image_size),
-    #             transforms.CenterCrop(config.data.image_size),
-    #             transforms.RandomHorizontalFlip(),
-    #             transforms.ToTensor()
-    #             ]
-    #     transform = transforms.Compose(transform)
-    #     # transform = None
-
-    #     corrupted_dataset_dir = os.path.join('data', 'corrupted_MNIST', 'lbm_ns_pair')
-    #     training_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=True, transform=transform)
-    #     test_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=False, transform=transform)
+            root="data",
+            train=False,
+            download=True,
+            transform=transform
+            )
     elif config.data.dataset == 'CIFAR10':
         training_data = datasets.CIFAR10(
-            root="data", train=True, download=True, transform=transform)
+            root="data",
+            train=True,
+            download=True,
+            transform=transform
+            )
         test_data = datasets.CIFAR10(
-            root="data", train=False, download=True, transform=transform)
+            root="data",
+            train=False,
+            download=True,
+            transform=transform
+            )
     elif config.data.dataset == "lsun_church":
         training_data = datasets.LSUN(
-            root="data/lsun", classes=['church_outdoor_train'], transform=transform)
+            root="data/lsun",
+            classes=['church_outdoor_train'],
+            transform=transform
+            )
         test_data = datasets.LSUN(
-            root="data/lsun", classes=['church_outdoor_val'], transform=transform)
+            root="data/lsun",
+            classes=['church_outdoor_val'],
+            transform=transform
+            )
     elif config.data.dataset == 'FFHQ':
-        trainloader = load_data(data_dir="data/ffhq-dataset/images1024x1024",
-                                batch_size=train_batch_size, image_size=config.data.image_size,
-                                random_flip=config.data.random_flip)
-        testloader = load_data(data_dir="data/ffhq-dataset/images1024x1024",
-                               batch_size=eval_batch_size, image_size=config.data.image_size,
-                               random_flip=False)
+        trainloader = load_data(
+            data_dir="data/ffhq-dataset/images1024x1024",
+            batch_size=train_batch_size,
+            image_size=config.data.image_size,
+            random_flip=config.data.random_flip
+            )
+        testloader = load_data(
+            data_dir="data/ffhq-dataset/images1024x1024",
+            batch_size=eval_batch_size,
+            image_size=config.data.image_size,
+            random_flip=False
+            )
         return trainloader, testloader
     elif config.data.dataset == 'FFHQ_128':
-        trainloader = load_data(data_dir="data/ffhq-128-70k",
-                                batch_size=train_batch_size, image_size=config.data.image_size,
-                                random_flip=config.data.random_flip)
-        testloader = load_data(data_dir="data/ffhq-128-70k",
-                               batch_size=eval_batch_size, image_size=config.data.image_size,
-                               random_flip=False)
+        trainloader = load_data(
+            data_dir="data/ffhq-128-70k",
+            batch_size=train_batch_size,
+            image_size=config.data.image_size,
+            random_flip=config.data.random_flip
+            )
+        testloader = load_data(
+            data_dir="data/ffhq-128-70k",
+            batch_size=eval_batch_size,
+            image_size=config.data.image_size,
+            random_flip=False
+            )
         return trainloader, testloader
     elif config.data.dataset == 'AFHQ':
-        trainloader = load_data(data_dir="data/afhq/train",
-                                batch_size=train_batch_size, image_size=config.data.image_size,
-                                random_flip=config.data.random_flip)
-        testloader = load_data(data_dir="data/afhq/val",
-                               batch_size=eval_batch_size, image_size=config.data.image_size,
-                               random_flip=False)
+        trainloader = load_data(
+            data_dir="data/afhq/train",
+            batch_size=train_batch_size,
+            image_size=config.data.image_size,
+            random_flip=config.data.random_flip
+            )
+        testloader = load_data(
+            data_dir="data/afhq/val",
+            batch_size=eval_batch_size,
+            image_size=config.data.image_size,
+            random_flip=False
+            )
         return trainloader, testloader
     else:
         raise ValueError
 
     # If we didn't use the load_data function that already created data loaders:
-    trainloader = DataLoader(training_data, batch_size=train_batch_size,
-                             shuffle=True, num_workers=4, pin_memory=True)
-    testloader = DataLoader(test_data, batch_size=eval_batch_size,
-                            shuffle=True, num_workers=4, pin_memory=True)
+    trainloader = DataLoader(training_data,
+                            batch_size=train_batch_size,
+                            shuffle=True,
+                            num_workers=4,
+                            pin_memory=True)
+    testloader = DataLoader(test_data,
+                            batch_size=eval_batch_size,
+                            shuffle=True,
+                            num_workers=4,
+                            pin_memory=True
+                            )
 
     return trainloader, testloader
 
@@ -189,8 +222,15 @@ def _list_image_files_recursively(data_dir):
 
 
 class ImageDataset(Dataset):
-    def __init__(self, resolution, image_paths, classes=None, shard=0, num_shards=1,
-                 random_flip=True):
+    def __init__(
+            self,
+            resolution,
+            image_paths,
+            classes=None,
+            shard=0,
+            num_shards=1,
+            random_flip=True
+            ):
         super().__init__()
         self.resolution = resolution
         self.local_images = image_paths[shard:][::num_shards]
@@ -232,11 +272,13 @@ class ImageDataset(Dataset):
         # Changed here so that not centered at zero
         # arr = arr.astype(np.float32) / 127.5 - 1
         arr = arr.astype(np.float32) / 255
-
-        out_dict = {}
+         
+        out = {}
         if self.local_classes is not None:
-            out_dict["y"] = np.array(self.local_classes[idx], dtype=np.int64)
-        return np.transpose(arr, [2, 0, 1]), out_dict
+            out["y"] = np.array(self.local_classes[idx], dtype=np.int64)
+        else:
+            out = torch.zeros([1])
+        return torch.from_numpy(np.transpose(arr, [2, 0, 1])), out
 
 
 def prepare_batch(data_loader_iterator, device):

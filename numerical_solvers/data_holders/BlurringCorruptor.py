@@ -1,21 +1,11 @@
-import numpy as np
-import os
 import torch
-from PIL import Image, ImageFilter
-import torchvision
-
 import numpy as np
-import matplotlib
-from matplotlib import cm
-import matplotlib.pyplot as plt
-import os
-import cv2
-
 from scipy.ndimage import gaussian_filter
-from abc import ABC
+from tqdm import tqdm
 import warnings
+import os
 
-import taichi as ti
+from configs.ffhq import corrupted
 from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
 from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range
 
@@ -87,57 +77,48 @@ class BlurringCorruptor(BaseCorruptor):
             process_pairs (bool): Flag indicating whether to process pairs of images (True) 
                                   or single corrupted images (False). Default is False.
         """
-        file_name = f"{'train' if is_train_dataset else 'test'}_data.pt"
-        file_path = os.path.join(save_dir, file_name)
-        
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-            
-        if os.path.exists(file_path):
-            warnings.warn(f"[EXIT] Data not generated. Reason: file exists {file_path}")
+        split = 'train' if is_train_dataset else 'test'
+
+        split_save_dir = os.path.join(save_dir, split)
+        if os.path.exists(split_save_dir):
+            warnings.warn(f"[EXIT] Data not generated. Reason: file exist {save_dir} and is not empty.")
             return
+        os.makedirs(split_save_dir)
         
-        data = []
-        modified_images = [] 
-        corruption_amounts = []
-        labels = []
 
-        # Only needed if processing pairs
-        pre_modified_images = [] if process_pairs else None  
+        for i in tqdm(range(len(initial_dataset))):
+            file_path = os.path.join(split_save_dir, f'data_point_{i}.pt')
 
-        dataset_length = len(initial_dataset)
-        if not process_all:
-            dataset_length = 500  # Process just a bit 
-        
-        for index in range(dataset_length):
-            if index % 100 == 0:
-                print(f"Preprocessing (blurring) {index}")
-            
             # corruption_amount = np.random.randint(self.min_blurr, self.max_blurr) # ints
-            
             corruption_amount = np.random.uniform(low=self.min_blurr, high=self.max_blurr, size=None)
-            original_pil_image, label = initial_dataset[index]
-            original_image = self.transform(original_pil_image)
+            image, label = initial_dataset[i]
+            original_image = self.transform(image)
 
             # Use the unified corrupt function and ignore the second value if not needed
-            modified_image, pre_modified_image = self._corrupt(original_image, corruption_amount, generate_pair=process_pairs)
-
-            data.append(original_image)
-            modified_images.append(modified_image)
-            corruption_amounts.append(corruption_amount)
-            labels.append(label)
+            corrupted_image, pre_corrupted_image = self._corrupt(
+                original_image,
+                corruption_amount,
+                generate_pair=process_pairs
+                )
 
             if process_pairs:
-                pre_modified_images.append(pre_modified_image)
-
-        # Convert lists to tensors
-        data = torch.stack(data)
-        modified_images = torch.stack(modified_images)
-        corruption_amounts = torch.tensor(corruption_amounts)
-        labels = torch.tensor(labels)
-
-        if process_pairs:
-            pre_modified_images = torch.stack(pre_modified_images)
-            torch.save((data, modified_images, pre_modified_images, corruption_amounts, labels), file_path)
-        else:
-            torch.save((data, modified_images, corruption_amounts, labels), file_path)
+                torch.save(
+                    (
+                    image,
+                    corrupted_image,
+                    pre_corrupted_image,
+                    corruption_amount,
+                    label
+                    ),
+                    file_path
+                    )
+            else:
+                torch.save(
+                    (
+                    image,
+                    corrupted_image,
+                    corruption_amount,
+                    label
+                    ),
+                    file_path
+                    )

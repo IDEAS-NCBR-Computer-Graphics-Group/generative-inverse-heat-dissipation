@@ -17,7 +17,8 @@ def corrupt_datasets(train, test, config, save_dir):
     transform = transforms.Compose([])
     process_all = True
 
-    logging.info(f"Fluid corrupting {dataset_name} dataset.")
+    fluid_save_dir = os.path.join(save_dir, 'fluid')
+    logging.info(f"Fluid corruption on {dataset_name} dataset")
     start = timer()
     solver_config = get_lbm_ns_config()
 
@@ -26,48 +27,50 @@ def corrupt_datasets(train, test, config, save_dir):
         transform=transform
     )
 
-    logging.info("Fluid corrupting train data.")
+    logging.info("Fluid corruption on train split")
     corruptor._preprocess_and_save_data(
         initial_dataset=train.dataset,
-        save_dir=save_dir,
+        save_dir=fluid_save_dir,
         is_train_dataset = True,
-        process_pairs = solver_config.data.process_pairs,
-        process_all=process_all)
+        process_pairs = solver_config.data.process_pairs
+        )
 
-    logging.info("Fluid corrupting test data.")
+    logging.info("Fluid corruption on test split")
     corruptor._preprocess_and_save_data(
         initial_dataset=train.dataset,
-        save_dir=save_dir,
+        save_dir=fluid_save_dir,
         is_train_dataset = False,
-        process_pairs = solver_config.data.process_pairs,
-        process_all=process_all)    
+        process_pairs = solver_config.data.process_pairs
+        )    
 
     end = timer()
-    logging.info(f"Fluid corruption took {end - start:.2f} seconds.")
+    logging.info(f"Fluid corruption took {end - start:.2f} seconds")
 
-    logging.info(f"Blur corrupting {dataset_name} dataset.")
+    blur_save_dir = os.path.join(save_dir, 'blur')
+    logging.info(f"Blur corruption on {dataset_name} dataset")
     start = timer()
     solver_config = get_blurr_config()    
     
     corruptor = BlurringCorruptor(
         solver_config, 
-        transform=transforms.Compose([transforms.ToTensor()]))
+        transform=transform
+        )
     
-    logging.info("Blur corrupting train data.")
+    logging.info("Blur corruption on train split")
     corruptor._preprocess_and_save_data(
         initial_dataset=train.dataset,
-        save_dir=save_dir,
+        save_dir=blur_save_dir,
         is_train_dataset = True,
-        process_pairs = solver_config.data.process_pairs,
-        process_all=process_all)
+        process_pairs = solver_config.data.process_pairs
+        )
 
-    logging.info("Blur corrupting test data.")
+    logging.info("Blur corruption test split")
     corruptor._preprocess_and_save_data(
         initial_dataset=test.dataset,
-        save_dir=save_dir,
+        save_dir=blur_save_dir,
         is_train_dataset = False,
-        process_pairs = solver_config.data.process_pairs,
-        process_all=process_all)    
+        process_pairs = solver_config.data.process_pairs
+        )    
     
     end = timer()
     logging.info(f"Blurring corruption took {end - start:.2f} seconds.")
@@ -77,34 +80,36 @@ def corrupt_datasets(train, test, config, save_dir):
 def prepare_datasets(save_dir):
     logging.info(f"Preparing datasets.") 
 
+    fluid_save_dir = os.path.join(save_dir, 'fluid')
     transform = None
     fluid_train_pairs = CorruptedDataset(
         train=True, 
         transform=transform, 
         target_transform=None, 
-        load_dir=save_dir
+        load_dir=fluid_save_dir
         )
     fluid_train_dataloader = DataLoader(fluid_train_pairs, batch_size=8, shuffle=True)
     fluid_test_pairs = CorruptedDataset(
-        train=True, 
+        train=False, 
         transform=transform, 
         target_transform=None, 
-        load_dir=save_dir
+        load_dir=fluid_save_dir
         )
     fluid_test_dataloader = DataLoader(fluid_test_pairs, batch_size=8, shuffle=True)
     
+    blur_save_dir = os.path.join(save_dir, 'blur')
     blur_train_pairs = CorruptedDataset(
         train=True, 
         transform=transform, 
         target_transform=None, 
-        load_dir=save_dir
+        load_dir=blur_save_dir
         )
     blur_train_dataloader = DataLoader(blur_train_pairs, batch_size=8, shuffle=True)
     blur_test_pairs = CorruptedDataset(
-        train=True, 
+        train=False, 
         transform=transform, 
         target_transform=None, 
-        load_dir=save_dir
+        load_dir=blur_save_dir
         )
     blur_test_dataloader = DataLoader(blur_test_pairs, batch_size=8, shuffle=True)
     
