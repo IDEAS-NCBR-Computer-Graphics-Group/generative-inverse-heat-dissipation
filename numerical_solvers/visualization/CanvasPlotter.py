@@ -449,7 +449,7 @@ def plot_v_component_distribution(v_data, title):
     mu, sigma = norm.fit(v_data)
     
     # Create an array over the full range specified
-    x_range = np.linspace(-max(v_data.max(), -v_data.min()), max(v_data.max(), -v_data.min()), 256)
+    x_range = np.linspace(-max(v_data.max(), -v_data.min())*2, max(v_data.max(), -v_data.min())*2, 256)
     gaussian_fit = norm.pdf(x_range, mu, sigma)
 
     # Display the histogram and the fit
@@ -457,7 +457,7 @@ def plot_v_component_distribution(v_data, title):
 
     # Plot the histogram and Gaussian fit
     ax.hist(v_data, bins=num_bins, density=True, alpha=0.6, color='g')
-    # ax.set_xlim([-max(v_data.max(), -v_data.min())/5, max(v_data.max(), -v_data.min())/5])
+    # ax.set_xlim([-max(v_data.max(), -v_data.min()), max(v_data.max(), -v_data.min())])
     ax.set_xlim(-5E-2, 5E-2)
     ax.plot(x_range, gaussian_fit, 'r-', lw=2)
     ax.set_title(f'{title}', fontsize=10)

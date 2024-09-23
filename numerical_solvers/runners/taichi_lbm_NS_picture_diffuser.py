@@ -110,7 +110,7 @@ if __name__ == '__main__':
 
     
     
-    run_with_gui(solver, np_gray_image, iter_per_frame=100)
+    run_with_gui(solver, np_gray_image, iter_per_frame=5)
 
 
 # %%
