@@ -74,8 +74,8 @@ if __name__ == '__main__':
         is_div_free = False)
     
     
-    niu = 1E-4 * 1./6
-    bulk_visc = 1E-4 * 1./6
+    niu = 1 * 1./6
+    bulk_visc = 1 * 1./6
     case_name="miau"   
     solver = LBM_NS_Solver(
         case_name,
@@ -110,7 +110,7 @@ if __name__ == '__main__':
 
     
     
-    run_with_gui(solver, np_gray_image, iter_per_frame=1)
+    run_with_gui(solver, np_gray_image, iter_per_frame=100)
 
 
 # %%

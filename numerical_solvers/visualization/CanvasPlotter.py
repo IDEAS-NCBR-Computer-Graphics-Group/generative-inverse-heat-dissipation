@@ -327,9 +327,9 @@ class CanvasPlotter:
         
         if self.is_v_distribution_checked:
             #TODO: JJM get rid of this ugly hack
-            border = 2
-            vy = vy[border:-border,border:-border]
-            vx = vx[border:-border,border:-border]
+            # border = 2
+            # vy = vy[border:-border,border:-border]
+            # vx = vx[border:-border,border:-border]
             v_distribution_y = plot_v_component_distribution(vy, "v_y component distribution")
             v_distribution_rgba_y = cm.ScalarMappable().to_rgba(np.flip(np.transpose(v_distribution_y, (1, 0, 2)), axis=1)) 
             v_distribution_x = plot_v_component_distribution(vx, "v_x component distribution")
