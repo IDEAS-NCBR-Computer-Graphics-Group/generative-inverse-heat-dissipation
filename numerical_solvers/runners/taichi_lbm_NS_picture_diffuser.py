@@ -55,11 +55,11 @@ if __name__ == '__main__':
 
     domain_size = (1.0, 1.0)
     grid_size = np_gray_image.shape
-    turb_intensity = 1E-4
+    turb_intensity = 0 #1E-4
     noise_limiter = (-1E-3, 1E-3)
-    dt_turb = 5E-4 
+    dt_turb = 1E-3 
 
-    # turb_intensity = 1E-3
+    # turb_intensity = 1E-4
     # energy_spectrum = lambda k: np.where(np.isinf(k), 0, k)
     
     energy_spectrum = lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
@@ -74,8 +74,8 @@ if __name__ == '__main__':
         is_div_free = False)
     
     
-    niu = 0.5*1/6
-    bulk_visc = 0.5*1/6
+    niu = 1 * 1./6
+    bulk_visc = 1 * 1./6
     case_name="miau"   
     solver = LBM_NS_Solver(
         case_name,
@@ -87,9 +87,9 @@ if __name__ == '__main__':
     solver.init(np_gray_image) 
 
     # solver.init(1.*np.ones(grid_size, dtype=np.float32))
-    # solver.create_ic_hill(.1, 1E-3, int(0.5*nx), int(0.5*ny)) 
-    # solver.create_ic_hill( .05, 1E-3, int(0.25*nx), int(0.25*ny))
-    # solver.create_ic_hill(-.05, 1E-3, int(0.75*nx), int(0.75*ny))
+    # solver.create_ic_hill(.2, 1E-2, int(0.5*grid_size[0]), int(0.5*grid_size[1])) 
+    # solver.create_ic_hill(.05, 1E-3, int(0.25*grid_size[0]), int(0.25*grid_size[1]))
+    # solver.create_ic_hill(-.05, 1E-3,int(0.75*grid_size[0]), int(0.75*grid_size[1]))
     
     # for i in range(3):
     #     subiterations = 100
@@ -110,7 +110,7 @@ if __name__ == '__main__':
 
     
     
-    run_with_gui(solver, np_gray_image, iter_per_frame=1)
+    run_with_gui(solver, np_gray_image, iter_per_frame=5)
 
 
 # %%
