@@ -24,13 +24,25 @@ first time...`sudo apt-get install python3-dev`
 then
 
 ```.sh
+
 /usr/bin/python3.9 -m venv py-ihd-env
 source ./py-ihd-env/bin/activate
 
+pip install -r ihd_requirements.txt
+pip install -r taichi_requirements.txt
+
+
+
+python -m ipykernel install --user --name=py-ihd-env --display-name "py-ihd-env"
+
+
+
+#if you face issues with cuda version
 $ nvcc --version # check your version
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu113 # and install the right one
 
-pip install -r gcp_requirements.txt
+
+
 ```
 
 ### athena cluster
@@ -209,5 +221,6 @@ python numerical_solvers/runners/taichi_lbm_NS_picture_diffuser.py
 python train.py --config configs/mnist/small_mnist.py --workdir runs/mnist/small_mnist
 
 python train_corrupted.py --config configs/mnist/small_corrupted_mnist.py  --workdir runs/mnist/small_lbm_mnist  --forwardsolverconfig=configs/mnist/lbm_ns_config.py
-python train_corrupted.py --config configs/mnist/small_corrupted_mnist.py  --workdir runs/mnist/small_blurr_mnist  --forwardsolverconfig=configs/mnist/blurring_configs.py
+
+python train_corrupted.py --config configs/mnist/small_blurr_mnist.py  --workdir runs/mnist/small_blurr_mnist  --forwardsolverconfig=configs/mnist/blurring_configs.py
 ```

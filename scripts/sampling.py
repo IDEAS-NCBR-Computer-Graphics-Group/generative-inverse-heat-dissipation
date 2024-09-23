@@ -7,9 +7,10 @@ from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
 from configs.mnist.lbm_ns_config import LBMConfig
 from torchvision import transforms
 
-def get_sampling_fn_inverse_lbm_ns(denoising_steps, initial_sample,
-                                 intermediate_sample_indices, delta, device,
-                                 share_noise=False):
+def get_sampling_fn_inverse_lbm_ns(
+    max_noise_level, n_denoising_steps,
+    initial_sample, intermediate_sample_indices, 
+    delta, device, share_noise=False):
     """ Returns our inverse heat process sampling function. 
     Arguments: 
     initial_sample: Pytorch Tensor with the initial draw from the prior p(u_K)
@@ -17,36 +18,35 @@ def get_sampling_fn_inverse_lbm_ns(denoising_steps, initial_sample,
     delta: Standard deviation of the sampling noise
     share_noise: Whether to use the same noises for all elements in the batch
     """
- 
+    
     def sampler(model):
         if share_noise:
-            noises = [torch.randn_like(initial_sample[0], dtype=torch.float)[None] for i in range(denoising_steps)]
+            noises = [torch.randn_like(initial_sample[0], dtype=torch.float)[None] for i in range(n_denoising_steps)]
         intermediate_samples_out = []
 
         with torch.no_grad():
             u = initial_sample.to(device).float()
-            if intermediate_sample_indices != None and denoising_steps in intermediate_sample_indices:
+            if intermediate_sample_indices != None and n_denoising_steps in intermediate_sample_indices:
                 intermediate_samples_out.append((u, u))
-            for i in range(denoising_steps, 0, -1):
-                vec_fwd_steps = torch.ones(initial_sample.shape[0], device=device, dtype=torch.long) * i # todo: keep attention to dtype
-                
+            for i in range(n_denoising_steps, 0, -1):
+                vec_fwd_steps = torch.ones(initial_sample.shape[0], device=device, dtype=torch.long) 
+                #TODO: get rid of casting
+                vec_fwd_steps = vec_fwd_steps * (float(max_noise_level) * float(i)/float(n_denoising_steps)) # todo: keep attention to dtype, 
                 # Predict less blurry img
-                # u_pred =  model(u, vec_fwd_steps) + u # original, shall be divided by 2 to get mean
-                u_pred =  model(u, vec_fwd_steps) 
+                u_pred =  model(u, vec_fwd_steps) + u # the NN predicts the difference between blurry_x and less_blurry_x
 
                 # Sampling step
                 if share_noise:
                     noise = noises[i-1]
                 else:
                     noise = torch.randn_like(u)
-                # u = u_pred #+ noise*delta #TODO: do we need Gaussian noise here? Or shall do a kind of destruction-step with numerical solver
-                u = u_pred
-                
+                u = u_pred + noise*delta #TODO: do we need Gaussian noise here? Or shall do a kind of destruction-step with numerical solver
+
                 # Save trajectory
                 if intermediate_sample_indices != None and i-1 in intermediate_sample_indices:
                     intermediate_samples_out.append((u, u_pred))
 
-            return u_pred, denoising_steps, [u for (u, u_pred) in intermediate_samples_out]
+            return u_pred, n_denoising_steps, [u for (u, u_pred) in intermediate_samples_out]
     return sampler
 
 
@@ -75,13 +75,13 @@ def get_sampling_fn_inverse_heat(config, initial_sample,
             for i in range(K, 0, -1):
                 vec_fwd_steps = torch.ones(initial_sample.shape[0], device=device, dtype=torch.long) * i
                 # Predict less blurry mean
-                u_mean = model(u, vec_fwd_steps) + u #TODO: mean?! shall be averaged
+                u_mean = model(u, vec_fwd_steps) + u # mean is as the NN learn difference between blurred_x and less_blurred_x
                 # Sampling step
                 if share_noise:
                     noise = noises[i-1]
                 else:
                     noise = torch.randn_like(u)
-                u = u_mean + noise*delta #TODO run without noise and check what happens
+                u = u_mean + noise*delta
                 # Save trajectory
                 if intermediate_sample_indices != None and i-1 in intermediate_sample_indices:
                     intermediate_samples_out.append((u, u_mean))

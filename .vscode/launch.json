@@ -23,7 +23,7 @@
             ]
         },
         {
-            "name": "Debugger: small-mnist-train with Arguments",
+            "name": "Debugger: small-debug-mnist",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/train.py",
@@ -34,7 +34,19 @@
             ]
         },
         {
-            "name": "Debugger: lbm-train with Arguments",
+            "name": "Debugger: blurr-train with Arguments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/train_corrupted.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--config", "configs/mnist/small_blurr_mnist.py",
+                "--workdir", "runs/mnist/small_blurr_mnist",
+                "--forwardsolverconfig", "configs/mnist/blurring_configs.py"
+            ]
+        },
+        {
+            "name": "Debugger: lbm-ns-train with Arguments",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/train_corrupted.py",
