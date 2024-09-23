@@ -89,7 +89,8 @@ class CanvasPlotter:
         if self.is_u_checked:
             vel_energy_spectrum = self.render_vel_energy_spectrum(vel_cpu)
         else:
-            vel_energy_spectrum = self.compute_divergence(vel_cpu[:, :, 0], vel_cpu[:, :, 1])
+            # vel_energy_spectrum = self.compute_divergence(vel_cpu[:, :, 0], vel_cpu[:, :, 1])
+            vel_energy_spectrum = self.dummy_canvas
         
         force_cpu = self.solver.Force.to_numpy()
         force_img = self.render_force_mag(force_cpu)
