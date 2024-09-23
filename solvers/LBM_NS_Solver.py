@@ -1,6 +1,6 @@
 import taichi as ti
 import taichi.math as tm
-import numpy as np
+import torch
 
 from solvers.LBM_SolverBase import LBM_SolverBase
 from solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
@@ -18,6 +18,7 @@ class LBM_NS_Solver(LBM_SolverBase):
             kin_visc,
             bulk_visc,
             turbulenceGenerator: SpectralTurbulenceGenerator,
+            device = 'cuda',
             debug = False
             ):
         super().__init__(name, domain_size, kin_visc, turbulenceGenerator)
@@ -43,8 +44,9 @@ class LBM_NS_Solver(LBM_SolverBase):
              
             # TODO: Turn this on to add advection.
             u_turb, v_turb = self.turbulenceGenerator.generate_turbulence(self.iterations_counter)     
-            turb_numpy = np.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
-            self.Force.from_numpy(turb_numpy)
+            # turb_numpy = np.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
+            turb_numpy = torch.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
+            self.Force.from_torch(turb_numpy)
             
             # self.init_gaussian_force_field(1E-2, 0, 1)
             self.apply_bb()

@@ -1,7 +1,7 @@
 from ml_collections import ConfigDict
 from dataclasses import dataclass, field
 from typing import Tuple, Callable
-import numpy as np
+import torch
 
 # Define the nested configurations as dataclasses
 @dataclass
@@ -33,11 +33,11 @@ class SolverConfig:
     
     def __post_init__(self):
         # Calculate k_min and k_max based on domain_size
-        self.k_min = 2.0 * np.pi / min(self.domain_size)
-        self.k_max = 2.0 * np.pi / (min(self.domain_size) / 1024)
+        self.k_min = 2.0 * torch.pi / min(self.domain_size)
+        self.k_max = 2.0 * torch.pi / (min(self.domain_size) / 1024)
 
         # Define energy_spectrum as a lambda function
-        self.energy_spectrum = lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
+        self.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
 
 @dataclass
 class LBMConfig:

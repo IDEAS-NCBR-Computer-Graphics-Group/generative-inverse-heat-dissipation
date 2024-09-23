@@ -1,11 +1,11 @@
 
 #%% imports
-import numpy as np
+import torch
 import scipy.fftpack as fft
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 
-np.random.seed(123)
+torch.random.seed(123)
 
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from numerical_solvers.solvers.RFMTurbulenceGenerator import RFMTurbulenceGenerator
@@ -26,9 +26,9 @@ num_modes = 64
 
 rfmTurbulenceGenerator = RFMTurbulenceGenerator(domain_size, grid_size, turb_intensity, num_modes)
 
-frequency_range = {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 2048)}
-# energy_spectrum = lambda k: np.where(np.isinf(k), 0, k) 
-energy_spectrum = lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
+frequency_range = {'k_min': 2.0 * torch.pi / min(domain_size), 'k_max': 2.0 * torch.pi / (min(domain_size) / 2048)}
+# energy_spectrum = lambda k: torch.where(torch.isinf(k), 0, k) 
+energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
 spectralTurbulenceGenerator = SpectralTurbulenceGenerator(
     domain_size, grid_size, turb_intensity, noise_limiter, energy_spectrum=energy_spectrum, frequency_range=frequency_range)
 
@@ -39,7 +39,7 @@ u_rfm, v_rfm = rfmTurbulenceGenerator.generate_turbulence(time)
 u_spec, v_spec = spectralTurbulenceGenerator.generate_turbulence(time)
 
 divergence = compute_divergence(u_spec, u_spec, dx=1, dy=1)
-print(f"max divergence is: {np.max(np.abs(divergence))}")  # Should be close to zero
+print(f"max divergence is: {torch.max(torch.abs(divergence))}")  # Should be close to zero
 
 # Generate random velocity fields
 u_random, v_random = generate_random_velocity_field(domain_size, grid_size, 0, 1)
@@ -58,10 +58,10 @@ plot_velocity_components(u_random, v_random, u_rfm, v_rfm, u_spec, v_spec, time)
 
 
 # Normalize u and v to have a standard deviation of 1
-u_spec = u_spec / np.std(u_spec)
+u_spec = u_spec / torch.std(u_spec)
 
-print(f"std of normalized u: {np.std(u_spec):.4f}")
-# print(f"std of normalized v: {np.std(v_spec):.4f}")
+print(f"std of normalized u: {torch.std(u_spec):.4f}")
+# print(f"std of normalized v: {torch.std(v_spec):.4f}")
 
 # Plot histogram of the normalized u component
 hist, bin_edges, _ = plt.hist(u_spec.flatten(), bins=30, density=True, alpha=0.6, color='g', label='u component histogram (normalized)')
@@ -69,7 +69,7 @@ hist, bin_edges, _ = plt.hist(u_spec.flatten(), bins=30, density=True, alpha=0.6
 
 # Integrate the area under the histogram using the trapezoidal rule
 bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2  # Calculate bin centers
-area_under_histogram = np.trapz(hist, bin_centers)
+area_under_histogram = torch.trapz(hist, bin_centers)
 
 print(f"Area under the histogram of u: {area_under_histogram:.4f}")
 
@@ -81,7 +81,7 @@ print(f"mu, std: {mu:.4f}  {std:.4f}")
 
 # Plot the Gaussian fit
 xmin, xmax = plt.xlim()
-x = np.linspace(xmin, xmax, 100)
+x = torch.linspace(xmin, xmax, 100)
 p = norm.pdf(x, mu, std)
 plt.plot(x, p, 'k', linewidth=2, label='Gaussian fit')
 

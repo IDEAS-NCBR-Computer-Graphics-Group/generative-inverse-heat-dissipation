@@ -5,7 +5,7 @@ import os
 
 from scripts import datasets as ihd_datasets
 from scripts.utils import save_png_norm, save_png
-from numerical_solvers.data_holders.CorruptedDatasetCreator import preprocess_dataset
+from corruptors.CorruptedDatasetCreator import preprocess_dataset
 
 FLAGS = flags.FLAGS
 

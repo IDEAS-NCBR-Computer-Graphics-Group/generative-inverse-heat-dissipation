@@ -12,7 +12,12 @@ from corruptors.BaseCorruptor import BaseCorruptor
 from configs.mnist.lbm_ns_turb_config import LBMConfig
 
 class LBM_NS_Corruptor(BaseCorruptor):
-    def __init__(self, config: LBMConfig, transform=None, target_transform=None):
+    def __init__(
+            self,
+            config: LBMConfig,
+            transform=None,
+            target_transform=None
+            ):
         super(LBM_NS_Corruptor, self).__init__(transform, target_transform)
 
         ti.init(arch=ti.gpu)
@@ -23,8 +28,10 @@ class LBM_NS_Corruptor(BaseCorruptor):
         # frequency_range = {'k_min': config.solver.k_min, 'k_max': config.solver.k_max }
 
         spectralTurbulenceGenerator = SpectralTurbulenceGenerator(
-            config.solver.domain_size, grid_size, 
-            config.solver.turb_intensity, config.solver.noise_limiter,
+            config.solver.domain_size,
+            grid_size, 
+            config.solver.turb_intensity,
+            config.solver.noise_limiter,
             energy_spectrum=config.solver.energy_spectrum, 
             frequency_range={'k_min': config.solver.k_min, 'k_max': config.solver.k_max}, 
             dt_turb=config.solver.dt_turb, 

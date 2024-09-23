@@ -22,7 +22,6 @@ class LBM_SolverBase:
         self.f = ti.Vector.field(9, float, shape=(self.nx, self.ny))
         self.f_new = ti.Vector.field(9, float, shape=(self.nx, self.ny))
         
-        
         # self.Force = ti.Vector.field(2, float, shape=()) # single vector
         self.Force = ti.Vector.field(2, float, shape=(self.nx, self.ny))
         self.w = ti.types.vector(9, float)(4, 1, 1, 1, 1, 1 / 4, 1 / 4, 1 / 4, 1 / 4) / 9.0
