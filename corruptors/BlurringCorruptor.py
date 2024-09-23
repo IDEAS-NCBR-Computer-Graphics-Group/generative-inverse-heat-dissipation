@@ -6,8 +6,8 @@ import warnings
 import os
 
 from configs.ffhq import corrupted
-from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
-from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range
+from corruptors.BaseCorruptor import BaseCorruptor
+from solvers.img_reader import normalize_grayscale_image_range
 
 
 class BlurringCorruptor(BaseCorruptor):

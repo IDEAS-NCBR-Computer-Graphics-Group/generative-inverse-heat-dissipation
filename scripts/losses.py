@@ -4,7 +4,7 @@
 import torch
 import torch.optim as optim
 import numpy as np
-from model_code import utils as mutils
+from models import utils as mutils
 import torch.distributions
 
 

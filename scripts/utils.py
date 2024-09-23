@@ -9,9 +9,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from torchvision.utils import make_grid, save_image
-from model_code import utils as mutils
+from models import utils as mutils
 from scripts import losses
-from model_code.ema import ExponentialMovingAverage
+from models.ema import ExponentialMovingAverage
 import pickle
 
 
@@ -151,8 +151,8 @@ def save_png_norm(save_dir, data, name, nrow=None):
     norm = matplotlib.colors.Normalize(vmin=0.95, vmax=1.05)
     image_np_norm = norm(image_np)
 
-    # Apply the 'Greys' colormap
-    cmap = plt.get_cmap('Greys')
+    # Apply the 'Greys' - inverted colormap, gray - normal
+    cmap = plt.get_cmap('gray')
     image_colored = cmap(image_np_norm)
 
     # plt.imshow(image_colored, cmap=cmap);

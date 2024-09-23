@@ -5,9 +5,9 @@ from pathlib import Path
 import logging
 import os
 
-from numerical_solvers.data_holders.BlurringCorruptor import BlurringCorruptor
-from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
-from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
+from corruptors.BlurringCorruptor import BlurringCorruptor
+from corruptors.LBM_NS_Corruptor import LBM_NS_Corruptor
+from corruptors.CorruptedDataset import CorruptedDataset
 from configs.cifar10.lbm_ns_turb_config import get_lbm_ns_config
 from configs.cifar10.blurring_configs import get_blurr_config
 from scripts import datasets as ihd_datasets

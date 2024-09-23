@@ -4,8 +4,8 @@ import matplotlib
 import matplotlib.cm as cm
 import cv2
 
-from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
-from numerical_solvers.visualization.KolmogorovSpectrumPlotter import KolmogorovSpectrumPlotter
+from solvers.LBM_SolverBase import LBM_SolverBase
+from visualization.KolmogorovSpectrumPlotter import KolmogorovSpectrumPlotter
 
 
 class CanvasPlotter:

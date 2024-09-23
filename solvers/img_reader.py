@@ -3,7 +3,15 @@ import numpy as np
 
 def read_img_in_grayscale(img_path, target_size=None):
     image = cv2.imread(img_path) 
+    print(image.shape)
     # image = cv2.imread('japan_1024x640.png')
+    if target_size is not None: 
+        image = cv2.resize(image, target_size)
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) # convert to grayscale
+    np_gray_image = np.array(gray_image)
+    return np.float32(np_gray_image)
+
+def make_grayscale(image, target_size=None):
     if target_size is not None: 
         image = cv2.resize(image, target_size)
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) # convert to grayscale
@@ -13,7 +21,7 @@ def read_img_in_grayscale(img_path, target_size=None):
 
 def standarize_grayscale_image_range(image) -> np.array:
     """
-    Normalize the ixel values of a grayscale image to have a specified range [min_val, max_val].
+    Normalize the pixel values of a grayscale image to have a specified range [min_val, max_val].
 
     Parameters:
     image (np.ndarray): Grayscale image array, cv2 layout.
@@ -41,7 +49,7 @@ def standarize_grayscale_image_range(image) -> np.array:
 
 def normalize_grayscale_image_range(image, min_val, max_val) -> np.array:
     """
-    Normalize the ixel values of a grayscale image to have a specified range [min_val, max_val].
+    Normalize the pixel values of a grayscale image to have a specified range [min_val, max_val].
 
     Parameters:
     image (np.ndarray): Grayscale image array, cv2 layout.

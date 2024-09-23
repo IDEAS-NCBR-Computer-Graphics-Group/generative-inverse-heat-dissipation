@@ -21,6 +21,7 @@ flags.DEFINE_string("workdir", None, "Work directory.")
 flags.mark_flags_as_required(["workdir", "config"])
 #flags.DEFINE_string("initialization", "prior", "How to initialize sampling")
 
+torch.cuda.empty_cache()
 
 def main(argv):
     train(FLAGS.config, FLAGS.workdir)

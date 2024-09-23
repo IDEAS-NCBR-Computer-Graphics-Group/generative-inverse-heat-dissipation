@@ -2,8 +2,8 @@ import taichi as ti
 import taichi.math as tm
 import numpy as np
 from math import pi
-from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
-from numerical_solvers.solvers.GaussianTurbulenceGenerator import get_gaussian_noise
+from solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
+from solvers.GaussianTurbulenceGenerator import get_gaussian_noise
 
 @ti.data_oriented
 class LBM_SolverBase:

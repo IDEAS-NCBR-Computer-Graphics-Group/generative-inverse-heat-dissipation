@@ -5,10 +5,10 @@ from tqdm import tqdm
 import warnings
 import os
 
-from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range
-from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver    
-from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
-from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
+from solvers.img_reader import normalize_grayscale_image_range
+from solvers.LBM_NS_Solver import LBM_NS_Solver    
+from solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
+from corruptors.BaseCorruptor import BaseCorruptor
 from configs.mnist.lbm_ns_turb_config import LBMConfig
 
 class LBM_NS_Corruptor(BaseCorruptor):

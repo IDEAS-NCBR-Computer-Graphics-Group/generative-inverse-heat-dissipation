@@ -3,9 +3,9 @@ import torch
 import torch.nn as nn
 import logging
 import numpy as np
-from model_code.unet import UNetModel
-from model_code import torch_dct
-from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
+from models.unet import UNetModel
+from models import torch_dct
+from corruptors.LBM_NS_Corruptor import LBM_NS_Corruptor
 
 class DCTBlur(nn.Module):
 

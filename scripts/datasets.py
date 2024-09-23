@@ -12,7 +12,7 @@ from PIL import Image
 import logging
 
 import os
-from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
+from corruptors.CorruptedDataset import CorruptedDataset
 
 class UniformDequantize(object):
     def __init__(self):
