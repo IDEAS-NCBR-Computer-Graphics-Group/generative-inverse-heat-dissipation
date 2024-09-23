@@ -14,8 +14,7 @@ def get_config():
     model.K = 50
     model.blur_schedule = np.exp(np.linspace(np.log(model.blur_sigma_min),
                                              np.log(model.blur_sigma_max), model.K))
-    model.blur_schedule = np.array(
-        [0] + list(model.blur_schedule))  # Add the k=0 timestep
+    model.blur_schedule = np.array([0] + list(model.blur_schedule))  # Add the k=0 timestep
     
     config.data.dataset = 'CORRUPTED_BLURR_MNIST'
     

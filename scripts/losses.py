@@ -135,7 +135,8 @@ def get_step_lbm_fn(train, config,
     loss_fn = get_inverse_lbm_ns_loss_fn(train)
     
     # For automatic mixed precision
-    scaler = torch.cuda.amp.GradScaler()
+    # scaler = torch.cuda.amp.GradScaler()
+    scaler = torch.cuda.amp.GradScaler('cuda')
 
     def step_fn(state, batch):
         """Running one step of training or evaluation.

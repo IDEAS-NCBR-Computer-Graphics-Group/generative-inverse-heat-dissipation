@@ -21,8 +21,8 @@ from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
 from scripts import datasets as ihd_datasets
 from scripts.utils import save_png_norm
-from configs.mnist.lbm_ns_config import get_lbm_ns_config
-from configs.mnist.blurring_configs import get_blurr_config
+from configs.mnist.lbm_ns_config import get_config as get_lbm_ns_config
+from configs.mnist.blurring_configs import get_config as get_blurr_config
 
 
 # sys.path.insert(0, '../../')
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     corruptor = BlurringCorruptor(
         solver_config, 
         transform=transforms.Compose([torchvision.transforms.ToTensor()]))
-    
+            
     corruptor._preprocess_and_save_data(
         initial_dataset=datasets.MNIST(root=input_data_dir, train=True, download=True),
         save_dir=corrupted_dataset_dir,
@@ -106,7 +106,7 @@ if __name__ == '__main__':
         process_pairs = solver_config.data.process_pairs,
         process_all=process_all)    
 
-    # end = timer()
+    end = timer()
     print(f"Time in seconds: {end - start:.2f}")
     
     
@@ -123,15 +123,12 @@ if __name__ == '__main__':
     # transform = transforms.Compose(transform)
     
     transform = None # the dataset is saved as torchtensor
-    lbm_mnist_pairs = CorruptedDataset(train=is_train_dataset, 
+    mnist_pairs = CorruptedDataset(train=is_train_dataset, 
                                        transform=transform, 
                                        target_transform=None, 
                                        load_dir=corrupted_dataset_dir)
-
-
-
     
-    corrupted_dataloader = DataLoader(lbm_mnist_pairs, batch_size=32, shuffle=True)
+    corrupted_dataloader = DataLoader(mnist_pairs, batch_size=32, shuffle=True)
     if solver_config.data.process_pairs:
         print(f"==processing pairs===")
         # x, (y, pre_y, corruption_amount, labels) = next(iter(corrupted_dataloader))
@@ -145,29 +142,43 @@ if __name__ == '__main__':
     print('Labels:', labels)
     print('corruption_amount:', corruption_amount)
 
-    # save_png_norm(current_file_path.parents[0], y, "test_norm.png") # test the plot saving fun
-    
-    
+
     clean_x, (noisy_x, less_noisy_x, corruption_amount, label) = next(iter(corrupted_dataloader))
-    # x, (y, corruption_amount, label) = next(iter(test_dataloader))
+
     print('Input shape:', clean_x.shape)
     print('corruption_amount:', corruption_amount)
     print('batch_size = x.shape[0]:', clean_x.shape[0])
     print('Labels:', label.shape)
-    # plt.imshow(torchvision.utils.make_grid(clean_x)[0], cmap='Greys');
-    # plt.imshow(torchvision.utils.make_grid(noisy_x, nrow=8)[0].clip(0.95, 1.05), cmap='Greys')
-    # plt.imshow(torchvision.utils.make_grid(noisy_x)[0], cmap='Greys');
 
     fig, axs = plt.subplots(1, 3, figsize=(20, 20), sharex=True)
     axs[0].set_title('clean x')
     axs[1].set_title('noisy x')
     axs[2].set_title('less noisy x')
 
-    # plt.imshow(torchvision.utils.make_grid(clean_x)[0], cmap='Greys')
-    # axs[0, 0].imshow(clean_x, cmap='Greys')
-    axs[0].imshow(torchvision.utils.make_grid(clean_x)[0], cmap='Greys');
-    axs[1].imshow(torchvision.utils.make_grid(noisy_x)[0].clip(0.95, 1.05), cmap='Greys')
-    axs[2].imshow(torchvision.utils.make_grid(less_noisy_x)[0].clip(0.95, 1.05), cmap='Greys')
+    axs[0].imshow(torchvision.utils.make_grid(clean_x)[0], cmap='Greys')
+    axs[1].imshow(torchvision.utils.make_grid(noisy_x)[0], cmap='Greys')
+    axs[2].imshow(torchvision.utils.make_grid(less_noisy_x)[0], cmap='Greys')
+    
+    # axs[1].imshow(torchvision.utils.make_grid(noisy_x)[0].clip(0.95, 1.05), cmap='Greys')
+    # axs[2].imshow(torchvision.utils.make_grid(less_noisy_x)[0].clip(0.95, 1.05), cmap='Greys')
 
 
+# %%
+
+max_noise_level = 2
+blurred_x = torch.empty_like(clean_x)
+for index in range(clean_x.shape[0]):
+    tmp, _ = corruptor._corrupt(clean_x[index], max_noise_level) # blur to the max level
+    blurred_x[index] = tmp
+    
+plt.imshow(torchvision.utils.make_grid(blurred_x)[0], cmap='Greys');
+# %%
+
+from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range
+np_gray_img = clean_x[0].numpy()[0, :, :]
+x = normalize_grayscale_image_range(np_gray_img, 0.95, 1.05)
+x = corruptor._corrupt(clean_x[0], 1)[0].numpy()[0]
+#TODO: print(x) - there is zero in a corner, which affects rescaling 
+# x = normalize_grayscale_image_range(x, 0., 1.0)
+plt.imshow(x, cmap='Greys');
 # %%
