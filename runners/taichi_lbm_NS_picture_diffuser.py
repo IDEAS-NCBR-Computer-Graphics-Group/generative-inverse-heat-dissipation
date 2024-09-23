@@ -39,38 +39,25 @@ def run_corruption(config):
     np_gray_image = normalize_grayscale_image_range(np_gray_image, 0.95, 1.05)
     np_gray_image = np.rot90(np_gray_image, -1)
 
-    domain_size = (1.0, 1.0)
-    grid_size = np_gray_image.shape
-    turb_intensity = 1E-4
-    noise_limiter = (-1E-3, 1E-3)
-    dt_turb = 3E-3
+    case_name="mnist"   
 
-    # turb_intensity = 1E-3
-    # energy_spectrum = lambda k: np.where(np.isinf(k), 0, k)
-
-    energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
-    frequency_range = {'k_min': 2.0 * np.pi / min(domain_size), 
-                       'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
-    
     spectralTurbulenceGenerator = SpectralTurbulenceGenerator(
-        domain_size,
-        grid_size, 
-        turb_intensity,
-        noise_limiter,
-        energy_spectrum=energy_spectrum,
-        frequency_range=frequency_range, 
-        dt_turb=dt_turb, 
-        is_div_free = False
+        config.lbm.solver.domain_size,
+        [config.data.image_size]*2, 
+        config.lbm.solver.turb_intensity,
+        config.lbm.solver.noise_limiter,
+        energy_spectrum=config.lbm.solver.energy_spectrum,
+        frequency_range={'k_min': config.lbm.solver.k_min, 'k_max': config.lbm.solver.k_max}, 
+        dt_turb=config.lbm.solver.dt_turb, 
+        is_div_free = False,
+        device='cuda'
         )
 
-    niu = 0.5*1/6
-    bulk_visc = 0.5*1/6
-    case_name="mnist"   
     solver = LBM_NS_Solver(
         case_name,
-        grid_size,
-        niu,
-        bulk_visc,
+        [config.data.image_size]*2,
+        config.lbm.solver.niu,
+        config.lbm.solver.bulk_visc,
         spectralTurbulenceGenerator
         )
     
@@ -82,7 +69,6 @@ def run_corruption(config):
     canvas = window.get_canvas()
     
     canvasPlotter = CanvasPlotter(solver, (1.0*np_gray_image.min(), 1.0*np_gray_image.max()))
-    
 
     # warm up
     solver.solve(iterations=1)   

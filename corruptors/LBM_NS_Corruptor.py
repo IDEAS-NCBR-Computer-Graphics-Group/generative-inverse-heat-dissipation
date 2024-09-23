@@ -9,12 +9,11 @@ from solvers.img_reader import normalize_grayscale_image_range
 from solvers.LBM_NS_Solver import LBM_NS_Solver    
 from solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from corruptors.BaseCorruptor import BaseCorruptor
-from configs.mnist.lbm_ns_turb_config import LBMConfig
 
 class LBM_NS_Corruptor(BaseCorruptor):
     def __init__(
             self,
-            config: LBMConfig,
+            config,
             transform=None,
             target_transform=None
             ):
@@ -23,7 +22,7 @@ class LBM_NS_Corruptor(BaseCorruptor):
         ti.init(arch=ti.gpu)
 
         grid_size = (config.data.image_size, config.data.image_size)
-        
+        config = config.lbm
         # energy_spectrum = lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
         # frequency_range = {'k_min': config.solver.k_min, 'k_max': config.solver.k_max }
 

@@ -5,7 +5,6 @@ from tqdm import tqdm
 import warnings
 import os
 
-from configs.ffhq import corrupted
 from corruptors.BaseCorruptor import BaseCorruptor
 from solvers.img_reader import normalize_grayscale_image_range
 

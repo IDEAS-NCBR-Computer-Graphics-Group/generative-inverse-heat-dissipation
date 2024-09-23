@@ -8,8 +8,6 @@ import os
 from corruptors.BlurringCorruptor import BlurringCorruptor
 from corruptors.LBM_NS_Corruptor import LBM_NS_Corruptor
 from corruptors.CorruptedDataset import CorruptedDataset
-from configs.ffhq.lbm_ns_turb_config import get_lbm_ns_config
-from configs.ffhq.blurring_configs import get_blurr_config
 from scripts import datasets as ihd_datasets
 
 def corrupt_datasets(train, test, config, save_dir):
@@ -20,10 +18,9 @@ def corrupt_datasets(train, test, config, save_dir):
     fluid_save_dir = os.path.join(save_dir, 'fluid')
     logging.info(f"Fluid corruption on {dataset_name} dataset")
     start = timer()
-    solver_config = get_lbm_ns_config()
 
     corruptor = LBM_NS_Corruptor(
-        solver_config,                                
+        config=config,                                
         transform=transform
     )
 
@@ -32,15 +29,15 @@ def corrupt_datasets(train, test, config, save_dir):
         initial_dataset=train.dataset,
         save_dir=fluid_save_dir,
         is_train_dataset = True,
-        process_pairs = solver_config.data.process_pairs
+        process_pairs = config.data.process_pairs
         )
 
     logging.info("Fluid corruption on test split")
     corruptor._preprocess_and_save_data(
-        initial_dataset=train.dataset,
+        initial_dataset=test.dataset,
         save_dir=fluid_save_dir,
         is_train_dataset = False,
-        process_pairs = solver_config.data.process_pairs
+        process_pairs = config.data.process_pairs
         )    
 
     end = timer()
@@ -49,10 +46,9 @@ def corrupt_datasets(train, test, config, save_dir):
     blur_save_dir = os.path.join(save_dir, 'blur')
     logging.info(f"Blur corruption on {dataset_name} dataset")
     start = timer()
-    solver_config = get_blurr_config()    
     
     corruptor = BlurringCorruptor(
-        solver_config, 
+        config=config.blur, 
         transform=transform
         )
     
@@ -61,7 +57,7 @@ def corrupt_datasets(train, test, config, save_dir):
         initial_dataset=train.dataset,
         save_dir=blur_save_dir,
         is_train_dataset = True,
-        process_pairs = solver_config.data.process_pairs
+        process_pairs = config.data.process_pairs
         )
 
     logging.info("Blur corruption test split")
@@ -69,7 +65,7 @@ def corrupt_datasets(train, test, config, save_dir):
         initial_dataset=test.dataset,
         save_dir=blur_save_dir,
         is_train_dataset = False,
-        process_pairs = solver_config.data.process_pairs
+        process_pairs = config.data.process_pairs
         )    
     
     end = timer()

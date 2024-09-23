@@ -34,7 +34,6 @@ class SpectralTurbulenceGenerator(t.nn.Module):
         self.frequency_range = frequency_range if frequency_range else {'k_min': 2.0 * t.pi / min(domain_size), 'k_max': 2.0 * t.pi / (min(domain_size) / 20)}
 
 
-
         # Fourier transform wave numbers
         self.kx = (t.fft.fftfreq(self.Nx, d=self.Lx/self.Nx) * 2 * t.pi).to(device)
         self.ky = (t.fft.fftfreq(self.Ny, d=self.Ly/self.Ny) * 2 * t.pi).to(device)
