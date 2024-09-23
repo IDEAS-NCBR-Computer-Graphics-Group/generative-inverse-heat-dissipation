@@ -24,6 +24,8 @@ from numerical_solvers.visualization.taichi_lbm_gui import run_with_gui
 # from lbm_diffuser.lbm_bckp_with_fields import lbm_solver as lbm_solver_bkcp
 from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
 
+# from numerical_solvers.solvers.LBM_NS_Solver_OLD import LBM_NS_Solver_OLD as LBM_NS_Solver
+
 # %% read IC
 # https://github.com/taichi-dev/image-processing-with-taichi/blob/main/image_transpose.py
 
@@ -55,7 +57,11 @@ if __name__ == '__main__':
 
     domain_size = (1.0, 1.0)
     grid_size = np_gray_image.shape
+<<<<<<< HEAD
     turb_intensity = 0 #1E-4
+=======
+    turb_intensity = 0*1E-4
+>>>>>>> faaa5cf5fb849a446af75237e570eef1b0010790
     noise_limiter = (-1E-3, 1E-3)
     dt_turb = 1E-3 
 
@@ -74,9 +80,15 @@ if __name__ == '__main__':
         is_div_free = False)
     
     
+<<<<<<< HEAD
     niu = 1 * 1./6
     bulk_visc = 1 * 1./6
+=======
+    niu = 1E-4 * 1/6
+    bulk_visc = 1E-4 *1/6
+>>>>>>> faaa5cf5fb849a446af75237e570eef1b0010790
     case_name="miau"   
+    
     solver = LBM_NS_Solver(
         case_name,
         np_gray_image.shape,
@@ -84,12 +96,19 @@ if __name__ == '__main__':
         spectralTurbulenceGenerator
         )
     
-    solver.init(np_gray_image) 
+    # solver.init(np_gray_image) 
 
+<<<<<<< HEAD
     # solver.init(1.*np.ones(grid_size, dtype=np.float32))
     # solver.create_ic_hill(.2, 1E-2, int(0.5*grid_size[0]), int(0.5*grid_size[1])) 
     # solver.create_ic_hill(.05, 1E-3, int(0.25*grid_size[0]), int(0.25*grid_size[1]))
     # solver.create_ic_hill(-.05, 1E-3,int(0.75*grid_size[0]), int(0.75*grid_size[1]))
+=======
+    solver.init(1.*np.ones(grid_size, dtype=np.float32))
+    solver.create_ic_hill(0.5, 1E-3, int(0.5*grid_size[0]), int(0.5*grid_size[1])) 
+    # solver.create_ic_hill( .05, 1E-3, int(0.25*nx), int(0.25*ny))
+    # solver.create_ic_hill(-.05, 1E-3, int(0.75*nx), int(0.75*ny))
+>>>>>>> faaa5cf5fb849a446af75237e570eef1b0010790
     
     # for i in range(3):
     #     subiterations = 100
