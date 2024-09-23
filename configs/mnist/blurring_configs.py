@@ -27,9 +27,10 @@ class DataConfig:
 
 @dataclass
 class SolverConfig:
-    min_steps: float = 1. # min anount of blurr
-    max_steps: float = 5. # max anount of blurr
+    min_steps: int = 1
+    max_steps: int = 50 # max amount of blurr
 
+    
 @dataclass
 class BlurrConfig:
     data: DataConfig = field(default_factory=DataConfig)

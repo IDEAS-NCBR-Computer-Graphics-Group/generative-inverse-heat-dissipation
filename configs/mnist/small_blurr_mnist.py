@@ -14,12 +14,11 @@ def get_config():
     model.K = 50
     model.blur_schedule = np.exp(np.linspace(np.log(model.blur_sigma_min),
                                              np.log(model.blur_sigma_max), model.K))
-    model.blur_schedule = np.array(
-        [0] + list(model.blur_schedule))  # Add the k=0 timestep
+    model.blur_schedule = np.array([0] + list(model.blur_schedule))  # Add the k=0 timestep
     
     config.data.dataset = 'CORRUPTED_BLURR_MNIST'
     
-    config.training.n_iters = 10001
+    config.training.n_iters = 1001
     config.training.snapshot_freq = 1000
     config.training.snapshot_freq_for_preemption = 100 # store additional checkpoints for preemption in cloud computing environments 
     config.training.log_freq = 50

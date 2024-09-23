@@ -9,8 +9,8 @@ from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range
 from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver    
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
+# from configs.mnist.lbm_ns_turb_config import LBMConfig
 from configs.mnist.lbm_ns_turb_config import LBMConfig
-
 
 class LBM_NS_Corruptor(BaseCorruptor):
     def __init__(self, config: LBMConfig, transform=None, target_transform=None):
@@ -42,8 +42,8 @@ class LBM_NS_Corruptor(BaseCorruptor):
         )
 
         # Set LBM steps (can be made configurable too)
-        self.min_lbm_steps = config.solver.min_lbm_steps
-        self.max_lbm_steps = config.solver.max_lbm_steps
+        self.min_steps = config.solver.min_steps
+        self.max_steps = config.solver.max_steps
         
         self.min_init_gray_scale = config.data.min_init_gray_scale
         self.max_init_gray_scale = config.data.max_init_gray_scale
@@ -66,7 +66,7 @@ class LBM_NS_Corruptor(BaseCorruptor):
         np_gray_img = x.numpy()[0, :, :]
         np_gray_img = normalize_grayscale_image_range(
             np_gray_img, self.min_init_gray_scale, self.max_init_gray_scale)
-        
+    
         self.solver.init(np_gray_img)
         self.solver.iterations_counter = 0  # Reset counter
 
@@ -74,17 +74,21 @@ class LBM_NS_Corruptor(BaseCorruptor):
             # Solve up to (lbm_steps - step_difference) if generating pairs
             self.solver.solve(steps - step_difference)
             rho_cpu = self.solver.rho.to_numpy()
+            rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
             less_noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
             
             # Solve the remaining steps for the pair generation
             self.solver.solve(step_difference)
             rho_cpu = self.solver.rho.to_numpy()
+            rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
             noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
-            return noisy_x, less_noisy_x,
+
+            return noisy_x, less_noisy_x
         else:
             # Solve up to lbm_steps - step_difference if generating pairs, else directly to lbm_steps
             self.solver.solve(steps)
             rho_cpu = self.solver.rho.to_numpy()
+            rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
             noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
             return noisy_x, None
 
@@ -125,7 +129,7 @@ class LBM_NS_Corruptor(BaseCorruptor):
             if index % 100 == 0:
                 print(f"Preprocessing (lbm) {index}")
             
-            corruption_amount = np.random.randint(self.min_lbm_steps, self.max_lbm_steps)
+            corruption_amount = np.random.randint(self.min_steps, self.max_steps)
             original_pil_image, label = initial_dataset[index]
             original_image = self.transform(original_pil_image)
 
