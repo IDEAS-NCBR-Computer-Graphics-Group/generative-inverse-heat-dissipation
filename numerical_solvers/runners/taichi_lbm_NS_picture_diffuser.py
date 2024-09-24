@@ -21,19 +21,25 @@ from numerical_solvers.solvers.img_reader import read_img_in_grayscale, normaliz
 from numerical_solvers.visualization.taichi_lbm_gui import run_with_gui
 
 
+from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
+
 # from lbm_diffuser.lbm_bckp_with_fields import lbm_solver as lbm_solver_bkcp
 from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
 
 # %% read IC
 # https://github.com/taichi-dev/image-processing-with-taichi/blob/main/image_transpose.py
 
-
-img_path = './numerical_solvers/runners/cat_768x768.jpg'
+img_path = './numerical_solvers/runners/mnist-2.png'
+# img_path = './numerical_solvers/runners/cat_256x256.jpg'
 
 target_size=None
 # target_size=(512, 512)
-target_size = (256, 256) # None
-# target_size = (128, 128) # None
+# target_size = (256, 256) # None
+target_size = (28, 28) # None
+
+
+
+
 
 np_gray_image = read_img_in_grayscale(img_path, target_size)
 np_gray_image = normalize_grayscale_image_range(np_gray_image, 0.95, 1.05)
@@ -74,8 +80,8 @@ if __name__ == '__main__':
         is_div_free = False)
     
     
-    niu = 1 * 1./6
-    bulk_visc = 1 * 1./6
+    niu = 1E0 * 1./6
+    bulk_visc = 1E0 * 1./6
     case_name="miau"   
     solver = LBM_NS_Solver(
         case_name,
@@ -85,6 +91,45 @@ if __name__ == '__main__':
         )
     
     solver.init(np_gray_image) 
+
+
+
+    ######################################################################################################### TODO Code with Michal's renderer
+
+
+    # window = ti.ui.Window('CG - Renderer', res=(5*solver.nx, 3 * solver.ny))
+    # gui = window.get_gui()
+    # canvas = window.get_canvas()
+    
+    # canvasPlotter = CanvasPlotter(solver, (1.0*np_gray_image.min(), 1.0*np_gray_image.max()))
+
+    # # warm up
+    # solver.solve(iterations=1)
+    # solver.iterations_counter=0 # reset counter
+    # img = canvasPlotter.make_frame()
+    
+    # # os.Path("output/").mkdir(parents=True, exist_ok=True)
+    # # canvasPlotter.write_canvas_to_file(img, f'output/iteration_{solver.iterations_counter}.jpg')
+       
+    # iter_per_frame = 1
+    # i = 0
+    # while window.running:
+    #     with gui.sub_window('MAIN MENU', x=0, y=0, width=1.0, height=0.3):
+    #         iter_per_frame = gui.slider_int('steps', iter_per_frame, 1, 20)
+    #         gui.text(f'iteration: {solver.iterations_counter}')
+    #         if gui.button('solve'):
+    #             solver.solve(iter_per_frame)      
+    #             img = canvasPlotter.make_frame()
+    #             # save_png(save_dir, torch_image, "s.png")
+    #             i += iter_per_frame
+
+    
+    #     canvas.set_image(img.astype(np.float32))
+    #     window.show()
+
+
+
+    ##########################################################################################################
 
     # solver.init(1.*np.ones(grid_size, dtype=np.float32))
     # solver.create_ic_hill(.2, 1E-2, int(0.5*grid_size[0]), int(0.5*grid_size[1])) 
@@ -109,8 +154,14 @@ if __name__ == '__main__':
     #     cv2.imwrite(f'output/{case_name}_at_{i*subiterations}.jpg', rho_cpu)
 
     
+    #########################33 TODO back standard renderer with multiple subwindows
+
     
-    run_with_gui(solver, np_gray_image, iter_per_frame=5)
+    run_with_gui(solver, np_gray_image, iter_per_frame = 1)
+
+
+
+    ############################
 
 
 # %%

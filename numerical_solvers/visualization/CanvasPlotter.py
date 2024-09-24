@@ -14,7 +14,6 @@ from scipy.stats import norm, chi
 from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
 from numerical_solvers.visualization.KolmogorovSpectrumPlotter import KolmogorovSpectrumPlotter, SpectrumHeatmapPlotter
 from numerical_solvers.visualization.MetricPlotter import MSEPlotter, SSIMPlotter
-from numerical_solvers.visualization.histogram_plotter import VelocityHistogramPlotter
 
 
 class CircularBuffer:
@@ -196,6 +195,13 @@ class CanvasPlotter:
         # first row - rho
         
         rho_cpu = self.solver.rho.to_numpy()
+
+        if self.solver.iterations_counter % 10 ==0:
+            print("rho max:  ", rho_cpu.max())
+            print("rho min:  ", rho_cpu.min())
+
+
+
         rho_img = self.render_rho(rho_cpu)
         image1 = img_as_float(self.rho_history.buffer[self.rho_history.index - 2])
         image2 = img_as_float(rho_cpu)
@@ -214,6 +220,8 @@ class CanvasPlotter:
         vy = vel_cpu[:,:,1]
         vel_img = self.render_vel_mag(vel_cpu)
         vel_mag_img = self.return_vel_mag(vel_cpu)
+
+        
         
         image1 = img_as_float(self.energy_history.buffer[self.energy_history.index - 2])
         image2 = img_as_float(vel_mag_img)
@@ -273,9 +281,10 @@ class CanvasPlotter:
                 ssim_index = ssim(image1, image2, data_range=image1.max() - image1.min())
 
         if self.is_vel_mag_distribution_checked:
-            border = 2
-            vel_mag_img[border:-border,border:-border] =0
-            vel_mag_histogram_rgb = make_canvas_histogram(vel_mag_img, vel_mag_img.min(), vel_mag_img.max(), "velocity")
+            # border = 2
+            # vel_mag_img[border:-border,border:-border] =0
+            # plot_velocity_magnitude_distribution
+            vel_mag_histogram_rgb = plot_velocity_magnitude_distribution(vel_mag_img)
             vel_mag_histogram_rgba = cm.ScalarMappable().to_rgba(np.flip(np.transpose(vel_mag_histogram_rgb, (1, 0, 2)), axis=1)) 
 
         else:
@@ -361,84 +370,11 @@ class CanvasPlotter:
     
     
 
-def maxwell_boltzmann(v, A):
-    """
-    Maxwell-Boltzmann distribution function with a constant temperature.
-    
-    Parameters:
-    - v: Speed
-    - A: Amplitude scaling factor
-    
-    Returns:
-    - Probability density at speed v, scaled by A.
-    """
-    T = 1  # Temperature, constant
-    m = 1  # Mass
-    k_B = 1  # Boltzmann constant (set to 1 for simplicity)
-    return A * np.sqrt(2/np.pi) * v * np.exp(-v**2 / (2 * k_B * T))
-
-def make_canvas_histogram(image_array, min_val, max_val, title):
-    # Use the 'Agg' backend for headless environments (no GUI)
-    matplotlib.use('Agg')  # This must be inside the function to be effective here
-
-    # Calculate the histogram
-    norm_image = (image_array - min_val) / (max_val - min_val) 
-    counts, bins = np.histogram(norm_image, bins=256)
-
-    # Calculate the probability distribution
-    total_pixels = norm_image.size
-    probability_distribution = counts / total_pixels
-
-    # Calculate the entropy
-    entropy = -np.sum([p * np.log2(p) for p in probability_distribution if p > 0])
-
-    # Display the histogram
-    my_dpi = 70
-    w, h = norm_image.shape
-    fig = plt.figure(figsize=(w / my_dpi, h / my_dpi), dpi=my_dpi)
-    
-    # Create Axes with space for the title and labels
-    ax = fig.add_axes([0.18, 0.12, 0.78, 0.78])  # [left, bottom, width, height] as fractions of the figure size
-    
-    # Plot the histogram
-    # ax.set_xlim([0, 30])
-    # ax.set_ylim([0, 0.3])
-    ax.set_ylim([0, 0.15])
-    hist_data, bins, _ = ax.hist(image_array.flatten(), bins=256, density=True, alpha=0.5, label='Data Histogram')
-
-    # Generate data points for fitting within the same range as the histogram
-    bin_centers = (bins[:-1] + bins[1:]) / 2  # Use bin centers for fitting
-
-    # Fit the Maxwell-Boltzmann distribution to the histogram data with a constant temperature
-    popt, _ = curve_fit(maxwell_boltzmann, bin_centers, hist_data, p0=[1])  # Initial guess for amplitude A is 1
-
-    # Generate a smooth curve for the fitted Maxwell-Boltzmann distribution
-    v = np.linspace(0.0001, 100, 300)  # Avoid zero to prevent division by zero
-    mb_fit = maxwell_boltzmann(v, *popt)
-
-    # Plot the fitted Maxwell-Boltzmann distribution
-    ax.plot(v, mb_fit, 'r-', lw=2, label=f'Maxwell-Boltzmann Fit (A={popt[0]:.2f})')
-
-    # Set title and labels
-    ax.set_title(f'{title} Entropy = {entropy:.4f} bits', fontsize=9) 
-    ax.set_xlabel('Pixel Value')
-    ax.set_ylabel('Frequency')
-    # ax.legend()
-
-    plt.tight_layout(pad=1.2)
-    # Render the figure to a NumPy array
-    fig.canvas.draw()
-    canvas = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-    canvas = canvas.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-    
-    plt.close(fig)  # Close the Matplotlib figure
-
-    return canvas
-
 
 def plot_v_component_distribution(v_data, title):
     matplotlib.use('Agg')  # Use the 'Agg' backend for headless environments (no GUI)
     
+    m= v_data.shape[0]
     v_data = v_data.reshape(-1)  # Flatten the data
 
     num_bins = 512
@@ -472,9 +408,49 @@ def plot_v_component_distribution(v_data, title):
     canvas = canvas.reshape(fig.canvas.get_width_height()[::-1] + (3,))
     
     # Resize the canvas to 256x256 pixels if necessary
-    if canvas.shape[0] != 256 or canvas.shape[1] != 256:
-        canvas = cv2.resize(canvas, (256, 256), interpolation=cv2.INTER_AREA)
+    if canvas.shape[0] != m or canvas.shape[1] != m:
+        canvas = cv2.resize(canvas, (m, m), interpolation=cv2.INTER_AREA)
     
     plt.close(fig)  # Close the Matplotlib figure
 
+    return canvas
+
+
+def plot_velocity_magnitude_distribution(vel_mag_img):
+    matplotlib.use('Agg')  # Use the 'Agg' backend for headless environments (no GUI)
+    
+    m= vel_mag_img.shape[0]
+    vel_mag_img = vel_mag_img.reshape(-1)
+     
+    num_bins = 64
+    hist_data, bins = np.histogram(vel_mag_img, bins=num_bins, density=True)
+
+    params = maxwell.fit(vel_mag_img)
+    x_range = np.linspace(0, 0.05, 300)
+    mb_fit = maxwell.pdf(x_range, *params)
+
+    # Create the plot
+    fig, ax = plt.subplots(figsize=(2.56, 2.56), dpi=100)  # This will create a 256x256 pixel figure
+
+    # Plot the histogram and Maxwell-Boltzmann fit
+    ax.hist(vel_mag_img, bins=bins, density=True, alpha=0.6, color='g')
+    ax.plot(x_range, mb_fit, 'r-', lw=2)
+    ax.set_ylim(0, 256)
+    ax.set_title('Velocity Magnitude Distribution', fontsize=10)
+    ax.set_xlabel('Velocity Magnitude')
+    ax.set_ylabel('Probability Density')
+
+    plt.tight_layout(pad=1.2)
+
+    # Render the figure to a NumPy array
+    fig.canvas.draw()
+    canvas = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+    canvas = canvas.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+
+    # Ensure the output is exactly 256x256 pixels
+    if canvas.shape[0] != m or canvas.shape[1] != m:
+        canvas = cv2.resize(canvas, (m, m), interpolation=cv2.INTER_AREA)
+
+    plt.close(fig)  # Close the Matplotlib figure to free up resources
+    
     return canvas
