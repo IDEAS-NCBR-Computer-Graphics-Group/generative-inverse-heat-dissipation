@@ -196,9 +196,9 @@ class CanvasPlotter:
         
         rho_cpu = self.solver.rho.to_numpy()
 
-        if self.solver.iterations_counter % 10 ==0:
-            print("rho max:  ", rho_cpu.max())
-            print("rho min:  ", rho_cpu.min())
+        # if self.solver.iterations_counter % 10 ==0:
+        #     print("rho max:  ", rho_cpu.max())
+        #     print("rho min:  ", rho_cpu.min())
 
 
 

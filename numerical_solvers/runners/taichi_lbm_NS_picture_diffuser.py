@@ -34,8 +34,8 @@ img_path = './numerical_solvers/runners/mnist-2.png'
 
 target_size=None
 # target_size=(512, 512)
-# target_size = (256, 256) # None
-target_size = (28, 28) # None
+target_size = (256, 256) # None
+# target_size = (28, 28) # None
 
 
 
