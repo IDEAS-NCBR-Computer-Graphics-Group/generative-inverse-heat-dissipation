@@ -245,9 +245,9 @@ class CanvasPlotter:
 
         # third row - heatmap + differences
 
-
+        self.heatmap_plotter.add_spectrum(vel_cpu[:, :, 0], vel_cpu[:, :, 1], self.solver.iterations_counter)
         if self.is_heatmap_checked:
-            self.heatmap_plotter.add_spectrum(vel_cpu[:, :, 0], vel_cpu[:, :, 1], self.solver.iterations_counter)
+            
             heatmap_energy  = self.heatmap_plotter.plot_heatmap_rgba()
         else:
             heatmap_energy = self.dummy_canvas

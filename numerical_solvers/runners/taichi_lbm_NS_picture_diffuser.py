@@ -65,7 +65,7 @@ if __name__ == '__main__':
     noise_limiter = (-1E-3, 1E-3)
     dt_turb = 1E-3 
 
-    # turb_intensity = 1E-4
+    turb_intensity = 1E-4
     # energy_spectrum = lambda k: np.where(np.isinf(k), 0, k)
     
     energy_spectrum = lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))

@@ -52,7 +52,8 @@ ti_float_precision = ti.f32
   
 if __name__ == '__main__':    
     nx, ny = np_gray_image.shape # 768, 768 
-    niu = 1E-3*1/6
+    # niu = 1E-3*1/6
+    niu = 1/6
     bulk_visc = None
     
     case_name="miau"
@@ -69,10 +70,10 @@ if __name__ == '__main__':
     # turb_intensity = 1E-3
     # energy_spectrum = lambda k: np.where(np.isinf(k * k), 0, k * k) # 
     
-    # turb_intensity = 9E-4
+    turb_intensity = 1E-4
     # energy_spectrum = lambda k: np.where(np.isinf(k ** (-1.)), 0, k ** (-1.0)) # najs
     
-    turb_intensity = 3E-3
+    # turb_intensity = 0*3E-3
     energy_spectrum = lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
     frequency_range = {'k_min': 2.0 * np.pi / min(domain_size), 
                        'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}

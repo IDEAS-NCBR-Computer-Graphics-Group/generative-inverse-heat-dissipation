@@ -38,7 +38,7 @@ class LBM_NS_Solver(LBM_SolverBase):
             # turb_numpy = np.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
             # self.Force.from_numpy(turb_numpy)
             
-            # self.init_gaussian_force_field(1E-2, 0, 1)
+            self.init_gaussian_force_field(1E-2, 0, 1)
             # self.apply_bb()
             self.apply_nee_bc()
             self.iterations_counter = self.iterations_counter +1
@@ -184,19 +184,3 @@ class LBM_NS_Solver(LBM_SolverBase):
             self.vel[i, j] += 0.5*self.Force[i,j] # self.vel[i, j] += 0.5*self.Force[None]
             self.vel[i, j] /= self.rho[i, j]
             
-    @ti.kernel
-    def apply_nee_bc(self):  # impose boundary conditions
-        for j in range(1,self.ny-1):
-            self.apply_nee_bc_core(0, j, 1, j) # left: ibc = 0; jbc = j; inb = 1; jnb = j
-            self.apply_nee_bc_core(self.nx - 1, j, self.nx - 2, j) # right: ibc = nx-1; jbc = j; inb = nx-2; jnb = j
-
-        for i in range(self.nx):
-            self.apply_nee_bc_core(i, self.ny - 1, i, self.ny - 2) # top: ibc = i; jbc = ny-1; inb = i; jnb = ny-2
-            self.apply_nee_bc_core(i, 0, i, 1) # bottom: ibc = i; jbc = 0; inb = i; jnb = 1
-    
-    @ti.func
-    def apply_nee_bc_core(self, ibc, jbc, inb, jnb):
-        #Non-Equilibrium Extrapolation method, see 5.3.4.3 p194, LBM: Principles and Practise, T. Kruger
-        self.rho[ibc, jbc] = self.rho[inb, jnb]
-        self.f_new[ibc, jbc] = self.f_eq(ibc, jbc) - self.f_eq(inb, jnb) + self.f_new[inb, jnb]
-        
