@@ -1,7 +1,7 @@
+import taichi as ti
 import numpy as np
-import os
 import torch
-from abc import ABC
+from tqdm import tqdm
 import warnings
 
 import taichi as ti
@@ -9,23 +9,30 @@ from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range
 from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver    
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
+# from configs.mnist.lbm_ns_turb_config import LBMConfig
 from configs.mnist.lbm_ns_turb_config import LBMConfig
 
-
 class LBM_NS_Corruptor(BaseCorruptor):
-    def __init__(self, config: LBMConfig, transform=None, target_transform=None):
+    def __init__(
+            self,
+            config,
+            transform=None,
+            target_transform=None
+            ):
         super(LBM_NS_Corruptor, self).__init__(transform, target_transform)
 
         ti.init(arch=ti.gpu)
 
         grid_size = (config.data.image_size, config.data.image_size)
-        
+        config = config.lbm
         # energy_spectrum = lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
         # frequency_range = {'k_min': config.solver.k_min, 'k_max': config.solver.k_max }
 
         spectralTurbulenceGenerator = SpectralTurbulenceGenerator(
-            config.solver.domain_size, grid_size, 
-            config.solver.turb_intensity, config.solver.noise_limiter,
+            config.solver.domain_size,
+            grid_size, 
+            config.solver.turb_intensity,
+            config.solver.noise_limiter,
             energy_spectrum=config.solver.energy_spectrum, 
             frequency_range={'k_min': config.solver.k_min, 'k_max': config.solver.k_max}, 
             dt_turb=config.solver.dt_turb, 
@@ -42,8 +49,8 @@ class LBM_NS_Corruptor(BaseCorruptor):
         )
 
         # Set LBM steps (can be made configurable too)
-        self.min_lbm_steps = config.solver.min_lbm_steps
-        self.max_lbm_steps = config.solver.max_lbm_steps
+        self.max_steps = config.solver.max_lbm_steps
+        self.min_steps = config.solver.min_lbm_steps
         
         self.min_init_gray_scale = config.data.min_init_gray_scale
         self.max_init_gray_scale = config.data.max_init_gray_scale
@@ -66,8 +73,7 @@ class LBM_NS_Corruptor(BaseCorruptor):
         np_gray_img = x.numpy()[0, :, :]
         np_gray_img = normalize_grayscale_image_range(
             np_gray_img, self.min_init_gray_scale, self.max_init_gray_scale)
-        # TODO: normalize after simulation as well, to keep data in 0-1 range consistently
-        
+    
         self.solver.init(np_gray_img)
         self.solver.iterations_counter = 0  # Reset counter
 
@@ -75,17 +81,21 @@ class LBM_NS_Corruptor(BaseCorruptor):
             # Solve up to (lbm_steps - step_difference) if generating pairs
             self.solver.solve(steps - step_difference)
             rho_cpu = self.solver.rho.to_numpy()
+            rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
             less_noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
             
             # Solve the remaining steps for the pair generation
             self.solver.solve(step_difference)
             rho_cpu = self.solver.rho.to_numpy()
+            rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
             noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
-            return noisy_x, less_noisy_x,
+
+            return noisy_x, less_noisy_x
         else:
             # Solve up to lbm_steps - step_difference if generating pairs, else directly to lbm_steps
             self.solver.solve(steps)
             rho_cpu = self.solver.rho.to_numpy()
+            rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
             noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
             return noisy_x, None
 

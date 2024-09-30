@@ -13,7 +13,7 @@ import numpy as np
 # Define the nested configurations as dataclasses
 @dataclass
 class DataConfig:
-    image_size: int = 28  # for MNIST
+    image_size: int = 32  # for MNIST
     # min_init_gray_scale: float = 0.95
     # max_init_gray_scale: float = 1.05    
     min_init_gray_scale: float = 0.0
@@ -27,12 +27,8 @@ class DataConfig:
 
 @dataclass
 class SolverConfig:
-    step_size: float = 0.1
-    min_steps: float = field(init=False)  # To be computed after domain_size is set
-    max_steps: float = 10. # max amount of blurr
-
-    def __post_init__(self):
-        self.min_steps: float = self.step_size # min amount of blurr
+    min_steps: int = 1
+    max_steps: int = 50 # max amount of blurr
 
     
 @dataclass

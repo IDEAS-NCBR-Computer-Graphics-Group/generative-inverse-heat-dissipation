@@ -9,9 +9,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from torchvision.utils import make_grid, save_image
-from model_code import utils as mutils
+from models import utils as mutils
 from scripts import losses
-from model_code.ema import ExponentialMovingAverage
+from models.ema import ExponentialMovingAverage
 import pickle
 
 

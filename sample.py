@@ -12,41 +12,104 @@ from ml_collections.config_flags import config_flags
 FLAGS = flags.FLAGS
 
 config_flags.DEFINE_config_file(
-    "config", None, "Training configuration.", lock_config=True)
-flags.DEFINE_string("workdir", None, "Work directory.")
-flags.DEFINE_integer("checkpoint", None,
-                     "Checkpoint number to use for custom sampling")
-flags.mark_flags_as_required(["workdir", "config", "checkpoint"])
-flags.DEFINE_integer("save_sample_freq", 1,
-                     "How often to save samples for output videos?")
+    "config",
+    None,
+    "Training configuration.",
+    lock_config=True
+    )
+flags.DEFINE_string(
+    "workdir",
+    None,
+    "Work directory."
+    )
+flags.DEFINE_integer(
+    "checkpoint",
+    None,
+    "Checkpoint number to use for custom sampling"
+    )
+flags.mark_flags_as_required(
+    [
+    "workdir",
+    "config",
+    "checkpoint"
+    ]
+    )
+flags.DEFINE_integer(
+    "save_sample_freq",
+    1,
+    "How often to save samples for output videos?"
+    )
 flags.DEFINE_float(
-    "delta", 0.01, "The standard deviation of noise to add at each step with predicted reverse blur")
+    "delta",
+    0.01,
+    "The standard deviation of noise to add at each step with predicted reverse blur"
+    )
 flags.DEFINE_integer(
-    "batch_size", None, "Batch size of sampled images. Defaults to the training batch size")
-flags.DEFINE_bool("same_init", False,
-                  "Whether to initialize all samples at the same image")
-flags.DEFINE_bool("share_noise", False,
-                  "Whether to use the same noises for each image in the generated batch")
+    "batch_size",
+    None,
+    "Batch size of sampled images. Defaults to the training batch size"
+    )
+flags.DEFINE_bool(
+    "same_init",
+    False,
+    "Whether to initialize all samples at the same image"
+    )
+flags.DEFINE_bool(
+    "share_noise",
+    False,
+    "Whether to use the same noises for each image in the generated batch")
 flags.DEFINE_integer(
-    "num_points", 10, "Default amount of points for sweeping the input from one place to another")
-flags.DEFINE_float("final_noise", None,
-                   "How much should the noise at the end be? Linear interpolation from noise_amount ot this. If none, use noise_amount")
-flags.DEFINE_bool("interpolate", False, "Whether to do interpolation")
+    "num_points", 
+    10,
+    "Default amount of points for sweeping the input from one place to another"
+    )
+flags.DEFINE_float(
+    "final_noise",
+    None,
+    "How much should the noise at the end be? Linear interpolation from noise_amount ot this. If none, use noise_amount"
+    )
+flags.DEFINE_bool(
+    "interpolate",
+    False,
+    "Whether to do interpolation"
+    )
 flags.DEFINE_integer(
-    "number", None, "add a number suffix to generated sample in interpolate")
-
+    "number",
+    None,
+    "add a number suffix to generated sample in interpolate"
+    )
 
 def main(argv):
     if FLAGS.interpolate:
-        sample_interpolate(FLAGS.config, FLAGS.workdir, FLAGS.checkpoint,
-                           FLAGS.delta, FLAGS.num_points, FLAGS.number)
+        sample_interpolate(
+            FLAGS.config,
+            FLAGS.workdir,
+            FLAGS.checkpoint,
+            FLAGS.delta,
+            FLAGS.num_points,
+            FLAGS.number
+            )
     else:
-        sample(FLAGS.config, FLAGS.workdir, FLAGS.checkpoint, FLAGS.save_sample_freq, FLAGS.delta,
-               FLAGS.batch_size, FLAGS.share_noise, FLAGS.same_init)
+        sample(
+            FLAGS.config,
+            FLAGS.workdir,
+            FLAGS.checkpoint,
+            FLAGS.save_sample_freq,
+            FLAGS.delta,
+            FLAGS.batch_size,
+            FLAGS.share_noise,
+            FLAGS.same_init)
 
-
-def sample(config, workdir, checkpoint, save_sample_freq=1,
-           delta=None, batch_size=None, share_noise=False, same_init=False):
+def sample(
+        config,
+        workdir,
+        checkpoint,
+        save_sample_freq=1,
+        delta=None,
+        batch_size=None,
+        share_noise=False,
+        same_init=False
+        ):
 
     if batch_size == None:
         batch_size = config.training.batch_size
@@ -54,7 +117,10 @@ def sample(config, workdir, checkpoint, save_sample_freq=1,
     if checkpoint > 0:
         checkpoint_dir = os.path.join(workdir, "checkpoints")
         model = utils.load_model_from_checkpoint(
-            config, checkpoint_dir, checkpoint)
+            config,
+            checkpoint_dir,
+            checkpoint
+            )
     else:  # Checkpoint means the latest checkpoint
         checkpoint_dir = os.path.join(workdir, "checkpoints-meta")
         model = utils.load_model_from_checkpoint_dir(config, checkpoint_dir)
@@ -66,9 +132,17 @@ def sample(config, workdir, checkpoint, save_sample_freq=1,
     logging.info("Creating the forward process...")
     scales = config.model.blur_schedule
     heat_forward_module = mutils.create_forward_process_from_sigmas(
-        config, scales, config.device)
+        config,
+        scales,
+        config.device
+        )
     logging.info("Done")
-    initial_sample, original_images = sampling.get_initial_sample(config, heat_forward_module, delta, batch_size)
+    initial_sample, original_images = sampling.get_initial_sample(
+        config,
+        heat_forward_module,
+        delta,
+        batch_size
+        )
     
     if same_init:
         initial_sample = torch.cat(batch_size*[initial_sample[0][None]], 0)
@@ -76,15 +150,19 @@ def sample(config, workdir, checkpoint, save_sample_freq=1,
     initial_sample, original_images = initial_sample[:batch_size], original_images[:batch_size]
     sampling_shape = initial_sample.shape
 
-    intermediate_sample_indices = list(
-        range(0, config.model.K+1, save_sample_freq))
+    intermediate_sample_indices = list(range(0, config.model.K+1, save_sample_freq))
     sample_dir = os.path.join(workdir, "additional_samples")
-    this_sample_dir = os.path.join(
-        sample_dir, "checkpoint_{}".format(checkpoint))
+    this_sample_dir = os.path.join(sample_dir, "checkpoint_{}".format(checkpoint))
 
     # Get smapling function and save directory
     sampling_fn = sampling.get_sampling_fn_inverse_heat(
-        config, initial_sample, intermediate_sample_indices, delta, config.device, share_noise=share_noise)
+        config,
+        initial_sample,
+        intermediate_sample_indices,
+        delta,
+        config.device,
+        share_noise=share_noise
+        )
     
     this_sample_dir = os.path.join(this_sample_dir, "delta_{}".format(delta))
     if same_init:
@@ -105,7 +183,6 @@ def sample(config, workdir, checkpoint, save_sample_freq=1,
     utils.save_png(this_sample_dir, initial_sample, "init.png")
     utils.save_gif(this_sample_dir, intermediate_samples)
     utils.save_video(this_sample_dir, intermediate_samples)
-
 
 def sample_interpolate(config, workdir, checkpoint,
                        delta, num_points, number):
@@ -166,7 +243,6 @@ def sample_interpolate(config, workdir, checkpoint,
         utils.save_video(this_sample_dir,
                          torch.cat([x_sweep, x_sweep[-1:].repeat(10, 1, 1, 1), reversed(x_sweep), x_sweep[:1].repeat(10, 1, 1, 1)]))
     logging.info("Done!")
-
 
 if __name__ == "__main__":
     app.run(main)

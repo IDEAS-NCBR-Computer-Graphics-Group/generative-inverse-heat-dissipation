@@ -10,5 +10,5 @@ def get_config():
     model = config.model
     config.data.image_size = 128
     config.data.dataset = 'FFHQ_128' 
-    
+    config.training.batch_size = 4
     return config

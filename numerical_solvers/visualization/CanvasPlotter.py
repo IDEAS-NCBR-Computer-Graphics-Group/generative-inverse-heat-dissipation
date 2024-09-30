@@ -233,7 +233,11 @@ class CanvasPlotter:
         else:
             # vel_energy_spectrum = self.compute_divergence(vel_cpu[:, :, 0], vel_cpu[:, :, 1])
             vel_energy_spectrum = self.dummy_canvas
+<<<<<<< HEAD
     
+=======
+        
+>>>>>>> faaa5cf5fb849a446af75237e570eef1b0010790
         force_cpu = self.solver.Force.to_numpy()
         force_img = self.render_force_mag(force_cpu)
         if self.is_f_checked:
@@ -452,5 +456,62 @@ def plot_velocity_magnitude_distribution(vel_mag_img):
         canvas = cv2.resize(canvas, (m, m), interpolation=cv2.INTER_AREA)
 
     plt.close(fig)  # Close the Matplotlib figure to free up resources
+    
+    return canvas
+
+def make_canvas_histogram_with_fit(image_array, min_val, max_val):
+    matplotlib.use('Agg')
+    
+    # Calculate the histogram
+    uint8_image = ((image_array - min_val) / (max_val - min_val) * 255).astype(np.uint8)
+    counts, bins = np.histogram(uint8_image, bins=256, range=(0, 255))
+    
+    # Calculate the probability distribution
+    total_pixels = uint8_image.size
+    probability_distribution = counts / total_pixels
+    
+    # Calculate the entropy
+    entropy = -np.sum([p * np.log2(p) for p in probability_distribution if p > 0])
+    
+    # Display the histogram
+    my_dpi = 100
+    w, h = uint8_image.shape
+    fig = plt.figure(figsize=(w/my_dpi, h/my_dpi), dpi=my_dpi)
+    
+    # Create Axes with space for the title and labels
+    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])  # [left, bottom, width, height] as fractions of the figure size
+    
+    # Plot the histogram
+    ax.set_xlim([0, 255])
+    ax.set_ylim([0, 0.015])
+    ax.hist(uint8_image.flatten(), bins=256, density=True, alpha=0.5, label='Histogram')
+    
+    # Add Maxwell-Boltzmann Distribution Fit
+    # Define the range of speeds for the plot
+    v = np.linspace(0, 255, 256)
+    
+    # Maxwell-Boltzmann distribution formula for T = 1, m = 1
+    mb_distribution = np.sqrt(2/np.pi) * (v ** 2) * np.exp(-v ** 2 / 2)
+    
+    # Normalize the distribution to match the scale of the histogram
+    mb_distribution /= np.trapz(mb_distribution, v)  # Normalize to ensure the area under the curve is 1
+    
+    # Plot the Maxwell-Boltzmann distribution
+    ax.plot(v, mb_distribution, color='red', lw=2, label='Maxwell-Boltzmann Fit')
+    
+    # Set title and labels
+    ax.set_title(f'Entropy = {entropy:.4f} bits', fontsize=9)
+    ax.set_xlabel('Pixel Value')
+    ax.set_ylabel('Frequency')
+    
+    # Add a legend
+    ax.legend()
+    
+    # Render the figure to a NumPy array
+    fig.canvas.draw()
+    canvas = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+    canvas = canvas.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    
+    plt.close(fig)  # Close the Matplotlib figure
     
     return canvas

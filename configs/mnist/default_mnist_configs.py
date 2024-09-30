@@ -39,6 +39,8 @@ def get_default_configs():
     data.centered = False
     data.uniform_dequantization = False
     data.num_channels = 1
+    data.showcase_comparison = False
+
 
     # model
     config.model = model = ml_collections.ConfigDict()
