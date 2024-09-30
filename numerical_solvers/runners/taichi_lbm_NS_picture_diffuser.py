@@ -21,6 +21,8 @@ from numerical_solvers.solvers.img_reader import read_img_in_grayscale, normaliz
 from numerical_solvers.visualization.taichi_lbm_gui import run_with_gui
 
 
+from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
+
 # from lbm_diffuser.lbm_bckp_with_fields import lbm_solver as lbm_solver_bkcp
 from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
 
@@ -29,13 +31,17 @@ from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
 # %% read IC
 # https://github.com/taichi-dev/image-processing-with-taichi/blob/main/image_transpose.py
 
-
-img_path = './numerical_solvers/runners/cat_768x768.jpg'
+img_path = './numerical_solvers/runners/mnist-2.png'
+# img_path = './numerical_solvers/runners/cat_256x256.jpg'
 
 target_size=None
 # target_size=(512, 512)
-target_size = (256, 256) # None
-# target_size = (128, 128) # None
+# target_size = (256, 256) # None
+target_size = (28, 28) # None
+
+
+
+
 
 np_gray_image = read_img_in_grayscale(img_path, target_size)
 np_gray_image = normalize_grayscale_image_range(np_gray_image, 0.95, 1.05)
@@ -57,11 +63,8 @@ if __name__ == '__main__':
 
     domain_size = (1.0, 1.0)
     grid_size = np_gray_image.shape
-<<<<<<< HEAD
-    turb_intensity = 0 #1E-4
-=======
     turb_intensity = 0*1E-4
->>>>>>> faaa5cf5fb849a446af75237e570eef1b0010790
+
     noise_limiter = (-1E-3, 1E-3)
     dt_turb = 1E-3 
 
@@ -80,13 +83,8 @@ if __name__ == '__main__':
         is_div_free = False)
     
     
-<<<<<<< HEAD
     niu = 1 * 1./6
     bulk_visc = 1 * 1./6
-=======
-    niu = 1E-4 * 1/6
-    bulk_visc = 1E-4 *1/6
->>>>>>> faaa5cf5fb849a446af75237e570eef1b0010790
     case_name="miau"   
     
     solver = LBM_NS_Solver(
@@ -98,17 +96,16 @@ if __name__ == '__main__':
     
     # solver.init(np_gray_image) 
 
-<<<<<<< HEAD
     # solver.init(1.*np.ones(grid_size, dtype=np.float32))
     # solver.create_ic_hill(.2, 1E-2, int(0.5*grid_size[0]), int(0.5*grid_size[1])) 
     # solver.create_ic_hill(.05, 1E-3, int(0.25*grid_size[0]), int(0.25*grid_size[1]))
     # solver.create_ic_hill(-.05, 1E-3,int(0.75*grid_size[0]), int(0.75*grid_size[1]))
-=======
+
     solver.init(1.*np.ones(grid_size, dtype=np.float32))
     solver.create_ic_hill(0.5, 1E-3, int(0.5*grid_size[0]), int(0.5*grid_size[1])) 
     # solver.create_ic_hill( .05, 1E-3, int(0.25*nx), int(0.25*ny))
     # solver.create_ic_hill(-.05, 1E-3, int(0.75*nx), int(0.75*ny))
->>>>>>> faaa5cf5fb849a446af75237e570eef1b0010790
+
     
     # for i in range(3):
     #     subiterations = 100
@@ -128,8 +125,14 @@ if __name__ == '__main__':
     #     cv2.imwrite(f'output/{case_name}_at_{i*subiterations}.jpg', rho_cpu)
 
     
+    #########################33 TODO back standard renderer with multiple subwindows
+
     
-    run_with_gui(solver, np_gray_image, iter_per_frame=5)
+    run_with_gui(solver, np_gray_image, iter_per_frame = 1)
+
+
+
+    ############################
 
 
 # %%

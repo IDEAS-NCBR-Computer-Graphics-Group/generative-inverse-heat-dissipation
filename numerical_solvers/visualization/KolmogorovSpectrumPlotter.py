@@ -6,51 +6,47 @@ import matplotlib.cm as cm
 from matplotlib.colors import LogNorm
 
 
-def compute_kolmogorov_spectrum(u, v, Lx, Ly):
+def compute_wavenumbers(u, v, Lx, Ly):
+    Nx, Ny = u.shape
+    kx = np.fft.fftfreq(Nx, d=Lx/Nx) * 2 * np.pi
+    ky = np.fft.fftfreq(Ny, d=Ly/Ny) * 2 * np.pi
+    k = np.sqrt(kx**2 + ky**2)
+    return k
+
+    ############333
+    # #TODO: this is calculated every time:(
+    # # Grid dimensions
+    # Nx, Ny = u.shape
+
+    # # Corresponding wavenumbers
+    # kx = np.fft.fftfreq(Nx, d=Lx/Nx) * 2 * np.pi
+    # ky = np.fft.fftfreq(Ny, d=Ly/Ny) * 2 * np.pi
+    # k = np.sqrt(kx**2 + ky**2)
+
+    # # Sort the spectrum by wavenumber
+    # idx = np.argsort(k)
+    # k_sorted = k[idx]
+    # #######################  
+
+def compute_kolmogorov_spectrum(u, v, idx):
     """
     Compute and plot the Kolmogorov spectrum using the straightforward energy spectrum calculation.
 
     Args:
         u: 2D array of x-velocity fluctuations.
         v: 2D array of y-velocity fluctuations.
-        Lx: Length of the domain in the x-direction.
-        Ly: Length of the domain in the y-direction.
+        idx: array of indexes of sorted wavenumber  sort 
 
     Returns:
-        k: 1D array of wavenumbers.
         energy_spectrum: 1D array of energy spectrum values.
     """
-
-    ############333
-    #TODO: this is calculated every time:(
-    # Grid dimensions
-    Nx, Ny = u.shape
-
-    # Corresponding wavenumbers
-    kx = np.fft.fftfreq(Nx, d=Lx/Nx) * 2 * np.pi
-    ky = np.fft.fftfreq(Ny, d=Ly/Ny) * 2 * np.pi
-    k = np.sqrt(kx**2 + ky**2)
-
-    # Sort the spectrum by wavenumber
-    idx = np.argsort(k)
-    k_sorted = k[idx]
-    #######################
-
-
-    # Compute the 2D Fourier transforms of the velocity fields
     u_hat = np.fft.fft2(u)
     v_hat = np.fft.fft2(v)
-
-    # Compute the energy spectrum as the sum of the squared magnitudes of the Fourier coefficients
     energy_spectrum = np.abs(u_hat)**2 + np.abs(v_hat)**2
-
-    # Average the energy spectrum over one dimension (e.g., the y-dimension)
     energy_spectrum = np.mean(energy_spectrum, axis=0)
-
-
     energy_spectrum_sorted = energy_spectrum[idx]
+    return  energy_spectrum_sorted
 
-    return k_sorted, energy_spectrum_sorted
 
 class KolmogorovSpectrumPlotter:
     def __init__(self, title='Energy spectrum', domain_size=(1., 1.),):
@@ -81,12 +77,14 @@ class KolmogorovSpectrumPlotter:
         matplotlib.use('Agg')  # Use Agg backend for rendering without GUI
         Lx, Ly = self.domain_size
 
-        # Compute the energy spectrum for the current data
-        k, energy_spectrum = compute_kolmogorov_spectrum(u, v, Lx, Ly)
+        k = compute_wavenumbers(u, v, Lx, Ly)
+        idx = np.argsort(k)
+        k_sorted = k[idx]
+        energy_spectrum = compute_kolmogorov_spectrum(u, v, idx)
         
         # If this is the first call, store the computed spectrum as the reference
         if self.first_k is None or self.first_energy_spectrum is None:
-            self.first_k = k
+            self.first_k = k_sorted
             self.first_energy_spectrum = energy_spectrum
 
         # Reference data for the -5/3 slope line from the first computed spectrum
@@ -104,9 +102,9 @@ class KolmogorovSpectrumPlotter:
         
         # Plot the current energy spectrum
         ax.set_ylim([1E-5, 1E2])
-        ax.loglog(k[1:len(k) // 2], energy_spectrum[1:len(k) // 2], 'b>', label='Energy spectrum')
+        ax.loglog(k_sorted[1:len(k_sorted) // 2], energy_spectrum[1:len(k) // 2], 'b>', label='Energy spectrum')
         
-        # Plot the -5/3 slope line using the reference data from the first call
+        # Plot the -5/3 slope line using the reference data from the first call``
         ax.loglog(k_ref, E_ref, 'r--', label='-5/3 slope')
 
         # Plot the first computed spectrum as a reference
@@ -146,7 +144,8 @@ class SpectrumHeatmapPlotter:
         self.target_shape = target_shape  # Target shape for the heatmap (matches other images)
         self.spectrums = []  # List to store energy spectrums for each iteration
         self.iterations = []  # List to store iteration numbers
-        self.k_values = None  # To store common wavenumber array (k)
+        self.k_sorted = None  # To store common wavenumber array (k)
+
 
     def add_spectrum(self, u, v, iteration):
         """
@@ -158,13 +157,14 @@ class SpectrumHeatmapPlotter:
             iteration (int): Current iteration number.
         """
         Lx, Ly = self.domain_size
-        k, energy_spectrum = compute_kolmogorov_spectrum(u, v, Lx, Ly)
-
-        if self.k_values is None:
-            self.k_values = k
+        if self.k_sorted == None:
+            k = compute_wavenumbers(u, v, Lx, Ly)
+            idx = np.argsort(k)
+            self.k_sorted  = k[idx]
+        energy_spectrum = compute_kolmogorov_spectrum(u, v, idx)
 
         # Interpolate energy_spectrum to align with the common wavenumber array
-        energy_spectrum = np.interp(self.k_values, k, energy_spectrum)
+        # energy_spectrum = np.interp(self.k_values, k, energy_spectrum)
         self.spectrums.append(energy_spectrum)
         self.iterations.append(iteration)
 
@@ -182,10 +182,12 @@ class SpectrumHeatmapPlotter:
         # Create the figure and axis for the heatmap
         fig, ax = plt.subplots(figsize=(self.target_shape[1] / 100, self.target_shape[0] / 100), dpi=100)
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+
+        plt.tight_layout(pad=1.2)
         cax = ax.imshow(
             spectrums_array,
             aspect='auto',
-            extent=[min(self.iterations), max(self.iterations), min(self.k_values), max(self.k_values)],
+            extent=[min(self.iterations), max(self.iterations), min(self.k_sorted), max(self.k_sorted)],
             origin='lower',
             norm=LogNorm(),  # Log scale for better visualization
             cmap='inferno'
