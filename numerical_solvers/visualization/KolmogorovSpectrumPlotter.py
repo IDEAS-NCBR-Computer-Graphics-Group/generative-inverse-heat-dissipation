@@ -266,7 +266,7 @@ class SpectrumHeatmapPlotter:
         if SpectrumHeatmapPlotter.k_values is None:
             SpectrumHeatmapPlotter.k_values = k
 
-        energy_spectrum = np.interp(SpectrumHeatmapPlotter.k_values, k, energy_spectrum)
+        # energy_spectrum = np.interp(SpectrumHeatmapPlotter.k_values, k, energy_spectrum)
         self.spectrums.append(energy_spectrum)
         self.iterations.append(iteration)
 
@@ -289,7 +289,7 @@ class SpectrumHeatmapPlotter:
             cmap='inferno'
         )
 
-        plt.tight_layout(pad=1.2)
+        # plt.tight_layout(pad=1.2)
         fig.canvas.draw()
         canvas = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
         canvas = canvas.reshape(fig.canvas.get_width_height()[::-1] + (3,))

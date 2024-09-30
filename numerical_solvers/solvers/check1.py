@@ -96,7 +96,7 @@ class SpectrumHeatmapPlotter:
         spectrums_array = np.array(self.spectrums).T  # Transpose to have iterations on the x-axis
 
         # Create the heatmap plot
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(1, 1))
         plt.title("Energy Spectrum Heatmap over Iterations")
         plt.xlabel("Iteration")
         plt.ylabel("Wavenumber $k$")
