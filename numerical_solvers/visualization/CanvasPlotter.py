@@ -228,6 +228,7 @@ class CanvasPlotter:
         ssim_index = ssim(image1, image2, data_range=image1.max() - image1.min())
         self.energy_history.add_snapshot(vel_mag_img, mean_squared_error(self.energy_history.buffer[self.energy_history.index - 2], vel_mag_img), ssim_index, self.solver.iterations_counter) 
 
+        # self.render_vel_energy_spectrum(vel_cpu)
         if self.is_u_checked:
             vel_energy_spectrum = self.render_vel_energy_spectrum(vel_cpu)
         else:

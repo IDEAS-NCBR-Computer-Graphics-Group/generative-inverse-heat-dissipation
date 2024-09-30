@@ -157,7 +157,7 @@ if __name__ == '__main__':
     #########################33 TODO back standard renderer with multiple subwindows
 
     
-    run_with_gui(solver, np_gray_image, iter_per_frame = 1)
+    run_with_gui(solver, np_gray_image, iter_per_frame = 5)
 
 
 
