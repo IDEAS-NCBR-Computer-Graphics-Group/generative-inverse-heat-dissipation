@@ -15,14 +15,17 @@ from absl import flags
 from ml_collections.config_flags import config_flags
 import numpy as np
 
-from corruptors.LBM_NS_Corruptor import LBM_NS_Corruptor
-from corruptors.BlurringCorruptor import BlurringCorruptor
+from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
+from numerical_solvers.data_holders.BlurringCorruptor import BlurringCorruptor
 
 from torchvision import transforms
+from configs.mnist.lbm_ns_turb_config import LBMConfig
+from scripts.git_utils import get_git_branch, get_git_revision_hash, get_git_revision_short_hash
 
 FLAGS = flags.FLAGS
 
 config_flags.DEFINE_config_file("config", None, "NN Training configuration.", lock_config=True)
+config_flags.DEFINE_config_file("forwardsolverconfig", None, "Forward solver configuration.", lock_config=True)
 flags.DEFINE_string("workdir", None, "Work directory.")
 flags.mark_flags_as_required(["workdir", "config"])
 #flags.DEFINE_string("initialization", "prior", "How to initialize sampling")
@@ -30,7 +33,7 @@ flags.mark_flags_as_required(["workdir", "config"])
 
 def main(argv):
     
-    train(FLAGS.config, FLAGS.workdir)
+    train(FLAGS.config, FLAGS.workdir, FLAGS.forwardsolverconfig)
 
 
 def train(config, workdir):
@@ -48,7 +51,7 @@ def train(config, workdir):
         logging.info("RUNNING ON CPU")
 
     # print(f"Code version\t branch: {get_git_branch()} \t commit hash: {get_git_revision_hash()}")
-    # logging.info(f"Code version\t branch: {get_git_branch()} \t commit hash: {get_git_revision_hash()}")
+    logging.info(f"Code version\t branch: {get_git_branch()} \t commit hash: {get_git_revision_hash()}")
     
     # TODO: copy config
     # shutil.copy(os.path.join(workdir, "case_name"), os.path.join(workdir, "case_info")) 
@@ -111,20 +114,17 @@ def train(config, workdir):
 
     # draw a sample by lbm-destroying some rand images
     corruptor = LBM_NS_Corruptor(
-        config,                                
+        solver_config,                                
         transform=transforms.Compose([transforms.ToTensor()]))
    
-    # # corruptor = BlurringCorruptor(
-    # #     solver_config, 
-    # #     transform=transforms.Compose([transforms.ToTensor()]))
+    # corruptor = BlurringCorruptor(
+    #     solver_config, 
+    #     transform=transforms.Compose([transforms.ToTensor()]))
     
     
     n_denoising_steps = solver_config.solver.n_denoising_steps   
     initial_sample = sampling.get_initial_corrupted_sample(
-        config,
-        n_denoising_steps,
-        corruptor
-        )
+        config, n_denoising_steps, corruptor)
     
     sampling_fn = sampling.get_sampling_fn_inverse_lbm_ns(
         n_denoising_steps = n_denoising_steps,
@@ -184,23 +184,23 @@ def train(config, workdir):
     #         utils.save_checkpoint(os.path.join(
     #             checkpoint_dir, 'checkpoint_{}.pth'.format(save_step)), state)
 
-    #     # Generate samples periodically
-    #     if step != 0 and step % config.training.sampling_freq == 0 or step == num_train_steps:
-    #         logging.info("Sampling...")
-    #         ema.store(model.parameters())
-    #         ema.copy_to(model.parameters())
-    #         sample, n, intermediate_samples = sampling_fn(model_evaluation_fn)
-    #         ema.restore(model.parameters())
-    #         this_sample_dir = os.path.join(sample_dir, "iter_{}".format(step))
-    #         Path(this_sample_dir).mkdir(parents=True, exist_ok=True)
-    #         utils.save_tensor(this_sample_dir, sample, "final.np")
-    #         utils.save_png(this_sample_dir, sample, "final.png")
+        # Generate samples periodically
+        if step != 0 and step % config.training.sampling_freq == 0 or step == num_train_steps:
+            logging.info("Sampling...")
+            ema.store(model.parameters())
+            ema.copy_to(model.parameters())
+            sample, n, intermediate_samples = sampling_fn(model_evaluation_fn)
+            ema.restore(model.parameters())
+            this_sample_dir = os.path.join(sample_dir, "iter_{}".format(step))
+            Path(this_sample_dir).mkdir(parents=True, exist_ok=True)
+            utils.save_tensor(this_sample_dir, sample, "final.np")
+            utils.save_png(this_sample_dir, sample, "final.png")
 
-    #         if initial_sample != None:
-    #             utils.save_png(this_sample_dir, initial_sample, "init.png")
+            if initial_sample != None:
+                utils.save_png(this_sample_dir, initial_sample, "init.png")
 
-    #         utils.save_gif(this_sample_dir, intermediate_samples)
-    #         utils.save_video(this_sample_dir, intermediate_samples)
+            utils.save_gif(this_sample_dir, intermediate_samples)
+            utils.save_video(this_sample_dir, intermediate_samples)
 
 if __name__ == "__main__":
     app.run(main)

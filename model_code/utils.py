@@ -42,6 +42,8 @@ class DCTBlur(nn.Module):
 
     def __init__(self, blur_sigmas, image_size, device):
         super(DCTBlur, self).__init__()
+        # sigmas = scales = config.model.blur_schedule
+         
         self.blur_sigmas = torch.tensor(blur_sigmas).to(device)
         freqs = np.pi*torch.linspace(0, image_size-1,
                                      image_size).to(device)/image_size
@@ -52,7 +54,7 @@ class DCTBlur(nn.Module):
             sigmas = self.blur_sigmas[fwd_steps][:, None, None, None]
         elif len(x.shape) == 3:
             sigmas = self.blur_sigmas[fwd_steps][:, None, None]
-        t = sigmas**2/2
+        t = sigmas**2/2 #example: 10**2/2 = 50 
         dct_coefs = torch_dct.dct_2d(x, norm='ortho')
         dct_coefs = dct_coefs * torch.exp(- self.frequencies_squared * t)
         return torch_dct.idct_2d(dct_coefs, norm='ortho')

@@ -3,7 +3,9 @@ import numpy as np
 import logging
 from scripts import datasets
 # from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
-from corruptors.BaseCorruptor import BaseCorruptor
+from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
+from configs.mnist.lbm_ns_config import LBMConfig
+from torchvision import transforms
 
 def get_sampling_fn_inverse_lbm_ns(
     n_denoising_steps,
@@ -16,7 +18,7 @@ def get_sampling_fn_inverse_lbm_ns(
     delta: Standard deviation of the sampling noise
     share_noise: Whether to use the same noises for all elements in the batch
     """
-    
+       
     def sampler(model):
         if share_noise:
             noises = [torch.randn_like(initial_sample[0], dtype=torch.float)[None] for i in range(n_denoising_steps)]

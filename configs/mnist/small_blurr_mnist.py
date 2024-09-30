@@ -1,4 +1,3 @@
-from sympy import evaluate
 from configs.mnist import default_mnist_configs
 import ml_collections
 import numpy as np
@@ -6,9 +5,6 @@ import numpy as np
 
 def get_config():
     config = default_mnist_configs.get_default_configs()
-    
-
-    # store additional checkpoints for preemption in cloud computing environments
     
     model = config.model
     model.blur_sigma_max = 20
@@ -20,15 +16,12 @@ def get_config():
                                              np.log(model.blur_sigma_max), model.K))
     model.blur_schedule = np.array([0] + list(model.blur_schedule))  # Add the k=0 timestep
     
-    data = config.data
-    data.showcase_comparison = True
+    config.data.dataset = 'CORRUPTED_BLURR_MNIST'
     
-    training = config.training
-    training.log_freq = 50
-    training.eval_freq = 100
-    training.n_iters = 20001
-    training.snapshot_freq = 1000
-    training.snapshot_freq_for_preemption = 100
-    training.sampling_freq = 100
-    
+    config.training.n_iters = 1001
+    config.training.snapshot_freq = 1000
+    config.training.snapshot_freq_for_preemption = 100 # store additional checkpoints for preemption in cloud computing environments 
+    config.training.log_freq = 50
+    config.training.eval_freq = 100
+    config.training.sampling_freq = 100
     return config
