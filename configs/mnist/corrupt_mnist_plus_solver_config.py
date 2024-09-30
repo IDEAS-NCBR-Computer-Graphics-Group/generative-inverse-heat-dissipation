@@ -18,8 +18,7 @@ def get_config():
     
     data = config.data
     data.showcase_comparison = True
-    data.process_pairs = True
-    
+    data.process_pairs = False
     
     training = config.training
     training.log_freq = 50
@@ -45,10 +44,11 @@ def get_config():
     solver.noise_limiter = (-1E-3, 1E-3)
     solver.dt_turb = 5 * 1E-4
     solver.min_lbm_steps = 1
-    solver.max_lbm_steps = 10
+    solver.max_lbm_steps = 100
     solver.k_min = 2.0 * torch.pi / min(solver.domain_size)
     solver.k_max = 2.0 * torch.pi / (min(solver.domain_size) / 1024)
     solver.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
+    solver.n_denoising_steps = 10
 
     # blur
     config.blur = blur = ml_collections.ConfigDict()
@@ -59,7 +59,8 @@ def get_config():
     data.processed_filename = 'blurr_pairs' if config.data.process_pairs else 'blurr'
 
     blur.solver = solver = ml_collections.ConfigDict()
-    solver.min_blurr = 1.
-    solver.max_blurr = 5.
+    solver.min_blurr = 1
+    solver.max_blurr = 50
+    solver.n_denoising_steps = 10
 
     return config

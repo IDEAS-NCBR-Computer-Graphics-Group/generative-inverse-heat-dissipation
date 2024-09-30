@@ -293,32 +293,31 @@ def prepare_batch(data_loader_iterator, device):
         tuple: Tuple containing original image tensor and a tuple of modified images and other data, all moved to the specified device.
     """
     # Get a batch from the DataLoader
-    original_image, batch = next(data_loader_iterator)
-
-    # Move original_image to the desired device
-    original_image = original_image.to(device).float()
+    # original_image, batch = next(data_loader_iterator)
+    batch = next(data_loader_iterator)
 
     # Unpack eval_batch and move each tensor to the GPU
-    if len(batch) == 4:  # Case with pre-modified images
-        modified_image, pre_modified_image, corruption_amount, label = batch
+    if len(batch) == 3:  # Case with pre-modified images
+        image, corruption_amount, label = batch
         
         # Move everything to the GPU
-        modified_image = modified_image.to(device).float()
-        pre_modified_image = pre_modified_image.to(device).float()
+        image = image.to(device).float()
         corruption_amount = corruption_amount.to(device)  # Already float32
         label = label.to(device)  # Already long
 
         # Efficient packing after moving to GPU
-        batch = (modified_image, pre_modified_image, corruption_amount, label)
-    else:  # Case without pre-modified images
-        modified_image, corruption_amount, label = batch
+        batch = (image,  corruption_amount, label)
+
+    elif len(batch) == 4:  # Case without pre-modified images
+        image, image_one_less, corruption_amount, label = batch
         
         # Move everything to the GPU
-        modified_image = modified_image.to(device).float()
+        image = image.to(device).float()
+        image_one_less = image_one_less.to(device).float()
         corruption_amount = corruption_amount.to(device)  # Already float32
         label = label.to(device)  # Already long
 
         # Efficient packing after moving to GPU
-        batch = (modified_image, corruption_amount, label)
+        batch = (image, image_one_less, corruption_amount, label)
 
-    return original_image, batch
+    return batch

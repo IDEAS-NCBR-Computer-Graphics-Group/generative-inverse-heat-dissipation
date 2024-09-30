@@ -54,6 +54,7 @@ def get_default_configs():
     solver.k_min = 2.0 * torch.pi / min(solver.domain_size)
     solver.k_max = 2.0 * torch.pi / (min(solver.domain_size) / 1024)
     solver.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
+    solver.n_denoising_steps = 10
 
     # blur
     config.blur = blur = ml_collections.ConfigDict()
@@ -67,6 +68,7 @@ def get_default_configs():
     blur.solver = solver = ml_collections.ConfigDict()
     solver.min_blurr = 1.
     solver.max_blurr = 5.
+    solver.n_denoising_steps = 10
 
     
     return config

@@ -47,8 +47,8 @@ class LBM_NS_Corruptor(BaseCorruptor):
         )
 
         # Set LBM steps (can be made configurable too)
-        self.min_lbm_steps = config.solver.min_lbm_steps
-        self.max_lbm_steps = config.solver.max_lbm_steps
+        self.max_steps = config.solver.max_lbm_steps
+        self.min_steps = config.solver.min_lbm_steps
         
         self.min_init_gray_scale = config.data.min_init_gray_scale
         self.max_init_gray_scale = config.data.max_init_gray_scale
@@ -92,57 +92,3 @@ class LBM_NS_Corruptor(BaseCorruptor):
             rho_cpu = self.solver.rho.to_numpy()
             noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
             return noisy_x, None
-
-    def _preprocess_and_save_data(self, initial_dataset, save_dir, is_train_dataset: bool, process_pairs=False):
-        """
-        Preprocesses data and saves it to the specified directory.
-
-        Args:
-            initial_dataset (list): The initial dataset containing images and labels.
-            save_dir (str): The directory to save the preprocessed data.
-            process_pairs (bool): Flag indicating whether to process pairs of images (True) 
-                                  or single corrupted images (False). Default is False.
-        """
-        split = 'train' if is_train_dataset else 'test'
-
-        split_save_dir = os.path.join(save_dir, split)
-        if os.path.exists(split_save_dir):
-            warnings.warn(f"[EXIT] Data not generated. Reason: file exist {save_dir} and is not empty.")
-            return
-        os.makedirs(split_save_dir)
-            
-        for i in tqdm(range(len(initial_dataset))):
-            file_path = os.path.join(split_save_dir, f'data_point_{i}.pt')
-
-            corruption_amount = np.random.randint(self.min_lbm_steps, self.max_lbm_steps)
-            image, label = initial_dataset[i]
-            image = self.transform(image)
-
-            corrupted_image, pre_corrupted_image = self._corrupt(
-                image,
-                corruption_amount,
-                generate_pair=process_pairs
-                )
-            corruption_amount = torch.tensor(corruption_amount)
-
-            if process_pairs:
-                torch.save(
-                    (
-                    image,
-                    corrupted_image,
-                    pre_corrupted_image,
-                    corruption_amount,
-                    label
-                    ),
-                    file_path
-                    )
-            else:
-                torch.save(
-                    (
-                    image,
-                    corrupted_image,
-                    corruption_amount,
-                    label
-                    ),
-                    file_path
-                    )

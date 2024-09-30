@@ -133,34 +133,6 @@ def save_png(save_dir, data, name, nrow=None):
         save_image(image_grid, fout)
 
 
-def save_png_norm(save_dir, data, name, nrow=None):
-    """Save tensor 'data' as a PNG with specified normalization and colormap."""
-    if nrow is None:
-        nrow = int(np.sqrt(data.shape[0]))
-        
-    image_grid = torchvision.utils.make_grid(data, nrow, padding=2)[0]
-
-    # # Convert the tensor to a NumPy array
-    # image_np = image_grid.cpu().numpy()
-    # # Transpose from (C, H, W) to (H, W, C)
-    # image_np = np.transpose(image_np, (1, 2, 0))
-
-    image_grid = torchvision.utils.make_grid(data)[0]
-    image_np = image_grid.cpu().numpy()
-    # Apply normalization
-    norm = matplotlib.colors.Normalize(vmin=0.95, vmax=1.05)
-    image_np_norm = norm(image_np)
-
-    # Apply the 'Greys' - inverted colormap, gray - normal
-    cmap = plt.get_cmap('gray')
-    image_colored = cmap(image_np_norm)
-
-    # plt.imshow(image_colored, cmap=cmap);
-    # Save the image
-    # with open(os.path.join(save_dir, name), "wb") as fout:
-    plt.imsave(os.path.join(save_dir, name), image_colored)
-    
-
 def append_to_log_file(dataset, experiment, additional_param, score_name, score_value):
     """
     Helper function for saving evaluation results to a .txt file. Arguments: 

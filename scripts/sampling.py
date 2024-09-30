@@ -2,13 +2,13 @@ import torch
 import numpy as np
 import logging
 from scripts import datasets
-from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
-from configs.mnist.lbm_ns_config import LBMConfig
-from torchvision import transforms
+# from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
+from corruptors.BaseCorruptor import BaseCorruptor
 
-def get_sampling_fn_inverse_lbm_ns(denoising_steps, initial_sample,
-                                 intermediate_sample_indices, delta, device,
-                                 share_noise=False):
+def get_sampling_fn_inverse_lbm_ns(
+    n_denoising_steps,
+    initial_sample, intermediate_sample_indices, 
+    delta, device, share_noise=False):
     """ Returns our inverse heat process sampling function. 
     Arguments: 
     initial_sample: Pytorch Tensor with the initial draw from the prior p(u_K)
@@ -16,39 +16,36 @@ def get_sampling_fn_inverse_lbm_ns(denoising_steps, initial_sample,
     delta: Standard deviation of the sampling noise
     share_noise: Whether to use the same noises for all elements in the batch
     """
- 
+    
     def sampler(model):
         if share_noise:
-            noises = [torch.randn_like(initial_sample[0], dtype=torch.float)[None] for i in range(denoising_steps)]
+            noises = [torch.randn_like(initial_sample[0], dtype=torch.float)[None] for i in range(n_denoising_steps)]
         intermediate_samples_out = []
 
         with torch.no_grad():
             u = initial_sample.to(device).float()
-            if intermediate_sample_indices != None and denoising_steps in intermediate_sample_indices:
+            if intermediate_sample_indices != None and n_denoising_steps in intermediate_sample_indices:
                 intermediate_samples_out.append((u, u))
-            for i in range(denoising_steps, 0, -1):
-                vec_fwd_steps = torch.ones(initial_sample.shape[0], device=device, dtype=torch.long) * i # todo: keep attention to dtype
+            for i in range(n_denoising_steps, 0, -1):
+                # vec_fwd_steps = vec_fwd_steps * (float(max_noise_level) * float(i)/float(n_denoising_steps))
                 
+                # we assume max_noise_level=n_denoising_steps
+                vec_fwd_steps = torch.ones(initial_sample.shape[0], device=device, dtype=torch.long) * i
                 # Predict less blurry img
-                # u_pred =  model(u, vec_fwd_steps) + u # original
-                u_pred =  model(u, vec_fwd_steps) # TODO just make one step backward 
+                u_pred =  model(u, vec_fwd_steps) + u # the NN predicts the difference between blurry_x and less_blurry_x
 
                 # Sampling step
                 if share_noise:
                     noise = noises[i-1]
                 else:
                     noise = torch.randn_like(u)
-                # u = u_pred #+ noise*delta #TODO: do we need Gaussian noise here? Or shall do a kind of destruction-step with numerical solver
-                
-                # mix_factor = 1/(denoising_steps - i) # TODO: it seems to be a trick for time-unaware ddpms
-                mix_factor = 1.
-                u = u*(1-mix_factor) + u_pred*mix_factor
-                
+                u = u_pred + noise*delta #TODO: do we need Gaussian noise here? Or shall do a kind of destruction-step with numerical solver
+
                 # Save trajectory
                 if intermediate_sample_indices != None and i-1 in intermediate_sample_indices:
                     intermediate_samples_out.append((u, u_pred))
 
-            return u_pred, denoising_steps, [u for (u, u_pred) in intermediate_samples_out]
+            return u_pred, n_denoising_steps, [u for (u, u_pred) in intermediate_samples_out]
     return sampler
 
 
@@ -77,13 +74,13 @@ def get_sampling_fn_inverse_heat(config, initial_sample,
             for i in range(K, 0, -1):
                 vec_fwd_steps = torch.ones(initial_sample.shape[0], device=device, dtype=torch.long) * i
                 # Predict less blurry mean
-                u_mean = model(u, vec_fwd_steps) + u #TODO: mean?! shall be averaged
+                u_mean = model(u, vec_fwd_steps) + u # mean is as the NN learn difference between blurred_x and less_blurred_x
                 # Sampling step
                 if share_noise:
                     noise = noises[i-1]
                 else:
                     noise = torch.randn_like(u)
-                u = u_mean + noise*delta #TODO run without noise and check what happens
+                u = u_mean + noise*delta
                 # Save trajectory
                 if intermediate_sample_indices != None and i-1 in intermediate_sample_indices:
                     intermediate_samples_out.append((u, u_mean))
@@ -155,25 +152,45 @@ def get_initial_sample(config, forward_heat_module, delta, batch_size=None):
     initial_sample = forward_heat_module(initial_sample, config.model.K * torch.ones(initial_sample.shape[0], dtype=torch.long).to(config.device))
     return initial_sample, original_images
 
-def get_initial_lbm_sample(dataset_config, solver_config: LBMConfig, solver: LBM_NS_Corruptor, batch_size=None):
+
+def get_initial_corrupted_sample(dataset_config, corruption_amount, solver: BaseCorruptor, batch_size=None):
     """Take a draw from the prior p(u_K)"""
     trainloader, _ = datasets.get_dataset(
         dataset_config, 
         uniform_dequantization=dataset_config.data.uniform_dequantization,
         train_batch_size=batch_size)
 
-    initial_sample, _ = datasets.prepare_batch(iter(trainloader), 'cpu')
+    initial_sample, _ = datasets.prepare_batch(iter(trainloader), dataset_config.device)
     noisy_sample = torch.empty_like(initial_sample)
-    # vec_corruption_amount = torch.randint(
-    #     low=solver_config.solver.min_lbm_steps, 
-    #     high=solver_config.solver.max_lbm_steps, 
-    #     size=initial_sample.shape[0], device='cpu')
-    
+  
     for index in range(initial_sample.shape[0]):
-        corruption_amount = solver_config.solver.max_lbm_steps #we shall start from completely destroyed images
-        # corruption_amount = np.random.randint(solver_config.solver.min_lbm_steps, solver_config.solver.max_lbm_steps)
-        tmp, _ = solver._corrupt(initial_sample[index], 
-                                    corruption_amount)
-        
+        tmp, _ = solver._corrupt(initial_sample[index], corruption_amount)
         noisy_sample[index] = tmp
+        
     return noisy_sample
+
+
+def get_initial_sample_dataset(config, forward_heat_module, delta, batch_size=None):
+    """Take a draw from the prior p(u_K)"""
+    trainloader, _ = datasets.get_dataset(config,
+                                          uniform_dequantization=config.data.uniform_dequantization,
+                                          train_batch_size=batch_size)
+
+    initial_sample = next(iter(trainloader))[0].to(config.device)
+    original_images = initial_sample.clone()
+    initial_sample = forward_heat_module(initial_sample,
+                                         config.model.K * torch.ones(initial_sample.shape[0], dtype=torch.long).to(config.device))
+    return initial_sample, original_images
+
+
+def get_initial_sample_dataset(config, forward_heat_module, delta, batch_size=None):
+    """Take a draw from the prior p(u_K)"""
+    trainloader, _ = datasets.get_dataset(config,
+                                          uniform_dequantization=config.data.uniform_dequantization,
+                                          train_batch_size=batch_size)
+
+    initial_sample = next(iter(trainloader))[0].to(config.device)
+    original_images = initial_sample.clone()
+    initial_sample = forward_heat_module(initial_sample,
+                                         config.model.K * torch.ones(initial_sample.shape[0], dtype=torch.long).to(config.device))
+    return initial_sample, original_images

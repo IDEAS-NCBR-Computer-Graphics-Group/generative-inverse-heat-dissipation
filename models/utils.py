@@ -6,6 +6,37 @@ import numpy as np
 from models.unet import UNetModel
 from models import torch_dct
 from corruptors.LBM_NS_Corruptor import LBM_NS_Corruptor
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torchvision.transforms as T
+
+class GaussianBlur(nn.Module):
+
+    def __init__(self, blur_sigmas, image_size, device):
+        super(GaussianBlur, self).__init__()
+        print(blur_sigmas)
+        self.blur_sigmas = torch.tensor(blur_sigmas).to(device)
+        freqs = np.pi*torch.linspace(0, image_size-1,
+                                     image_size).to(device)/image_size
+        self.frequencies_squared = freqs[:, None]**2 + freqs[None, :]**2
+
+    def forward(self, x, fwd_steps):
+        if len(x.shape) == 4:
+            sigmas = self.blur_sigmas[fwd_steps][:, None, None, None]
+        elif len(x.shape) == 3:
+            sigmas = self.blur_sigmas[fwd_steps][:, None, None]
+        
+        sigmas += 1e-5
+
+        sigmas = sigmas.squeeze().tolist()
+
+        transforms = [T.GaussianBlur(kernel_size=(17, 17), sigma=sigmas[i]) for i in range(len(sigmas))]
+            
+        for i in range(x.shape[0]):
+            x[i] = transforms[i](x[i])
+
+        return x
 
 class DCTBlur(nn.Module):
 

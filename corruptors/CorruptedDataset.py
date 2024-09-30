@@ -27,26 +27,25 @@ class CorruptedDataset(Dataset):
     def __getitem__(self, index):
         data_point_tensor = torch.load(os.path.join(self.dataset_path, f'data_point_{index}.pt'))
 
-        data_length = len(data_point_tensor)-1
+        data_length = len(data_point_tensor)
 
-        if data_length == 4:
-            original_image, modified_image, less_modified_image, corruption_amount, label = data_point_tensor
+        if data_length == 3:
+            image, corruption_amount, label = data_point_tensor
 
             if self.transform is not None:
-                original_image = self.transform(original_image)
-                modified_image = self.transform(modified_image)
-                less_modified_image = self.transform(less_modified_image)
+                image = self.transform(image)
 
-            return original_image, (modified_image, less_modified_image, corruption_amount, label)
+            return image, corruption_amount, label
       
-        elif data_length == 5:
-            original_image, modified_image, corruption_amount, label = data_point_tensor
+        elif data_length == 4:
+            # original_image, modified_image, corruption_amount, label = data_point_tensor
+            image, image_one_less, corruption_amount, label = data_point_tensor
             
             if self.transform is not None:
-                original_image = self.transform(original_image)
-                modified_image = self.transform(modified_image)
+                image = self.transform(image)
+                image_one_less = self.transform(image_one_less)
 
-            return original_image, (modified_image, corruption_amount, label)
+            return image, image_one_less, corruption_amount, label
 
         else:
             raise ValueError(f"Unexpected data format in {data_point_tensor}, expected 4 or 5 elements, got {len(data_point_tensor)}")

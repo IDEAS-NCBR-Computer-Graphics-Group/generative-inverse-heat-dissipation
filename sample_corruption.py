@@ -2,10 +2,12 @@ from absl import flags
 from absl import app
 from ml_collections.config_flags import config_flags
 import os
-
+import torchvision
+import matplotlib
 from scripts import datasets as ihd_datasets
-from scripts.utils import save_png_norm, save_png
+from scripts.utils import save_png
 from corruptors.CorruptedDatasetCreator import preprocess_dataset
+from matplotlib import pyplot as plt
 
 FLAGS = flags.FLAGS
 
@@ -18,12 +20,48 @@ def produce_sample(config):
     storage_dir = 'runs'
     save_scriptname = 'corruption_samples'
     save_dir = os.path.join(storage_dir, save_scriptname)
+    os.makedirs(save_dir, exist_ok=True)
 
-    x, batch = ihd_datasets.prepare_batch(iter(fluid_train),'cpu')
-    y, *_ = batch
+    x = ihd_datasets.prepare_batch(iter(blur_train),'cpu')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
-    save_png_norm(save_dir, y, "post.png")
-    save_png(save_dir, x, 'pre.png')
+    
+    sampling_interval = 3
+
+    num_images = len(x[0][0])
+    fig, axs = plt.subplots((num_images + sampling_interval - 1) // sampling_interval, len(x[0]), 
+                            sharex=True, sharey=True, figsize=(10, 10), facecolor='black')
+
+    for i in range(len(x[0])):
+        y = x[0][i]
+        for j in range(0, num_images, sampling_interval):
+            p = y[j].squeeze(0)
+
+            subplot_row = j // sampling_interval
+            axs[subplot_row, i].imshow(p, cmap='gray')
+            axs[subplot_row, i].axis('off')
+
+    plt.show()
 
 def main(argv):
     produce_sample(FLAGS.config)

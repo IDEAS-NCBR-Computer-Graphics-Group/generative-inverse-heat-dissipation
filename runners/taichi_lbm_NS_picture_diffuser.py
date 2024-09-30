@@ -63,7 +63,7 @@ def run_corruption(config):
     
     solver.init(np_gray_image) 
 
-    iter_per_frame=1
+    iter_per_frame = 1
     window = ti.ui.Window('CG - Renderer', res=(2*solver.nx, 3 * solver.ny))
     gui = window.get_gui()
     canvas = window.get_canvas()
