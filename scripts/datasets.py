@@ -9,9 +9,10 @@ from torchvision import datasets
 from torchvision import transforms, datasets
 import torch
 from PIL import Image
+import logging
 
 import os
-from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
+from corruptors.CorruptedDataset import CorruptedDataset
 
 class UniformDequantize(object):
     def __init__(self):
@@ -49,79 +50,98 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
 
     if config.data.dataset == 'MNIST':
         training_data = datasets.MNIST(
-            root="data", train=True, download=True, transform=transform)
+            root="data",
+            train=True,
+            download=True,
+            transform=transform
+            )
         test_data = datasets.MNIST(
-            root="data", train=False, download=True, transform=transform)
-    elif config.data.dataset == 'CORRUPTED_NS_MNIST':
-        # TODO: make it consistent
-        transform = [
-                transforms.ToPILImage(), 
-                transforms.Resize(config.data.image_size),
-                transforms.CenterCrop(config.data.image_size),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor()
-                ]
-        transform = transforms.Compose(transform)
-        # transform = None
-        corrupted_dataset_dir = os.path.join('data', 'corrupted_MNIST', 'lbm_ns_pairs')
-        training_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=True, transform=transform)
-        test_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=False, transform=transform)
-    elif config.data.dataset == 'CORRUPTED_BLURR_MNIST':
-        # TODO: make it consistent
-        transform = [
-                transforms.ToPILImage(), 
-                transforms.Resize(config.data.image_size),
-                transforms.CenterCrop(config.data.image_size),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor()
-                ]
-        transform = transforms.Compose(transform)
-        # transform = None
-        corrupted_dataset_dir = os.path.join('data', 'corrupted_MNIST', 'blurr_pairs') 
-        training_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=True, transform=transform)
-        test_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=False, transform=transform) 
+            root="data",
+            train=False,
+            download=True,
+            transform=transform
+            )
     elif config.data.dataset == 'CIFAR10':
         training_data = datasets.CIFAR10(
-            root="data", train=True, download=True, transform=transform)
+            root="data",
+            train=True,
+            download=True,
+            transform=transform
+            )
         test_data = datasets.CIFAR10(
-            root="data", train=False, download=True, transform=transform)
+            root="data",
+            train=False,
+            download=True,
+            transform=transform
+            )
     elif config.data.dataset == "lsun_church":
         training_data = datasets.LSUN(
-            root="data/lsun", classes=['church_outdoor_train'], transform=transform)
+            root="data/lsun",
+            classes=['church_outdoor_train'],
+            transform=transform
+            )
         test_data = datasets.LSUN(
-            root="data/lsun", classes=['church_outdoor_val'], transform=transform)
+            root="data/lsun",
+            classes=['church_outdoor_val'],
+            transform=transform
+            )
     elif config.data.dataset == 'FFHQ':
-        trainloader = load_data(data_dir="data/ffhq-dataset/images1024x1024",
-                                batch_size=train_batch_size, image_size=config.data.image_size,
-                                random_flip=config.data.random_flip)
-        testloader = load_data(data_dir="data/ffhq-dataset/images1024x1024",
-                               batch_size=eval_batch_size, image_size=config.data.image_size,
-                               random_flip=False)
+        trainloader = load_data(
+            data_dir="data/ffhq-dataset/images1024x1024",
+            batch_size=train_batch_size,
+            image_size=config.data.image_size,
+            random_flip=config.data.random_flip
+            )
+        testloader = load_data(
+            data_dir="data/ffhq-dataset/images1024x1024",
+            batch_size=eval_batch_size,
+            image_size=config.data.image_size,
+            random_flip=False
+            )
         return trainloader, testloader
     elif config.data.dataset == 'FFHQ_128':
-        trainloader = load_data(data_dir="data/ffhq-128-70k",
-                                batch_size=train_batch_size, image_size=config.data.image_size,
-                                random_flip=config.data.random_flip)
-        testloader = load_data(data_dir="data/ffhq-128-70k",
-                               batch_size=eval_batch_size, image_size=config.data.image_size,
-                               random_flip=False)
+        trainloader = load_data(
+            data_dir="data/ffhq-128-70k",
+            batch_size=train_batch_size,
+            image_size=config.data.image_size,
+            random_flip=config.data.random_flip
+            )
+        testloader = load_data(
+            data_dir="data/ffhq-128-70k",
+            batch_size=eval_batch_size,
+            image_size=config.data.image_size,
+            random_flip=False
+            )
         return trainloader, testloader
     elif config.data.dataset == 'AFHQ':
-        trainloader = load_data(data_dir="data/afhq/train",
-                                batch_size=train_batch_size, image_size=config.data.image_size,
-                                random_flip=config.data.random_flip)
-        testloader = load_data(data_dir="data/afhq/val",
-                               batch_size=eval_batch_size, image_size=config.data.image_size,
-                               random_flip=False)
+        trainloader = load_data(
+            data_dir="data/afhq/train",
+            batch_size=train_batch_size,
+            image_size=config.data.image_size,
+            random_flip=config.data.random_flip
+            )
+        testloader = load_data(
+            data_dir="data/afhq/val",
+            batch_size=eval_batch_size,
+            image_size=config.data.image_size,
+            random_flip=False
+            )
         return trainloader, testloader
     else:
         raise ValueError
 
     # If we didn't use the load_data function that already created data loaders:
-    trainloader = DataLoader(training_data, batch_size=train_batch_size,
-                             shuffle=True, num_workers=4, pin_memory=True)
-    testloader = DataLoader(test_data, batch_size=eval_batch_size,
-                            shuffle=True, num_workers=4, pin_memory=True)
+    trainloader = DataLoader(training_data,
+                            batch_size=train_batch_size,
+                            shuffle=True,
+                            num_workers=4,
+                            pin_memory=True)
+    testloader = DataLoader(test_data,
+                            batch_size=eval_batch_size,
+                            shuffle=True,
+                            num_workers=4,
+                            pin_memory=True
+                            )
 
     return trainloader, testloader
 
@@ -202,8 +222,15 @@ def _list_image_files_recursively(data_dir):
 
 
 class ImageDataset(Dataset):
-    def __init__(self, resolution, image_paths, classes=None, shard=0, num_shards=1,
-                 random_flip=True):
+    def __init__(
+            self,
+            resolution,
+            image_paths,
+            classes=None,
+            shard=0,
+            num_shards=1,
+            random_flip=True
+            ):
         super().__init__()
         self.resolution = resolution
         self.local_images = image_paths[shard:][::num_shards]
@@ -245,11 +272,13 @@ class ImageDataset(Dataset):
         # Changed here so that not centered at zero
         # arr = arr.astype(np.float32) / 127.5 - 1
         arr = arr.astype(np.float32) / 255
-
-        out_dict = {}
+         
+        out = {}
         if self.local_classes is not None:
-            out_dict["y"] = np.array(self.local_classes[idx], dtype=np.int64)
-        return np.transpose(arr, [2, 0, 1]), out_dict
+            out["y"] = np.array(self.local_classes[idx], dtype=np.int64)
+        else:
+            out = torch.zeros([1])
+        return torch.from_numpy(np.transpose(arr, [2, 0, 1])), out
 
 
 def prepare_batch(data_loader_iterator, device):
@@ -264,32 +293,31 @@ def prepare_batch(data_loader_iterator, device):
         tuple: Tuple containing original image tensor and a tuple of modified images and other data, all moved to the specified device.
     """
     # Get a batch from the DataLoader
-    original_image, batch = next(data_loader_iterator)
-
-    # Move original_image to the desired device
-    original_image = original_image.to(device).float()
+    # original_image, batch = next(data_loader_iterator)
+    batch = next(data_loader_iterator)
 
     # Unpack eval_batch and move each tensor to the GPU
-    if len(batch) == 4:  # Case with pre-modified images
-        modified_image, pre_modified_image, corruption_amount, label = batch
+    if len(batch) == 3:  # Case with pre-modified images
+        image, corruption_amount, label = batch
         
         # Move everything to the GPU
-        modified_image = modified_image.to(device).float()
-        pre_modified_image = pre_modified_image.to(device).float()
+        image = image.to(device).float()
         corruption_amount = corruption_amount.to(device)  # Already float32
         label = label.to(device)  # Already long
 
         # Efficient packing after moving to GPU
-        batch = (modified_image, pre_modified_image, corruption_amount, label)
-    else:  # Case without pre-modified images
-        modified_image, corruption_amount, label = batch
+        batch = (image,  corruption_amount, label)
+
+    elif len(batch) == 4:  # Case without pre-modified images
+        image, image_one_less, corruption_amount, label = batch
         
         # Move everything to the GPU
-        modified_image = modified_image.to(device).float()
+        image = image.to(device).float()
+        image_one_less = image_one_less.to(device).float()
         corruption_amount = corruption_amount.to(device)  # Already float32
         label = label.to(device)  # Already long
 
         # Efficient packing after moving to GPU
-        batch = (modified_image, corruption_amount, label)
+        batch = (image, image_one_less, corruption_amount, label)
 
-    return original_image, batch
+    return batch

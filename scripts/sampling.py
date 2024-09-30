@@ -18,7 +18,7 @@ def get_sampling_fn_inverse_lbm_ns(
     delta: Standard deviation of the sampling noise
     share_noise: Whether to use the same noises for all elements in the batch
     """
-    
+       
     def sampler(model):
         if share_noise:
             noises = [torch.randn_like(initial_sample[0], dtype=torch.float)[None] for i in range(n_denoising_steps)]
@@ -162,7 +162,7 @@ def get_initial_corrupted_sample(dataset_config, corruption_amount, solver: Base
         uniform_dequantization=dataset_config.data.uniform_dequantization,
         train_batch_size=batch_size)
 
-    initial_sample, _ = datasets.prepare_batch(iter(trainloader), 'cpu')
+    initial_sample, _ = datasets.prepare_batch(iter(trainloader), dataset_config.device)
     noisy_sample = torch.empty_like(initial_sample)
   
     for index in range(initial_sample.shape[0]):
@@ -170,3 +170,29 @@ def get_initial_corrupted_sample(dataset_config, corruption_amount, solver: Base
         noisy_sample[index] = tmp
         
     return noisy_sample
+
+
+def get_initial_sample_dataset(config, forward_heat_module, delta, batch_size=None):
+    """Take a draw from the prior p(u_K)"""
+    trainloader, _ = datasets.get_dataset(config,
+                                          uniform_dequantization=config.data.uniform_dequantization,
+                                          train_batch_size=batch_size)
+
+    initial_sample = next(iter(trainloader))[0].to(config.device)
+    original_images = initial_sample.clone()
+    initial_sample = forward_heat_module(initial_sample,
+                                         config.model.K * torch.ones(initial_sample.shape[0], dtype=torch.long).to(config.device))
+    return initial_sample, original_images
+
+
+def get_initial_sample_dataset(config, forward_heat_module, delta, batch_size=None):
+    """Take a draw from the prior p(u_K)"""
+    trainloader, _ = datasets.get_dataset(config,
+                                          uniform_dequantization=config.data.uniform_dequantization,
+                                          train_batch_size=batch_size)
+
+    initial_sample = next(iter(trainloader))[0].to(config.device)
+    original_images = initial_sample.clone()
+    initial_sample = forward_heat_module(initial_sample,
+                                         config.model.K * torch.ones(initial_sample.shape[0], dtype=torch.long).to(config.device))
+    return initial_sample, original_images

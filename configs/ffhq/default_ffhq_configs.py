@@ -9,6 +9,7 @@ def get_config():
 
 def get_default_configs():
     config = ml_collections.ConfigDict()
+
     # training
     config.training = training = ml_collections.ConfigDict()
     config.training.batch_size = 32

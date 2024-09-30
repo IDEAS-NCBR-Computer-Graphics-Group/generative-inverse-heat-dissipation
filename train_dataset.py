@@ -1,17 +1,18 @@
 import os
 from pathlib import Path
 import logging
-from scripts import losses
-from scripts import sampling
-from models import utils as mutils
-from models.ema import ExponentialMovingAverage
-from scripts import datasets
 import torch
 from torch.utils import tensorboard
-from scripts import utils
 from absl import app
 from absl import flags
 from ml_collections.config_flags import config_flags
+
+
+
+from scripts import losses, sampling, datasets, utils
+from models import utils as mutils
+from models.ema import ExponentialMovingAverage
+from corruptors.CorruptedDatasetCreator import preprocess_dataset
 
 FLAGS = flags.FLAGS
 
@@ -21,7 +22,6 @@ flags.DEFINE_string("workdir", None, "Work directory.")
 flags.mark_flags_as_required(["workdir", "config"])
 #flags.DEFINE_string("initialization", "prior", "How to initialize sampling")
 
-torch.cuda.empty_cache()
 
 def main(argv):
     train(FLAGS.config, FLAGS.workdir)
@@ -37,6 +37,7 @@ def train(config, workdir):
                     contains checkpoint training will be resumed from the latest checkpoint.
     """
 
+    # SETUP
     if config.device == torch.device('cpu'):
         logging.info("RUNNING ON CPU")
 
@@ -48,7 +49,14 @@ def train(config, workdir):
     Path(tb_dir).mkdir(parents=True, exist_ok=True)
     writer = tensorboard.SummaryWriter(tb_dir)
 
-    # Initialize model
+
+
+
+
+
+
+
+    # MODEL INITIALIZATION
     model = mutils.create_model(config)
     optimizer = losses.get_optimizer(config, model.parameters())
     ema = ExponentialMovingAverage(
@@ -56,7 +64,15 @@ def train(config, workdir):
     state = dict(optimizer=optimizer, model=model, step=0, ema=ema)
     model_evaluation_fn = mutils.get_model_fn(model, train=False)
 
-    # Create checkpoints directory
+
+
+
+
+
+
+
+
+    # CHECKPOINTS SAVING
     checkpoint_dir = os.path.join(workdir, "checkpoints")
     # Intermediate checkpoints to resume training
     checkpoint_meta_dir = os.path.join(
@@ -68,43 +84,90 @@ def train(config, workdir):
     state = utils.restore_checkpoint(checkpoint_meta_dir, state, config.device)
     initial_step = int(state['step'])
 
-    # Build data iterators
-    trainloader, testloader = datasets.get_dataset(
-        config, uniform_dequantization=config.data.uniform_dequantization)
-    train_iter = iter(trainloader)
-    eval_iter = iter(testloader)
 
-    # Build one-step training and evaluation functions
+
+
+
+
+
+
+
+
+
+
+
+    # DATA ITERATORS
+    # trainloader, testloader = datasets.get_dataset(
+    #     config, uniform_dequantization=config.data.uniform_dequantization)
+    # train_iter = iter(trainloader)
+    # eval_iter = iter(testloader)
+
+
+    (fluid_train, fluid_test), (blur_train, blur_test) = preprocess_dataset(config)
+    train_iter = iter(blur_train)
+    eval_iter = iter(blur_test)
+
+
+
+
+
+
+    # ONE STEP OPTIMIZATION
     optimize_fn = losses.optimization_manager(config)
 
-    # Get the forward process definition
+
+
+
+
+
+
+
+    # BLURING FUNCTION DEFINITION
     scales = config.model.blur_schedule
-    heat_forward_module = mutils.create_forward_process_from_sigmas(
-        config, scales, config.device)
 
-    # Get the loss function
-    train_step_fn = losses.get_step_fn(
-        train=True,
-        scales=scales,
-        config=config,
-        optimize_fn=optimize_fn,
-        heat_forward_module=heat_forward_module
-        )
-    eval_step_fn = losses.get_step_fn(
-        train=False,
-        scales=scales,
-        config=config,
-        optimize_fn=optimize_fn,
-        heat_forward_module=heat_forward_module
-        )
+    # heat_forward_module = mutils.create_forward_process_from_sigmas(
+    #     config, scales, config.device)
 
-    # Building sampling functions
+
+
+
+
+
+
+
+    # ONE STEP INFERENCE PLUS COMPARISON
+    train_step_fn = losses.get_inverse_loss_fn_from_dataset(train=True, scales=scales, config=config, optimize_fn=optimize_fn)
+    eval_step_fn = losses.get_inverse_loss_fn_from_dataset(train=False, scales=scales, config=config, optimize_fn=optimize_fn)
+
+
+
+
+
+
+
+
+
+
+    # END SETUP
+
+    # GET INITIAL STATE
     delta = config.model.sigma*1.25
-    initial_sample, _ = sampling.get_initial_sample(
-        config,
-        heat_forward_module,
-        delta
-        )
+    initial_sample, _ = sampling.get_initial_sample_dataset(config, delta)
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # SAMPLING OF THE MODEL
     sampling_fn = sampling.get_sampling_fn_inverse_heat(
         config,
         initial_sample,
@@ -113,6 +176,26 @@ def train(config, workdir):
         device=config.device
         )
 
+    
+    
+    
+    
+    
+    
+    
+    
+
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    # BEGIN OPTIMIZATION
     num_train_steps = config.training.n_iters
     logging.info("Starting training loop at step %d." % (initial_step,))
     logging.info("Running on {}".format(config.device))
@@ -120,17 +203,70 @@ def train(config, workdir):
     # For analyzing the mean values of losses over many batches, for each scale separately
     pooled_losses = torch.zeros(len(scales))
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    # BEGIN OPTIMIZATION
     for step in range(initial_step, num_train_steps + 1):
-        # Train step
+        
+        
+        # WHAT? STILL WTF
         try:
             batch = next(train_iter)[0].to(config.device).float()
         except StopIteration:  # Start new epoch if run out of data
-            print(f"new epoch {step}")
-            train_iter = iter(trainloader)
+            train_iter = iter(blur_train)
             batch = next(train_iter)[0].to(config.device).float()
-        loss, losses_batch, fwd_steps_batch = train_step_fn(state, batch)
 
+
+
+
+        # print(batch.shape)
+
+
+
+
+
+
+
+
+
+        # MODEL QUERY + LOSS CALCULATION
+        loss, losses_batch, fwd_steps_batch = train_step_fn(state, batch)
         writer.add_scalar("training_loss", loss.item(), step)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        # BS (I MEAN EVALUATION AND CHECKPOINTS)
 
         # Save a temporary checkpoint to resume training if training is stopped
         if step != 0 and step % config.training.snapshot_freq_for_preemption == 0:
@@ -159,6 +295,7 @@ def train(config, workdir):
             save_step = step // config.training.snapshot_freq
             utils.save_checkpoint(os.path.join(
                 checkpoint_dir, 'checkpoint_{}.pth'.format(save_step)), state)
+
 
         # Generate samples periodically
         if step != 0 and step % config.training.sampling_freq == 0 or step == num_train_steps:

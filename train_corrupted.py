@@ -4,8 +4,8 @@ from pathlib import Path
 import logging
 from scripts import losses
 from scripts import sampling
-from model_code import utils as mutils
-from model_code.ema import ExponentialMovingAverage
+from models import utils as mutils
+from models.ema import ExponentialMovingAverage
 from scripts import datasets
 import torch
 from torch.utils import tensorboard
@@ -27,7 +27,7 @@ FLAGS = flags.FLAGS
 config_flags.DEFINE_config_file("config", None, "NN Training configuration.", lock_config=True)
 config_flags.DEFINE_config_file("forwardsolverconfig", None, "Forward solver configuration.", lock_config=True)
 flags.DEFINE_string("workdir", None, "Work directory.")
-flags.mark_flags_as_required(["workdir", "config", "forwardsolverconfig"])
+flags.mark_flags_as_required(["workdir", "config"])
 #flags.DEFINE_string("initialization", "prior", "How to initialize sampling")
 
 
@@ -36,7 +36,7 @@ def main(argv):
     train(FLAGS.config, FLAGS.workdir, FLAGS.forwardsolverconfig)
 
 
-def train(config, workdir, solver_config):
+def train(config, workdir):
     """Runs the training pipeline. 
     Based on code from https://github.com/yang-song/score_sde_pytorch
 
@@ -45,6 +45,7 @@ def train(config, workdir, solver_config):
             workdir: Working directory for checkpoints and TF summaries. If this
                     contains checkpoint training will be resumed from the latest checkpoint.
     """
+    solver_config = config.lbm
 
     if config.device == torch.device('cpu'):
         logging.info("RUNNING ON CPU")
@@ -93,12 +94,20 @@ def train(config, workdir, solver_config):
     optimize_fn = losses.optimization_manager(config)
 
     # Get the forward process definition
-    # scales = config.model.blur_schedule
-    # heat_forward_module = None
+    scales = config.model.blur_schedule
+    heat_forward_module = None
 
     # Get the loss function
-    train_step_fn = losses.get_step_lbm_fn(train=True, config=config, optimize_fn=optimize_fn)
-    eval_step_fn = losses.get_step_lbm_fn(train=False, config=config, optimize_fn=optimize_fn)
+    train_step_fn = losses.get_step_lbm_fn(
+        train=True,
+        config=config,
+        optimize_fn=optimize_fn
+        )
+    eval_step_fn = losses.get_step_lbm_fn(
+        train=False,
+        config=config,
+        optimize_fn=optimize_fn
+        )
 
     # Building sampling functions
     delta = config.model.sigma*1.25
@@ -123,57 +132,57 @@ def train(config, workdir, solver_config):
         intermediate_sample_indices=list(range(n_denoising_steps)),
         delta=delta, device=config.device)
 
-    num_train_steps = config.training.n_iters
-    logging.info("Starting training loop at step %d." % (initial_step,))
-    logging.info("Running on {}".format(config.device))
+    # num_train_steps = config.training.n_iters
+    # logging.info("Starting training loop at step %d." % (initial_step,))
+    # logging.info("Running on {}".format(config.device))
 
-    # For analyzing the mean values of losses over many batches, for each scale separately
-    # pooled_losses = torch.zeros(len(scales))
+    # # For analyzing the mean values of losses over many batches, for each scale separately
+    # # pooled_losses = torch.zeros(len(scales))
 
-    for step in range(initial_step, num_train_steps + 1):
-        # Train step
-        try:
-            # batch = next(train_iter)[0].to(config.device).float()
-            # _, batch = next(train_iter).to(config.device).float() # not that easy if batch has mutltiple elements
-            # x, (y, pre_y, corruption_amount, labels) = next(train_iter)
-            _, batch = datasets.prepare_batch(train_iter, config.device)
+    # for step in range(initial_step, num_train_steps + 1):
+    #     # Train step
+    #     try:
+    #         # batch = next(train_iter)[0].to(config.device).float()
+    #         # _, batch = next(train_iter).to(config.device).float() # not that easy if batch has mutltiple elements
+    #         # x, (y, pre_y, corruption_amount, labels) = next(train_iter)
+    #         _, batch = datasets.prepare_batch(train_iter, config.device)
             
-        except StopIteration:  # Start new epoch if run out of data
-            train_iter = iter(trainloader)
-            # batch = next(train_iter)[0].to(config.device).float()
-            _, batch = datasets.prepare_batch(train_iter, config.device)
-        loss, _, _ = train_step_fn(state, batch)
+    #     except StopIteration:  # Start new epoch if run out of data
+    #         train_iter = iter(trainloader)
+    #         # batch = next(train_iter)[0].to(config.device).float()
+    #         _, batch = datasets.prepare_batch(train_iter, config.device)
+    #     loss, _, _ = train_step_fn(state, batch)
 
-        writer.add_scalar("training_loss", loss.item(), step)
+    #     writer.add_scalar("training_loss", loss.item(), step)
 
-        # Save a temporary checkpoint to resume training if training is stopped
-        if step != 0 and step % config.training.snapshot_freq_for_preemption == 0:
-            logging.info("Saving temporary checkpoint")
-            utils.save_checkpoint(checkpoint_meta_dir, state)
+    #     # Save a temporary checkpoint to resume training if training is stopped
+    #     if step != 0 and step % config.training.snapshot_freq_for_preemption == 0:
+    #         logging.info("Saving temporary checkpoint")
+    #         utils.save_checkpoint(checkpoint_meta_dir, state)
 
-        # Report the loss on an evaluation dataset periodically
-        if step % config.training.eval_freq == 0:
-            logging.info("Starting evaluation")
-            # Use 25 batches for test-set evaluation, arbitrary choice
-            N_evals = 25
-            for i in range(N_evals):
-                try:
-                    # eval_batch = next(eval_iter)[0].to(config.device).float()
-                    _, eval_batch = datasets.prepare_batch(eval_iter, config.device)
-                except StopIteration:  # Start new epoch
-                    eval_iter = iter(testloader)
-                    _, eval_batch = datasets.prepare_batch(eval_iter, config.device)
-                eval_loss, _, _ = eval_step_fn(state, eval_batch)
-                eval_loss = eval_loss.detach()
-            logging.info("step: %d, eval_loss: %.5e" % (step, eval_loss.item()))
+    #     # Report the loss on an evaluation dataset periodically
+    #     if step % config.training.eval_freq == 0:
+    #         logging.info("Starting evaluation")
+    #         # Use 25 batches for test-set evaluation, arbitrary choice
+    #         N_evals = 25
+    #         for i in range(N_evals):
+    #             try:
+    #                 # eval_batch = next(eval_iter)[0].to(config.device).float()
+    #                 _, eval_batch = datasets.prepare_batch(eval_iter, config.device)
+    #             except StopIteration:  # Start new epoch
+    #                 eval_iter = iter(testloader)
+    #                 _, eval_batch = datasets.prepare_batch(eval_iter, config.device)
+    #             eval_loss, _, _ = eval_step_fn(state, eval_batch)
+    #             eval_loss = eval_loss.detach()
+    #         logging.info("step: %d, eval_loss: %.5e" % (step, eval_loss.item()))
 
-        # Save a checkpoint periodically
-        if step != 0 and step % config.training.snapshot_freq == 0 or step == num_train_steps:
-            logging.info("Saving a checkpoint")
-            # Save the checkpoint.
-            save_step = step // config.training.snapshot_freq
-            utils.save_checkpoint(os.path.join(
-                checkpoint_dir, 'checkpoint_{}.pth'.format(save_step)), state)
+    #     # Save a checkpoint periodically
+    #     if step != 0 and step % config.training.snapshot_freq == 0 or step == num_train_steps:
+    #         logging.info("Saving a checkpoint")
+    #         # Save the checkpoint.
+    #         save_step = step // config.training.snapshot_freq
+    #         utils.save_checkpoint(os.path.join(
+    #             checkpoint_dir, 'checkpoint_{}.pth'.format(save_step)), state)
 
         # Generate samples periodically
         if step != 0 and step % config.training.sampling_freq == 0 or step == num_train_steps:

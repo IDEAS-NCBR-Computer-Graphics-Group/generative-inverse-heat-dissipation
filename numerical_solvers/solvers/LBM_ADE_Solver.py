@@ -9,7 +9,6 @@ from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
 # Fluid solver based on lattice boltzmann method using taichi language
 # Inspired by: https://github.com/hietwll/LBM_Taichi
 
-
 @ti.data_oriented
 class LBM_ADE_Solver(LBM_SolverBase):
     def __init__(self, name, domain_size, kin_visc, bulk_visc, turbulenceGenerator: SpectralTurbulenceGenerator):

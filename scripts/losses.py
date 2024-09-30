@@ -4,7 +4,7 @@
 import torch
 import torch.optim as optim
 import numpy as np
-from model_code import utils as mutils
+from models import utils as mutils
 import torch.distributions
 
 
@@ -132,8 +132,9 @@ def get_step_lbm_fn(train, config,
     if device == None:
         device = config.device
 
-    loss_fn = get_inverse_lbm_ns_loss_fn(train)
-    
+    loss_fn = get_inverse_heat_loss_fn(config, train,
+                                       scales, device, heat_forward_module=heat_forward_module)
+
     # For automatic mixed precision
     # scaler = torch.cuda.amp.GradScaler()
     scaler = torch.cuda.amp.GradScaler('cuda')
@@ -178,16 +179,77 @@ def get_step_lbm_fn(train, config,
 
     return step_fn
 
+def get_inverse_loss_fn_from_dataset(config, train, scales, device, heat_forward_module):
+    sigma = config.model.sigma
+    label_sampling_fn = get_label_sampling_function(config.model.K)
 
-def get_step_fn(train, scales, config, optimize_fn=None,
-                heat_forward_module=None, device=None):
+    def loss_fn(model, batch):
+        model_fn = mutils.get_model_fn(
+            model, train=train)  # get train/eval model
+        # fwd_steps = label_sampling_fn(batch.shape[0], batch.device)
+        
+        # blurred_batch = heat_forward_module(batch, fwd_steps).float()
+        # less_blurred_batch = heat_forward_module(batch, fwd_steps-1).float()
+
+        if len(batch) == 3:
+            blurred_batch, fwd_steps, label = batch
+        elif len(batch) == 4:
+            blurred_batch, less_blurred_batch, fwd_steps, label = batch
+
+        noise = torch.randn_like(blurred_batch) * sigma
+        perturbed_data = noise + blurred_batch
+        
+        diff = model_fn(perturbed_data, fwd_steps)
+        prediction = perturbed_data + diff
+        
+        losses = (less_blurred_batch - prediction)**2
+        losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1)
+        loss = torch.mean(losses)
+        return loss, losses, fwd_steps
+
+    return loss_fn
+
+
+def load_inverse_heat_loss_fn(config, train):
+
+    sigma = config.model.sigma
+    label_sampling_fn = get_label_sampling_function(config.model.K)
+
+    def loss_fn(model, blurred_batch, less_blurred_batch):
+        model_fn = mutils.get_model_fn(
+            model, train=train)  # get train/eval model
+        fwd_steps = label_sampling_fn(blurred_batch.shape[0], blurred_batch.device)
+        
+
+        # SWITCH THIS FOR THE LOADING OF A SPECIFIED BATCH
+        # blurred_batch = heat_forward_module(batch, fwd_steps).float()
+        # less_blurred_batch = heat_forward_module(batch, fwd_steps-1).float()
+
+
+        noise = torch.randn_like(blurred_batch) * sigma
+        perturbed_data = noise + blurred_batch
+
+        
+        diff = model_fn(perturbed_data, fwd_steps)
+        prediction = perturbed_data + diff
+
+
+        losses = (less_blurred_batch - prediction)**2
+        losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1)
+        loss = torch.mean(losses)
+        
+        return loss, losses, fwd_steps
+
+    return loss_fn
+
+
+def get_step_fn_dataset(train, scales, config, optimize_fn=None, device=None):
     """A wrapper for loss functions in training or evaluation
     Based on code from https://github.com/yang-song/score_sde_pytorch"""
     if device == None:
         device = config.device
 
-    loss_fn = get_inverse_heat_loss_fn(
-        config, train, scales, device, heat_forward_module=heat_forward_module)
+    loss_fn = load_inverse_heat_loss_fn(config, train, scales, device)
 
     # For automatic mixed precision
     scaler = torch.cuda.amp.GradScaler()
@@ -202,8 +264,7 @@ def get_step_fn(train, scales, config, optimize_fn=None,
             optimizer = state['optimizer']
             if config.optim.automatic_mp:
                 optimizer.zero_grad()
-                with torch.amp.autocast("cuda"):
-                # with torch.cuda.amp.autocast(): # depreciated
+                with torch.cuda.amp.autocast():
                     loss, losses_batch, fwd_steps_batch = loss_fn(model, batch)
                     # amp not recommended in backward pass, but had issues getting this to work without it
                     # Followed https://github.com/pytorch/pytorch/issues/37730

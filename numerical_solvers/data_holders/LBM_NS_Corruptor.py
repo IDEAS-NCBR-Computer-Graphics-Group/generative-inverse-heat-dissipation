@@ -1,7 +1,7 @@
+import taichi as ti
 import numpy as np
-import os
 import torch
-from abc import ABC
+from tqdm import tqdm
 import warnings
 
 import taichi as ti
@@ -13,19 +13,26 @@ from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
 from configs.mnist.lbm_ns_turb_config import LBMConfig
 
 class LBM_NS_Corruptor(BaseCorruptor):
-    def __init__(self, config: LBMConfig, transform=None, target_transform=None):
+    def __init__(
+            self,
+            config,
+            transform=None,
+            target_transform=None
+            ):
         super(LBM_NS_Corruptor, self).__init__(transform, target_transform)
 
         ti.init(arch=ti.gpu)
 
         grid_size = (config.data.image_size, config.data.image_size)
-        
+        config = config.lbm
         # energy_spectrum = lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
         # frequency_range = {'k_min': config.solver.k_min, 'k_max': config.solver.k_max }
 
         spectralTurbulenceGenerator = SpectralTurbulenceGenerator(
-            config.solver.domain_size, grid_size, 
-            config.solver.turb_intensity, config.solver.noise_limiter,
+            config.solver.domain_size,
+            grid_size, 
+            config.solver.turb_intensity,
+            config.solver.noise_limiter,
             energy_spectrum=config.solver.energy_spectrum, 
             frequency_range={'k_min': config.solver.k_min, 'k_max': config.solver.k_max}, 
             dt_turb=config.solver.dt_turb, 
@@ -42,8 +49,8 @@ class LBM_NS_Corruptor(BaseCorruptor):
         )
 
         # Set LBM steps (can be made configurable too)
-        self.min_steps = config.solver.min_steps
-        self.max_steps = config.solver.max_steps
+        self.max_steps = config.solver.max_lbm_steps
+        self.min_steps = config.solver.min_lbm_steps
         
         self.min_init_gray_scale = config.data.min_init_gray_scale
         self.max_init_gray_scale = config.data.max_init_gray_scale
@@ -129,7 +136,7 @@ class LBM_NS_Corruptor(BaseCorruptor):
             if index % 100 == 0:
                 print(f"Preprocessing (lbm) {index}")
             
-            corruption_amount = np.random.randint(self.min_steps, self.max_steps)
+            corruption_amount = np.random.randint(self.min_lbm_steps, self.max_lbm_steps)
             original_pil_image, label = initial_dataset[index]
             original_image = self.transform(original_pil_image)
 

@@ -13,7 +13,7 @@ import numpy as np
 # Define the nested configurations as dataclasses
 @dataclass
 class DataConfig:
-    image_size: int = 28  # for MNIST
+    image_size: int = 32  # for MNIST
     # min_init_gray_scale: float = 0.95
     # max_init_gray_scale: float = 1.05    
     min_init_gray_scale: float = 0.0

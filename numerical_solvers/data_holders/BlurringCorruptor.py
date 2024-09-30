@@ -1,13 +1,12 @@
-import numpy as np
-import os
 import torch
+import numpy as np
 from scipy.ndimage import gaussian_filter
-from abc import ABC
+from tqdm import tqdm
 import warnings
+import os
 
-import taichi as ti
-from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
-from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range
+from corruptors.BaseCorruptor import BaseCorruptor
+from solvers.img_reader import normalize_grayscale_image_range
 
 
 class BlurringCorruptor(BaseCorruptor):
@@ -26,8 +25,8 @@ class BlurringCorruptor(BaseCorruptor):
         self.max_init_gray_scale = config.data.max_init_gray_scale
         
         
-        self.min_blurr = config.solver.min_steps
-        self.max_blurr = config.solver.max_steps
+        self.max_steps = config.solver.max_blurr
+        self.min_steps = config.solver.min_blurr
         
     def _corrupt(self, x, fwd_steps, generate_pair=False):
         """
@@ -121,27 +120,18 @@ class BlurringCorruptor(BaseCorruptor):
             if index % 100 == 0:
                 print(f"Preprocessing (blurring) {index}")
             
+            # corruption_amount = np.random.randint(self.min_blurr, self.max_blurr) # ints
             
-            
-            # corruption_amount = np.random.uniform(low=self.min_blurr, high=self.max_blurr, size=None)
-            
-            
-      
-            K = 50 # max time
-            fwd_steps = np.random.randint(1, K) # ints
-            
-     
-            
-            
+            corruption_amount = np.random.uniform(low=self.min_blurr, high=self.max_blurr, size=None)
             original_pil_image, label = initial_dataset[index]
             original_image = self.transform(original_pil_image)
 
             # Use the unified corrupt function and ignore the second value if not needed
-            modified_image, pre_modified_image = self._corrupt(original_image, fwd_steps, generate_pair=process_pairs)
+            modified_image, pre_modified_image = self._corrupt(original_image, corruption_amount, generate_pair=process_pairs)
 
             data.append(original_image)
             modified_images.append(modified_image)
-            corruption_amounts.append(fwd_steps)
+            corruption_amounts.append(corruption_amount)
             labels.append(label)
 
             if process_pairs:

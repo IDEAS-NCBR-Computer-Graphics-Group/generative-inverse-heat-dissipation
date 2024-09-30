@@ -9,9 +9,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from torchvision.utils import make_grid, save_image
-from model_code import utils as mutils
+from models import utils as mutils
 from scripts import losses
-from model_code.ema import ExponentialMovingAverage
+from models.ema import ExponentialMovingAverage
 import pickle
 
 
@@ -133,7 +133,6 @@ def save_png(save_dir, data, name, nrow=None):
         save_image(image_grid, fout)
 
 def save_png_norm(save_dir, data, name, nrow=None):
-    # TODO: this is depreciated and shall be removed
     """Save tensor 'data' as a PNG with specified normalization and colormap."""
     if nrow is None:
         nrow = int(np.sqrt(data.shape[0]))
