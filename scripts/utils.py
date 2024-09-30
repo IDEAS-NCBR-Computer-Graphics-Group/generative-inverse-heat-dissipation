@@ -133,6 +133,7 @@ def save_png(save_dir, data, name, nrow=None):
         save_image(image_grid, fout)
 
 def save_png_norm(save_dir, data, name, nrow=None):
+    # TODO: this is depreciated and shall be removed
     """Save tensor 'data' as a PNG with specified normalization and colormap."""
     if nrow is None:
         nrow = int(np.sqrt(data.shape[0]))
