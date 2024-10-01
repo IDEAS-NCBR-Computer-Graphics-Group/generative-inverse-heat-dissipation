@@ -52,7 +52,7 @@
             "program": "${workspaceFolder}/train_corrupted.py",
             "console": "integratedTerminal",
             "args": [
-                "--config", "configs/mnist/small_corrupted_mnist.py",
+                "--config", "configs/mnist/small_lbm_mnist.py",
                 "--workdir", "runs/mnist/small_lbm_mnist",
                 "--forwardsolverconfig", "configs/mnist/lbm_ns_config.py"
             ]

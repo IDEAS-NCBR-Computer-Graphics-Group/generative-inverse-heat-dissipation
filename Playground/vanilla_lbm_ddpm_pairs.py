@@ -20,8 +20,8 @@ print(f'Using device: {device}')
 from numerical_solvers.data_holders.BlurringCorruptor import BlurringCorruptor
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
-# from configs.mnist.lbm_ns_config import get_config
-from configs.mnist.blurring_configs import get_config
+from configs.mnist.lbm_ns_config import get_config as lbm_ns_config
+from configs.mnist.blurring_configs import get_config as blurring_config
 # from configs.mnist.lbm_ns_turb_config import get_lbm_ns_config as get_lbm_ns_turb_config
 
 # %% figure out paths
@@ -41,7 +41,7 @@ print(f"Input data folder: {input_data_dir}")
 start = timer()
 process_all=True
 
-# solver_config = get_config()
+# solver_config = lbm_ns_config()
 # corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
 
 # solver_config = get_lbm_ns_turb_config()
@@ -66,7 +66,7 @@ process_all=True
 #     process_pairs = solver_config.data.process_pairs,
 #     process_all=True)    
 
-solver_config = get_config()
+solver_config = blurring_config()
 corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
 
 corruptor = BlurringCorruptor(
@@ -263,7 +263,7 @@ plt.grid()
 plt.show()
 
 
-# %% Generate samples
+# %% Generate noisy samples
 fig, axs = plt.subplots(1, 3, figsize=(20, 16))
 
 # n_steps = int(solver_config.solver.max_steps) # 5
@@ -272,7 +272,7 @@ n_steps = 20
 # x, (noisy_x, less_noisy_x, corruption_amount, label) = next(iter(test_dataloader))
 clean_x, (_, _, _, _) = next(iter(test_dataloader))
 
-max_noise_level = 3
+max_noise_level = 20
 blurred_x = torch.empty_like(clean_x)
 for index in range(clean_x.shape[0]):
     tmp, _ = corruptor._corrupt(clean_x[index], max_noise_level) # blur to the max level
@@ -284,10 +284,9 @@ blurred_x = blurred_x.to(device)
 
 deblurred_x = blurred_x.clone() 
 
-
-
 print("corruption_amount[0].item(), n_steps, i")
 
+# %% denoise samples
 for i in range(n_steps):
 #   noise_amount = torch.ones((noisy_x.shape[0], )).to(device) * (1-(i/n_steps)) # Starting high going low
   corruption_amount = torch.ones(blurred_x.shape[0], device=device, dtype=torch.float) *(max_noise_level - i/n_steps)
@@ -303,18 +302,13 @@ for i in range(n_steps):
   print(corruption_amount[0].item(), n_steps, i)
 
   
-
 axs[0].imshow(torchvision.utils.make_grid(clean_x, nrow=8)[0].clip(0, 1), cmap='Greys')
 axs[0].set_title('Clean input');
 
-axs[1].imshow(torchvision.utils.make_grid(
-    deblurred_x.detach().cpu(), nrow=8)[0].clip(solver_config.data.min_init_gray_scale, 
-                                               solver_config.data.max_init_gray_scale), cmap='Greys')
+axs[1].imshow(torchvision.utils.make_grid(deblurred_x.detach().cpu(), nrow=8)[0].clip(0, 1), cmap='Greys')
 axs[1].set_title('Denoised');
 
-axs[2].imshow(torchvision.utils.make_grid(
-    blurred_x.detach().cpu(), nrow=8)[0].clip(solver_config.data.min_init_gray_scale, 
-                                            solver_config.data.max_init_gray_scale), cmap='Greys')
+axs[2].imshow(torchvision.utils.make_grid(blurred_x.detach().cpu(), nrow=8)[0].clip(0, 1), cmap='Greys')
 axs[2].set_title('Noise to sample from');
 
 # for ax in axs:
