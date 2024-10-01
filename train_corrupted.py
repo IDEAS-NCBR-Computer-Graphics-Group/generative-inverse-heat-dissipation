@@ -19,24 +19,19 @@ from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.BlurringCorruptor import BlurringCorruptor
 
 from torchvision import transforms
-from configs.mnist.lbm_ns_turb_config import LBMConfig
 from scripts.git_utils import get_git_branch, get_git_revision_hash, get_git_revision_short_hash
 
 FLAGS = flags.FLAGS
 
 config_flags.DEFINE_config_file("config", None, "NN Training configuration.", lock_config=True)
-config_flags.DEFINE_config_file("forwardsolverconfig", None, "Forward solver configuration.", lock_config=True)
 flags.DEFINE_string("workdir", None, "Work directory.")
-flags.mark_flags_as_required(["workdir", "config", "forwardsolverconfig"])
+flags.mark_flags_as_required(["workdir", "config"])
 #flags.DEFINE_string("initialization", "prior", "How to initialize sampling")
 
-
 def main(argv):
-    
-    train(FLAGS.config, FLAGS.workdir, FLAGS.forwardsolverconfig)
+    train(FLAGS.config, FLAGS.workdir)
 
-
-def train(config, workdir, solver_config):
+def train(config, workdir):
     """Runs the training pipeline. 
     Based on code from https://github.com/yang-song/score_sde_pytorch
 
@@ -104,16 +99,18 @@ def train(config, workdir, solver_config):
     delta = config.model.sigma*1.25
 
     # draw a sample by lbm-destroying some rand images
-    corruptor = LBM_NS_Corruptor(
-        solver_config,                                
-        transform=transforms.Compose([transforms.ToTensor()]))
-   
-    # corruptor = BlurringCorruptor(
-    #     solver_config, 
-    #     transform=transforms.Compose([transforms.ToTensor()]))
+    if config.solver.type == 'fluid':
+        corruptor = LBM_NS_Corruptor(
+            config,                                
+            transform=transforms.Compose([transforms.ToTensor()]))
+    elif config.solver.type == 'blurr':
+        corruptor = BlurringCorruptor(
+            config, 
+            transform=transforms.Compose([transforms.ToTensor()]))
+    else:
+        raise ValueError(f"Invalid solver type in config'")
     
-    
-    n_denoising_steps = solver_config.solver.n_denoising_steps   
+    n_denoising_steps = config.solver.n_denoising_steps   
     initial_sample = sampling.get_initial_corrupted_sample(
         config, n_denoising_steps, corruptor)
     

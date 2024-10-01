@@ -21,8 +21,8 @@ from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
 from scripts import datasets as ihd_datasets
 from scripts.utils import save_png_norm
-from configs.mnist.lbm_ns_config import get_config as get_lbm_ns_config
-from configs.mnist.blurring_configs import get_config as get_blurr_config
+from configs.mnist.small_mnist_lbm_ns_config import get_config as get_lbm_ns_config
+from configs.mnist.small_mnist_blurring_config import get_config as get_blurr_config
 
 
 # sys.path.insert(0, '../../')
