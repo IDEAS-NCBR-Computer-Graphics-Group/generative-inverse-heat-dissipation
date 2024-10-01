@@ -275,30 +275,47 @@ class SpectrumHeatmapPlotter:
             self.iterations.pop(0)
 
     def plot_heatmap_rgba(self):
+        """
+        Plot a heatmap of the energy spectrum over iterations and return it as an RGBA image array.
+        The image is generated directly at the target resolution to maintain quality.
+        """
+
+
         spectrums_array = np.array(self.spectrums).T
+        m= spectrums_array.shape[0]
 
-        target_dpi = 100
-        fig, ax = plt.subplots(figsize=(2.56, 2.56), dpi=target_dpi)
 
-        ax.imshow(
+        # Create the figure with the exact target size and DPI
+        fig, ax = plt.subplots(figsize=(2.56, 2.56), dpi=100)
+
+        # Plot the heatmap
+        cax = ax.imshow(
             spectrums_array,
             aspect='auto',
-            extent=[min(self.iterations), max(self.iterations), min(SpectrumHeatmapPlotter.k_values), max(SpectrumHeatmapPlotter.k_values)],
             origin='lower',
-            norm=LogNorm(),
+            norm=LogNorm(),  # Log scale for better visualization
             cmap='inferno'
         )
 
-        plt.tight_layout(pad=1.2)
+        # Add a colorbar with a label
+        plt.colorbar(cax)
+
+        # Set titles and labels
+        ax.set_title("Spectrum Heatmap")
+        ax.set_xlabel("Iteration")
+        ax.set_ylabel("Wavenumber $k$")
+
+        plt.tight_layout(pad=0.5)
+
         fig.canvas.draw()
         canvas = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
         canvas = canvas.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+        
+        # Resize the canvas to 256x256 pixels if necessary
+        if canvas.shape[0] != m or canvas.shape[1] != m:
+            canvas = cv2.resize(canvas, (m,m), interpolation=cv2.INTER_AREA)
+        
+        plt.close(fig)  # Close the Matplotlib figure
+        rgba = cm.ScalarMappable().to_rgba(np.flip(np.transpose(canvas, (1, 0, 2)), axis=1)) 
 
-        if canvas.shape[0] != 256 or canvas.shape[1] != 256:
-            canvas = cv2.resize(canvas, (256, 256), interpolation=cv2.INTER_AREA)
-
-        plt.close(fig)
-
-        canvas_rgba = np.dstack([canvas, np.full((canvas.shape[0], canvas.shape[1]), 255, dtype=np.uint8)])
-
-        return canvas_rgba
+        return rgba

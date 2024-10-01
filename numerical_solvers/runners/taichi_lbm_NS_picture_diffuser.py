@@ -29,12 +29,13 @@ from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
 # %% read IC
 # https://github.com/taichi-dev/image-processing-with-taichi/blob/main/image_transpose.py
 
-img_path = './numerical_solvers/runners/mnist-2.png'
-# img_path = './numerical_solvers/runners/cat_256x256.jpg'
+# img_path = './numerical_solvers/runners/mnist-2.png'
+img_path = './numerical_solvers/runners/cat_256x256.jpg'
 
 target_size=None
 # target_size=(512, 512)
 target_size = (256, 256) # None
+# target_size = (64, 64) # None
 # target_size = (28, 28) # None
 
 
