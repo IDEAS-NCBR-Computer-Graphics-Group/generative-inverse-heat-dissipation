@@ -1,6 +1,6 @@
 import taichi as ti
 import taichi.math as tm
-import numpy as np
+import torch
 
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from numerical_solvers.solvers.GaussianTurbulenceGenerator import get_gaussian_noise
@@ -19,9 +19,10 @@ class LBM_ADE_Solver(LBM_SolverBase):
     def init(self, np_gray_image): 
         self.rho.from_numpy(np_gray_image)
         self.vel.fill(0)
-        # u_spec, v_spec = self.spectralTurbulenceGenerator.generate_turbulence(0)     
-        # force_numpy = np.stack((u_spec, v_spec), axis=-1)  # Shape becomes (128, 128, 2)
-        # self.Force.from_numpy(force_numpy)
+
+        # u_spec, v_spec = self.turbulenceGenerator.generate_turbulence(0)     
+        # force_numpy = torch.stack((u_spec, v_spec), axis=-1)  # Shape becomes (128, 128, 2)
+        # self.Force.from_torch(force_numpy)
         
         self.init_gaussian_force_field(0*1E-3, 0, 1)
         self.init_fields()
@@ -34,9 +35,9 @@ class LBM_ADE_Solver(LBM_SolverBase):
             self.collide_cm()
              
             u_turb, v_turb = self.turbulenceGenerator.generate_turbulence(self.iterations_counter)     
-            turb_numpy = np.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
-            self.vel.from_numpy(turb_numpy)
-            self.Force.from_numpy(turb_numpy)
+            turb_numpy = torch.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
+            self.vel.from_torch(turb_numpy)
+            self.Force.from_torch(turb_numpy)
             
             # self.init_gaussian_force_field(1E-2, 0, 1)
             # self.init_gaussian_velocity_field(1E-2, 0, 1)

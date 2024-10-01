@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib
 from matplotlib import cm
 import matplotlib.pyplot as plt
+import torch
 
 import taichi as ti
 import taichi.math as tm
@@ -73,9 +74,9 @@ if __name__ == '__main__':
     # energy_spectrum = lambda k: np.where(np.isinf(k ** (-1.)), 0, k ** (-1.0)) # najs
     
     turb_intensity = 3E-3
-    energy_spectrum = lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
-    frequency_range = {'k_min': 2.0 * np.pi / min(domain_size), 
-                       'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
+    energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
+    frequency_range = {'k_min': 2.0 * torch.pi / min(domain_size), 
+                       'k_max': 2.0 * torch.pi / (min(domain_size) / 1024)}
     
     spectralTurbulenceGenerator = SpectralTurbulenceGenerator(
         domain_size, grid_size, 
