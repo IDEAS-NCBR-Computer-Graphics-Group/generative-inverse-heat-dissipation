@@ -132,7 +132,10 @@ class CanvasPlotter:
         self.energy_history = CircularBuffer(self.buffer_size, self.array_shape)
         self.rho_history = CircularBuffer(self.buffer_size, self.array_shape)
 
-        self.heatmap_plotter = SpectrumHeatmapPlotter(self.buffer_size)
+
+        self.heatmap_force_plotter = SpectrumHeatmapPlotter(self.buffer_size, title = "force")
+        self.heatmap_energy_plotter = SpectrumHeatmapPlotter(self.buffer_size, title = "energy")
+        self.heatmap_rho_plotter = SpectrumHeatmapPlotter(self.buffer_size, title = "rho")
     
     def compute_divergence(self, u, v, dx=1, dy=1):
         """
@@ -245,12 +248,7 @@ class CanvasPlotter:
 
         # third row - heatmap + differences
 
-        self.heatmap_plotter.add_spectrum(vel_cpu[:, :, 0], vel_cpu[:, :, 1], self.solver.iterations_counter)
-        if self.is_heatmap_checked:
-            
-            heatmap_energy  = self.heatmap_plotter.plot_heatmap_rgba()
-        else:
-            heatmap_energy = self.dummy_canvas
+        
 
         img_energy_difference = None
         if self.solver.iterations_counter < 2:
@@ -347,15 +345,36 @@ class CanvasPlotter:
             v_distribution_rgba_y = self.dummy_canvas
             v_distribution_rgba_x = self.dummy_canvas
 
+        self.heatmap_energy_plotter.add_spectrum(vel_cpu[:, :, 0], vel_cpu[:, :, 1], self.solver.iterations_counter)
+        if self.is_heatmap_checked:
+            
+            heatmap_energy  = self.heatmap_energy_plotter.plot_heatmap_rgba()
+        else:
+            heatmap_energy = self.dummy_canvas
 
+        self.heatmap_rho_plotter.add_spectrum(rho_cpu, np.zeros_like(rho_cpu), self.solver.iterations_counter)
+        if self.is_heatmap_checked:
+            
+            heatmap_rho = self.heatmap_rho_plotter.plot_heatmap_rgba()
+        else:
+            heatmap_rho = self.dummy_canvas
+            
+
+        self.heatmap_force_plotter.add_spectrum(force_cpu[:,:,0], force_cpu[:,:,1], self.solver.iterations_counter)
+        if self.is_heatmap_checked:
+            
+            heatmap_force = self.heatmap_force_plotter.plot_heatmap_rgba()
+        else:
+            heatmap_force = self.dummy_canvas    
+            
     
 
         img_col1 = np.concatenate((rho_img, vel_img, force_img), axis=1)
         img_col2 = np.concatenate((rho_energy_spectrum, vel_energy_spectrum, force_energy_spectrum), axis=1)
-        img_col3 = np.concatenate((img_rho_difference, img_energy_difference,  heatmap_energy), axis=1)
-        img_col4 = np.concatenate((mse_rho_image, mse_energy_image, vel_mag_histogram_rgba), axis=1)
-        img_col5 = np.concatenate((ssim_rho_image, ssim_energy_image, v_distribution_rgba_y), axis=1)
-        img_col6 = np.concatenate((self.dummy_canvas, self.dummy_canvas, v_distribution_rgba_x), axis=1)
+        img_col3 = np.concatenate((img_rho_difference, img_energy_difference,  vel_mag_histogram_rgba), axis=1)
+        img_col4 = np.concatenate((mse_rho_image, mse_energy_image, v_distribution_rgba_y), axis=1)
+        img_col5 = np.concatenate((ssim_rho_image, ssim_energy_image, v_distribution_rgba_x), axis=1)
+        img_col6 = np.concatenate((heatmap_rho, heatmap_energy, heatmap_force), axis=1)
 
 
         img = np.concatenate((img_col1, img_col2, img_col3, img_col4, img_col5, img_col6), axis=0)

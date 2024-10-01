@@ -252,12 +252,13 @@ class KolmogorovSpectrumPlotter:
 class SpectrumHeatmapPlotter:
     k_values = None  # Class variable shared by all instances
 
-    def __init__(self, buffer_size, domain_size=(1.0, 1.0), target_shape=(256, 256)):
+    def __init__(self, buffer_size, domain_size=(1.0, 1.0), target_shape=(256, 256), title = " "):
         self.domain_size = domain_size
         self.buffer_size = buffer_size
         self.target_shape = target_shape
         self.spectrums = []
         self.iterations = []
+        self.title = title
 
     def add_spectrum(self, u, v, iteration):
         Lx, Ly = self.domain_size
@@ -301,7 +302,7 @@ class SpectrumHeatmapPlotter:
         plt.colorbar(cax)
 
         # Set titles and labels
-        ax.set_title("Spectrum Heatmap")
+        ax.set_title(f"Spectrum {self.title} heatmap")
         ax.set_xlabel("Iteration")
         ax.set_ylabel("Wavenumber $k$")
 
