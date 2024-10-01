@@ -104,13 +104,13 @@ def train(config, workdir, solver_config):
     delta = config.model.sigma*1.25
 
     # draw a sample by lbm-destroying some rand images
-    corruptor = LBM_NS_Corruptor(
-        solver_config,                                
-        transform=transforms.Compose([transforms.ToTensor()]))
-   
-    # corruptor = BlurringCorruptor(
-    #     solver_config, 
+    # corruptor = LBM_NS_Corruptor(
+    #     solver_config,                                
     #     transform=transforms.Compose([transforms.ToTensor()]))
+   
+    corruptor = BlurringCorruptor(
+        solver_config, 
+        transform=transforms.Compose([transforms.ToTensor()]))
     
     
     n_denoising_steps = solver_config.solver.n_denoising_steps   

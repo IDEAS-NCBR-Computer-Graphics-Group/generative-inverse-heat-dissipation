@@ -9,6 +9,9 @@ import matplotlib.pyplot as plt
 import time
 import torch
 from scipy.ndimage import gaussian_filter
+from torchvision.transforms import GaussianBlur
+import torch.nn as nn
+import math
 
 from model_code.utils import DCTBlur
 
@@ -103,6 +106,27 @@ def Gaussian_blur(image, time, diff_coeff):
   return blurred_img
 
 
+class GaussianBlurLayerNaive(nn.Module):
+    def __init__(self, blur_sigmas, device):
+        super(GaussianBlurLayerNaive, self).__init__()
+        print(blur_sigmas)
+        self.device = device
+        self.blur_sigmas = torch.tensor(blur_sigmas).to(device)
+        # self.blur_sigmas = blur_sigmas
+
+
+    def forward(self, x, fwd_steps):
+        sigmas = self.blur_sigmas[fwd_steps]
+        
+        for i in range(x.shape[0]):
+            npx = x[i].numpy()
+            sigma = float(sigmas[i].numpy())
+            blurred_x = gaussian_filter(npx, sigma)
+            x[i] = torch.tensor(blurred_x).to(self.device)
+        return x
+
+      
+         
 #%% ################ RUN naive FFT ################
 
 blurred_by_fft = fft_ade(initial_condition, tc, diffusivity0, advection_coeff_0)
@@ -139,71 +163,17 @@ blurred_by_dct = dctBlur(t_initial_condition, fwd_steps).float()
 blurred_by_dct = blurred_by_dct.squeeze().numpy()
 plot_matrix(blurred_by_dct, title="DCT Blurr")
 
+gaussianBlur = GaussianBlurLayerNaive(model.blur_schedule, device="cpu")
 
-blurred_by_gaussian_schedule = gaussian_filter(initial_condition, sigma=model.blur_schedule[fwd_steps])
+
+blurred_by_gaussian_schedule_v0 = gaussian_filter(initial_condition, sigma=model.blur_schedule[fwd_steps])
+
+blurred_by_gaussian_schedule = gaussianBlur(t_initial_condition, fwd_steps).float()
+blurred_by_gaussian_schedule = blurred_by_gaussian_schedule.squeeze().numpy()
+
 plot_matrix(blurred_by_gaussian_schedule, title="Sigma Blurr")
 plot_matrix(blurred_by_dct-blurred_by_gaussian_schedule, title="Final Difference")
 
 print(f"Blurring sigma = {calc_sigma(tc, diffusivity0)}")
 print(f"model.blur_schedule[fwd_steps] = {model.blur_schedule[fwd_steps]}")
 
-
-
-# %% ################ RUN GaussianBlur from Torch ################
-
-import torch.nn as nn
-import torch.nn.functional as F
-import torchvision.transforms as T
-
-class GaussianBlur(nn.Module):
-    def __init__(self, blur_sigmas,  device):
-        super(GaussianBlur, self).__init__()
-        print(blur_sigmas)
-        self.blur_sigmas = torch.tensor(blur_sigmas).to(device)
-
-        
-        """
-        from scipy--> gaussian_filter()
-        
-        truncate : float, optional
-          Truncate the filter at this many standard deviations.
-          Default is 4.0.
-        radius : None or int or sequence of ints, optional
-            Radius of the Gaussian kernel. The radius are given for each axis
-            as a sequence, or as a single number, in which case it is equal
-            for all axes. If specified, the size of the kernel along each axis
-            will be ``2*radius + 1``, and `truncate` is ignored.
-            Default is None.
-        """
-        truncate=4.0
-        # sd = float(blur_sigmas)
-        # self.radius = int(truncate * sd + 0.5)
-        # make the radius of the filter equal to truncate standard deviations
-        radius = truncate * blur_sigmas + 0.5
-        self.radius = radius.astype(int)
-
-        
-
-    def forward(self, x, fwd_steps):
-        if len(x.shape) == 4:
-            sigmas = self.blur_sigmas[fwd_steps][:, None, None, None]
-        elif len(x.shape) == 3:
-            sigmas = self.blur_sigmas[fwd_steps][:, None, None]
-        
-        sigmas += 1e-6
-
-        sigmas = sigmas.squeeze().tolist()
-
-        transforms = [T.GaussianBlur(kernel_size=(self.radius, self.radius), sigma=sigmas[i]) 
-                      for i in range(len(sigmas))]
-            
-        for i in range(x.shape[0]):
-            x[i] = transforms[i](x[i])
-
-        return x
-      
-gaussianBlur = GaussianBlur(model.blur_schedule, device="cpu")
-
-blurred_by_GaussianTorch = dctBlur(t_initial_condition, fwd_steps).float()
-blurred_by_GaussianTorch = blurred_by_GaussianTorch.squeeze().numpy()
-plot_matrix(blurred_by_GaussianTorch, title="GaussianTorch Blurr")

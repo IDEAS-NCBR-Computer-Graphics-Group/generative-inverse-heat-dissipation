@@ -58,7 +58,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
                 transforms.ToPILImage(), 
                 transforms.Resize(config.data.image_size),
                 transforms.CenterCrop(config.data.image_size),
-                transforms.RandomHorizontalFlip(),
+                # transforms.RandomHorizontalFlip(), #TODO: read from config; random_flip is FALSE!
                 transforms.ToTensor()
                 ]
         transform = transforms.Compose(transform)
@@ -72,7 +72,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
                 transforms.ToPILImage(), 
                 transforms.Resize(config.data.image_size),
                 transforms.CenterCrop(config.data.image_size),
-                transforms.RandomHorizontalFlip(),
+                # transforms.RandomHorizontalFlip(),  #TODO: read from config; random_flip is FALSE!
                 transforms.ToTensor()
                 ]
         transform = transforms.Compose(transform)
@@ -80,6 +80,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         corrupted_dataset_dir = os.path.join('data', 'corrupted_MNIST', 'blurr_pairs') 
         training_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=True, transform=transform)
         test_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=False, transform=transform) 
+    
     elif config.data.dataset == 'CIFAR10':
         training_data = datasets.CIFAR10(
             root="data", train=True, download=True, transform=transform)

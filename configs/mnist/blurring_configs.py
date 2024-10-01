@@ -29,7 +29,7 @@ class DataConfig:
 class SolverConfig:
     min_steps: int = 1
     max_steps: int = 50 # max amount of blurr
-
+    n_denoising_steps: int = 50 #TODO: redundant same as max steps  
     
 @dataclass
 class BlurrConfig:
