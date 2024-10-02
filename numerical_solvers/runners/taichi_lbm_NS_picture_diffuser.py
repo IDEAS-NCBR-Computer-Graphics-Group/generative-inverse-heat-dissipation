@@ -95,9 +95,8 @@ if __name__ == '__main__':
         spectralTurbulenceGenerator
         )
     
-    # solver.init(np_gray_image) 
-
-
+    solver.init(np_gray_image) 
+    
 
     ######################################################################################################### TODO Code with Michal's renderer
 
