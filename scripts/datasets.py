@@ -53,6 +53,11 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         test_data = datasets.MNIST(
             root="data", train=False, download=True, transform=transform)
     elif config.data.dataset == 'CORRUPTED_NS_MNIST':
+        # TODO: create corruptor according to config
+        
+        # TODO: try to run corruptor - it will do nothing if files exist
+        
+        
         # TODO: make it consistent
         transform = [
                 transforms.ToPILImage(), 
