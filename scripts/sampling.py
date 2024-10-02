@@ -4,7 +4,6 @@ import logging
 from scripts import datasets
 # from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
-from configs.mnist.lbm_ns_config import LBMConfig
 from torchvision import transforms
 
 def get_sampling_fn_inverse_lbm_ns(

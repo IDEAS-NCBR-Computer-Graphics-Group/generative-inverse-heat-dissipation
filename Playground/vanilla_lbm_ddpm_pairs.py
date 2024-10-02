@@ -20,9 +20,9 @@ print(f'Using device: {device}')
 from numerical_solvers.data_holders.BlurringCorruptor import BlurringCorruptor
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
-from configs.mnist.lbm_ns_config import get_config as lbm_ns_config
-from configs.mnist.blurring_configs import get_config as blurring_config
-# from configs.mnist.lbm_ns_turb_config import get_lbm_ns_config as get_lbm_ns_turb_config
+# from configs.mnist.small_mnist_lbm_ns_config import get_config as lbm_ns_config
+from configs.mnist.small_mnist_blurring_config import get_config as blurring_config
+# from configs.mnist.small_mnist_lbm_ns_turb_config import get_lbm_ns_config as get_lbm_ns_turb_config
 
 # %% figure out paths
 
@@ -272,7 +272,7 @@ n_steps = 20
 # x, (noisy_x, less_noisy_x, corruption_amount, label) = next(iter(test_dataloader))
 clean_x, (_, _, _, _) = next(iter(test_dataloader))
 
-max_noise_level = 20
+max_noise_level = 3
 blurred_x = torch.empty_like(clean_x)
 for index in range(clean_x.shape[0]):
     tmp, _ = corruptor._corrupt(clean_x[index], max_noise_level) # blur to the max level
@@ -301,7 +301,7 @@ for i in range(n_steps):
   step_history.append(deblurred_x.detach().cpu())
   print(corruption_amount[0].item(), n_steps, i)
 
-  
+
 axs[0].imshow(torchvision.utils.make_grid(clean_x, nrow=8)[0].clip(0, 1), cmap='Greys')
 axs[0].set_title('Clean input');
 

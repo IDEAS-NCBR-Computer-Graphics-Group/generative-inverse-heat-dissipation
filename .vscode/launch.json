@@ -40,9 +40,8 @@
             "program": "${workspaceFolder}/train_corrupted.py",
             "console": "integratedTerminal",
             "args": [
-                "--config", "configs/mnist/small_blurr_mnist.py",
-                "--workdir", "runs/mnist/small_blurr_mnist",
-                "--forwardsolverconfig", "configs/mnist/blurring_configs.py"
+                "--config", "configs/mnist/small_mnist_blurring_config.py",
+                "--workdir", "runs/mnist/small_blurr_mnist"
             ]
         },
         {
@@ -52,9 +51,8 @@
             "program": "${workspaceFolder}/train_corrupted.py",
             "console": "integratedTerminal",
             "args": [
-                "--config", "configs/mnist/small_lbm_mnist.py",
-                "--workdir", "runs/mnist/small_lbm_mnist",
-                "--forwardsolverconfig", "configs/mnist/lbm_ns_config.py"
+                "--config", "configs/mnist/small_mnist_lbm_ns_config.py",
+                "--workdir", "runs/mnist/small_lbm_mnist"
             ]
         }
     ]

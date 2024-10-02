@@ -1,6 +1,6 @@
 import taichi as ti
 import taichi.math as tm
-import numpy as np
+import torch
 
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from numerical_solvers.solvers.GaussianTurbulenceGenerator import get_gaussian_noise
@@ -19,11 +19,12 @@ class LBM_ADE_Solver(LBM_SolverBase):
     def init(self, np_gray_image): 
         self.rho.from_numpy(np_gray_image)
         self.vel.fill(0)
-        # u_spec, v_spec = self.spectralTurbulenceGenerator.generate_turbulence(0)     
-        # force_numpy = np.stack((u_spec, v_spec), axis=-1)  # Shape becomes (128, 128, 2)
-        # self.Force.from_numpy(force_numpy)
+
+        # u_spec, v_spec = self.turbulenceGenerator.generate_turbulence(0)     
+        # force_numpy = torch.stack((u_spec, v_spec), axis=-1)  # Shape becomes (128, 128, 2)
+        # self.Force.from_torch(force_numpy)
         
-        self.init_gaussian_force_field(0*1E-3, 0, 1)
+        # self.init_gaussian_force_field(0*1E-3, 0, 1)
         self.init_fields()
                    
     def solve(self, iterations):
@@ -34,15 +35,16 @@ class LBM_ADE_Solver(LBM_SolverBase):
             self.collide_cm()
              
             u_turb, v_turb = self.turbulenceGenerator.generate_turbulence(self.iterations_counter)     
-            turb_numpy = np.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
-            self.vel.from_numpy(turb_numpy)
-            self.Force.from_numpy(turb_numpy)
+            turb_numpy = torch.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
+            self.vel.from_torch(turb_numpy)
+            self.Force.from_torch(turb_numpy)
             
             # self.init_gaussian_force_field(1E-2, 0, 1)
             # self.init_gaussian_velocity_field(1E-2, 0, 1)
             
-            self.apply_bb()
-            self.iterations_counter = self.iterations_counter +1
+            # self.apply_bb()
+            self.apply_nee_bc()
+            self.iterations_counter = self.iterations_counter + 1
         
         
         if self.iterations_counter % 10 == 0:
@@ -63,7 +65,7 @@ class LBM_ADE_Solver(LBM_SolverBase):
 
     @ti.kernel
     def collide_srt(self):
-        for i, j in ti.ndrange((1, self.nx - 2), (1, self.ny - 2)):
+        for i, j in ti.ndrange((1, self.nx - 1), (1, self.ny - 1)):
             for k in ti.static(range(9)):
                 feq = self.f_eq(i, j)
                 self.f_new[i, j][k] = (1 - self.omega_kin) * self.f[i, j][k] + feq[k] * self.omega_kin
@@ -72,7 +74,7 @@ class LBM_ADE_Solver(LBM_SolverBase):
         
     @ti.kernel
     def collide_cm(self):
-        for i, j in ti.ndrange((1, self.nx - 2), (1, self.ny - 2)):       
+        for i, j in ti.ndrange((1, self.nx - 1), (1, self.ny - 1)): 
             #=== THIS IS AUTOMATICALLY GENERATED CODE ===
             ux = self.vel[i, j][0]
             uy = self.vel[i, j][1]
@@ -153,7 +155,8 @@ class LBM_ADE_Solver(LBM_SolverBase):
     
     @ti.kernel
     def update_macro_var(self): 
-        for i, j in ti.ndrange(self.nx, self.ny):
+        for i, j in ti.ndrange((1, self.nx-1), (1,self.ny-1)):
+        # for i, j in ti.ndrange(self.nx, self.ny):
             self.rho[i, j] = 0
             
             for k in ti.static(range(9)):
