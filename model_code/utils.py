@@ -6,7 +6,30 @@ import numpy as np
 from model_code.unet import UNetModel
 from model_code import torch_dct
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
+from scipy.ndimage import gaussian_filter
 
+class GaussianBlurNaiveLayer(nn.Module):
+    # this is for tests only
+    
+    def __init__(self, blur_sigmas, device):
+        super(GaussianBlurNaiveLayer, self).__init__()
+        print(blur_sigmas)
+        self.device = device
+        self.blur_sigmas = torch.tensor(blur_sigmas).to(device)
+        # self.blur_sigmas = blur_sigmas
+
+
+    def forward(self, x, fwd_steps):
+        sigmas = self.blur_sigmas[fwd_steps]
+        
+        for i in range(x.shape[0]):
+            npx = x[i].cpu().numpy()
+            sigma = float(sigmas[i].cpu().numpy())
+            blurred_x = gaussian_filter(npx, sigma)
+            x[i] = torch.tensor(blurred_x).to(self.device)
+        return x
+    
+    
 class DCTBlur(nn.Module):
 
     def __init__(self, blur_sigmas, image_size, device):
@@ -30,14 +53,11 @@ class DCTBlur(nn.Module):
 
 
 def create_forward_process_from_sigmas(config, sigmas, device):
-    forward_process_module = DCTBlur(sigmas, config.data.image_size, device)
+    forward_process_module = DCTBlur(sigmas, config.data.image_size, device) 
+    # forward_process_module = GaussianBlurNaiveLayer(sigmas, device) # TODO: hack
+    
     return forward_process_module
 
-
-def create_forward_lbm_ns_solver(config):
-        lbm_ns_Corruptor = LBM_NS_Corruptor(
-        grid_size = (config.data.image_size, config.data.image_size), 
-        transform=None)
 
 """Utilities related to log-likelihood evaluation"""
 

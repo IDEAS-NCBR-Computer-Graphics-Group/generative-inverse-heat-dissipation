@@ -117,7 +117,7 @@ def train(config, workdir):
     sampling_fn = sampling.get_sampling_fn_inverse_lbm_ns(
         n_denoising_steps = n_denoising_steps,
         initial_sample = initial_sample, 
-        intermediate_sample_indices=list(range(n_denoising_steps)),
+        intermediate_sample_indices=list(range(n_denoising_steps+1)), # TODO: list(range(config.model.K+1))
         delta=delta, device=config.device)
 
     num_train_steps = config.training.n_iters

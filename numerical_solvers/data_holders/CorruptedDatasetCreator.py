@@ -82,32 +82,32 @@ if __name__ == '__main__':
     print(f"Time in seconds: {end - start:.2f}")
 
     # %% blurr        
-    start = timer()
-    process_all=True
-    solver_config = get_blurr_config()
+    # start = timer()
+    # process_all=True
+    # solver_config = get_blurr_config()
     
-    corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
+    # corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
     
-    corruptor = BlurringCorruptor(
-        solver_config, 
-        transform=transforms.Compose([torchvision.transforms.ToTensor()]))
+    # corruptor = BlurringCorruptor(
+    #     solver_config, 
+    #     transform=transforms.Compose([torchvision.transforms.ToTensor()]))
             
-    corruptor._preprocess_and_save_data(
-        initial_dataset=datasets.MNIST(root=input_data_dir, train=True, download=True),
-        save_dir=corrupted_dataset_dir,
-        is_train_dataset = True,
-        process_pairs = solver_config.data.process_pairs,
-        process_all=process_all)
+    # corruptor._preprocess_and_save_data(
+    #     initial_dataset=datasets.MNIST(root=input_data_dir, train=True, download=True),
+    #     save_dir=corrupted_dataset_dir,
+    #     is_train_dataset = True,
+    #     process_pairs = solver_config.data.process_pairs,
+    #     process_all=process_all)
 
-    corruptor._preprocess_and_save_data(
-        initial_dataset=datasets.MNIST(root=input_data_dir, train=False, download=True),
-        save_dir=corrupted_dataset_dir,
-        is_train_dataset = False,
-        process_pairs = solver_config.data.process_pairs,
-        process_all=process_all)    
+    # corruptor._preprocess_and_save_data(
+    #     initial_dataset=datasets.MNIST(root=input_data_dir, train=False, download=True),
+    #     save_dir=corrupted_dataset_dir,
+    #     is_train_dataset = False,
+    #     process_pairs = solver_config.data.process_pairs,
+    #     process_all=process_all)    
 
-    end = timer()
-    print(f"Time in seconds: {end - start:.2f}")
+    # end = timer()
+    # print(f"Time in seconds: {end - start:.2f}")
     
     
     # %% see what you have done 

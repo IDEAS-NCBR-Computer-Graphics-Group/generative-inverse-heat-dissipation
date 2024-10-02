@@ -84,7 +84,9 @@ def get_default_configs():
     optim.automatic_mp = False
 
     config.seed = 42
-    config.device = torch.device(
-        'cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+    
+    # config.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
+    config.device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+        
     return config

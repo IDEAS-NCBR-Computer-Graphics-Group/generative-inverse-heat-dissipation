@@ -127,7 +127,7 @@ class LBM_NS_Corruptor(BaseCorruptor):
             if index % 100 == 0:
                 print(f"Preprocessing (lbm) {index}")
             
-            corruption_amount = np.random.randint(self.min_steps, self.max_steps)
+            corruption_amount = np.random.randint(self.min_steps, self.max_steps) # TODO: add +1 as max_steps is excluded from tossing, or modify no of denoising steps
             original_pil_image, label = initial_dataset[index]
             original_image = self.transform(original_pil_image)
 

@@ -58,17 +58,17 @@ class BlurringCorruptor(BaseCorruptor):
         K = 50
         blur_sigma_max = 20
         blur_sigma_min = 0.5
-        blur_schedule = np.exp(np.linspace(
-            np.log(blur_sigma_min), np.log(blur_sigma_max), K))
+        # blur_schedule = np.exp(np.linspace(np.log(blur_sigma_min), np.log(blur_sigma_max), K))
+
+        blur_schedule = np.linspace(blur_sigma_min, blur_sigma_max, K)
+        
         
         blur_schedule = np.array([0] + list(blur_schedule))
 
         sigmas = blur_schedule[fwd_steps]  
-        corruption_amount = np.sqrt(sigmas**2)
-        
         less_sigmas = blur_schedule[fwd_steps-1] 
-        less_corruption_amount = np.sqrt(less_sigmas**2)
-        blurred_img = gaussian_filter(np_gray_img, sigma=corruption_amount)
+
+        blurred_img = gaussian_filter(np_gray_img, sigma=sigmas)
         
         # Convert back to Tensor after blurring
         noisy_x = torch.tensor(blurred_img).unsqueeze(0).float()
@@ -78,7 +78,7 @@ class BlurringCorruptor(BaseCorruptor):
             # step_size = 1
             # less_blurred_img = gaussian_filter(np_gray_img, sigma=(corruption_amount-self.step_size))
             
-            less_blurred_img = gaussian_filter(np_gray_img, sigma=less_corruption_amount)
+            less_blurred_img = gaussian_filter(np_gray_img, sigma=less_sigmas)
             less_noisy_x = torch.tensor(less_blurred_img).unsqueeze(0).float()
             
             return noisy_x, less_noisy_x
@@ -120,19 +120,12 @@ class BlurringCorruptor(BaseCorruptor):
         for index in range(dataset_length):
             if index % 100 == 0:
                 print(f"Preprocessing (blurring) {index}")
-            
-            
-            
+
             # corruption_amount = np.random.uniform(low=self.min_blurr, high=self.max_blurr, size=None)
-            
-            
-      
+
             K = 50 # max time
             fwd_steps = np.random.randint(1, K) # ints
-            
-     
-            
-            
+
             original_pil_image, label = initial_dataset[index]
             original_image = self.transform(original_pil_image)
 

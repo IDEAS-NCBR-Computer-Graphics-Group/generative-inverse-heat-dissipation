@@ -75,7 +75,7 @@ def get_sampling_fn_inverse_heat(config, initial_sample,
             for i in range(K, 0, -1):
                 vec_fwd_steps = torch.ones(initial_sample.shape[0], device=device, dtype=torch.long) * i
                 # Predict less blurry mean
-                u_mean = model(u, vec_fwd_steps) + u # mean is as the NN learn difference between blurred_x and less_blurred_x
+                u_mean = model(u, vec_fwd_steps) + u # the NN learn difference between blurred_x and less_blurred_x
                 # Sampling step
                 if share_noise:
                     noise = noises[i-1]

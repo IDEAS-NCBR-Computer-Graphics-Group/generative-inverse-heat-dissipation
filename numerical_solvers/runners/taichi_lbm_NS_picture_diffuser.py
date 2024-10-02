@@ -37,9 +37,10 @@ img_path = './numerical_solvers/runners/cat_256x256.jpg'
 
 target_size=None
 # target_size=(512, 512)
-target_size = (256, 256) # None
-# target_size = (64, 64) # None
-# target_size = (28, 28) # None
+target_size = (256, 256)
+# target_size = (64, 64)
+# target_size = (28, 28)
+# target_size = None
 
 
 
@@ -65,15 +66,15 @@ if __name__ == '__main__':
 
     domain_size = (1.0, 1.0)
     grid_size = np_gray_image.shape
-    # turb_intensity = 0 #1E-4
+    turb_intensity = 0*1E-4
     noise_limiter = (-1E-3, 1E-3)
     dt_turb = 1E-3 
 
-    turb_intensity = 1E-4
+
     # energy_spectrum = lambda k: np.where(np.isinf(k), 0, k)
     
     energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
-    frequency_range = {'k_min': 2.0 * torch.pi / min(domain_size), 
+    frequency_range = {'k_min': 2.0 * torch.pi / min(domain_size),
                        'k_max': 2.0 * torch.pi / (min(domain_size) / 1024)}
     
     spectralTurbulenceGenerator = SpectralTurbulenceGenerator(
@@ -95,45 +96,11 @@ if __name__ == '__main__':
         spectralTurbulenceGenerator
         )
     
-    solver.init(np_gray_image) 
-    
+    solver.init(np_gray_image)
+
 
     ######################################################################################################### TODO Code with Michal's renderer
 
-
-    # window = ti.ui.Window('CG - Renderer', res=(5*solver.nx, 3 * solver.ny))
-    # gui = window.get_gui()
-    # canvas = window.get_canvas()
-    
-    # canvasPlotter = CanvasPlotter(solver, (1.0*np_gray_image.min(), 1.0*np_gray_image.max()))
-
-    # # warm up
-    # solver.solve(iterations=1)
-    # solver.iterations_counter=0 # reset counter
-    # img = canvasPlotter.make_frame()
-    
-    # # os.Path("output/").mkdir(parents=True, exist_ok=True)
-    # # canvasPlotter.write_canvas_to_file(img, f'output/iteration_{solver.iterations_counter}.jpg')
-       
-    # iter_per_frame = 1
-    # i = 0
-    # while window.running:
-    #     with gui.sub_window('MAIN MENU', x=0, y=0, width=1.0, height=0.3):
-    #         iter_per_frame = gui.slider_int('steps', iter_per_frame, 1, 20)
-    #         gui.text(f'iteration: {solver.iterations_counter}')
-    #         if gui.button('solve'):
-    #             solver.solve(iter_per_frame)      
-    #             img = canvasPlotter.make_frame()
-    #             # save_png(save_dir, torch_image, "s.png")
-    #             i += iter_per_frame
-
-    
-    #     canvas.set_image(img.astype(np.float32))
-    #     window.show()
-
-
-
-    ##########################################################################################################
 
     # solver.init(1.*np.ones(grid_size, dtype=np.float32))
     # solver.create_ic_hill(.2, 1E-2, int(0.5*grid_size[0]), int(0.5*grid_size[1])) 
@@ -160,7 +127,7 @@ if __name__ == '__main__':
     
     #########################33 TODO back standard renderer with multiple subwindows
 
-    
+
     run_with_gui(solver, np_gray_image, iter_per_frame = 1)
 
 
