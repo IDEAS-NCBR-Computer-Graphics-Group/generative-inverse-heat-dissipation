@@ -43,7 +43,7 @@ class LBM_ADE_Solver(LBM_SolverBase):
             
             # self.apply_bb()
             self.apply_nee_bc()
-            self.iterations_counter = self.iterations_counter +1
+            self.iterations_counter = self.iterations_counter + 1
         
         
         if self.iterations_counter % 10 == 0:

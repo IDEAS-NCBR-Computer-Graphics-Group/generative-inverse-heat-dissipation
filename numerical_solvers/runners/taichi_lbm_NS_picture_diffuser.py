@@ -62,7 +62,7 @@ if __name__ == '__main__':
 
     domain_size = (1.0, 1.0)
     grid_size = np_gray_image.shape
-    turb_intensity = 0 #1E-4
+    # turb_intensity = 0 #1E-4
     noise_limiter = (-1E-3, 1E-3)
     dt_turb = 1E-3 
 

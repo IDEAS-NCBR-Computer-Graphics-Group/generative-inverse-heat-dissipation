@@ -45,7 +45,7 @@ class LBM_SolverBase:
         # noise = magnitude*get_gaussian_noise(mu,variance)
         # self.Force[None] = ti.Vector([noise[0], noise[1]])
         
-        for i, j in ti.ndrange((1, self.nx - 2), (1, self.ny - 2)):
+        for i, j in ti.ndrange((1, self.nx - 1), (1, self.ny - 1)):
             noise = magnitude*get_gaussian_noise(mu,variance)
             self.Force[i,j] = ti.Vector([noise[0], noise[1]])
             
@@ -54,7 +54,7 @@ class LBM_SolverBase:
         # noise = magnitude*get_gaussian_noise(mu,variance)
         # self.Force[None] = ti.Vector([noise[0], noise[1]])
         
-        for i, j in ti.ndrange((1, self.nx - 2), (1, self.ny - 2)):
+        for i, j in ti.ndrange((1, self.nx - 1), (1, self.ny - 1)):
             noise = magnitude*get_gaussian_noise(mu,variance)
             self.vel[i,j] = ti.Vector([noise[0], noise[1]])
                    

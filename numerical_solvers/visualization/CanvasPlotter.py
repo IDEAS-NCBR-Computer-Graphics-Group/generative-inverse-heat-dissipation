@@ -361,7 +361,9 @@ class CanvasPlotter:
             
 
         self.heatmap_force_plotter.add_spectrum(force_cpu[:,:,0], force_cpu[:,:,1], self.solver.iterations_counter)
-        if self.is_heatmap_checked:
+        
+        
+        if self.is_heatmap_checked and not np.allclose(force_cpu, np.zeros_like(force_cpu)):
             
             heatmap_force = self.heatmap_force_plotter.plot_heatmap_rgba()
         else:
