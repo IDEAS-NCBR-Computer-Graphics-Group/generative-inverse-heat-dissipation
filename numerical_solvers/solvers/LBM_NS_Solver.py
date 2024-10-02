@@ -32,7 +32,7 @@ class LBM_NS_Solver(LBM_SolverBase):
         # force_numpy = np.stack((u_spec, v_spec), axis=-1)  # Shape becomes (128, 128, 2)
         # self.Force.from_numpy(force_numpy)
         
-        self.init_gaussian_force_field(0*1E-3, 0, 1)
+        self.init_gaussian_force_field(0*1E-2, 0, 1)
         self.init_fields()
                    
     def solve(self, iterations):
@@ -48,7 +48,7 @@ class LBM_NS_Solver(LBM_SolverBase):
             turb_numpy = torch.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
             self.Force.from_torch(turb_numpy)
             
-            # self.init_gaussian_force_field(1E-2, 0, 1)
+            # self.init_gaussian_force_field(1E-3, 0, 1)
             # self.apply_bb()
             self.apply_nee_bc()
             self.iterations_counter = self.iterations_counter +1
