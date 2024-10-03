@@ -19,6 +19,7 @@ class LBM_NS_Solver(LBM_SolverBase):
             
     def init(self, np_gray_image): 
         self.rho.from_numpy(np_gray_image)
+        # self.rho.fill(1.0)
         self.vel.fill(0)
         # u_spec, v_spec = self.spectralTurbulenceGenerator.generate_turbulence(0)     
         # force_numpy = np.stack((u_spec, v_spec), axis=-1)  # Shape becomes (128, 128, 2)

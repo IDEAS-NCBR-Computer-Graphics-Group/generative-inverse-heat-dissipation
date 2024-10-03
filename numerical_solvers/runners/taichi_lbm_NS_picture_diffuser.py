@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import taichi as ti
 import taichi.math as tm
 import itertools
+from pathlib import Path
 
 import cv2 # conda install conda-forge::opencv || pip install opencv-python
 
@@ -142,19 +143,7 @@ if __name__ == '__main__':
     ##########################################################################################################
 
     # solver.init(1.*np.ones(grid_size, dtype=np.float32))
-    # solver.create_ic_hill(.2, 1E-2, int(0.5*grid_size[0]), int(0.5*grid_size[1])) 
-    # solver.create_ic_hill(.05, 1E-3, int(0.25*grid_size[0]), int(0.25*grid_size[1]))
-    # solver.create_ic_hill(-.05, 1E-3,int(0.75*grid_size[0]), int(0.75*grid_size[1]))
-    
-    # for i in range(3):
-    #     subiterations = 100
-    #     solver.solve(subiterations)
-    #     rho_cpu = solver.rho.to_numpy()
-
-    #     os.makedirs("output", exist_ok=True)
-    #     matplotlib.use('TkAgg')
-    #     plt.imshow(rho_cpu, vmin=np_gray_image.min(), vmax=np_gray_image.max(), cmap="gist_gray", interpolation='none') 
-    #     plt.colorbar()
+    # solver.creatmin_init_gray_scalerbar()
     #     ax = plt.gca()
     #     ax.set_xlim([0, nx])
     #     ax.set_ylim([0, ny])

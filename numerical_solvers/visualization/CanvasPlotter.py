@@ -163,7 +163,8 @@ class CanvasPlotter:
 
     def render_vel_mag(self, vel):
         vel_mag = np.sqrt((vel[:, :, 0] ** 2 + vel[:, :, 1] ** 2))
-        vel_img = cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=0.0, vmax=0.05), cmap="coolwarm").to_rgba(vel_mag)
+        # vel_img = cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=0.0, vmax=0.05), cmap="coolwarm").to_rgba(vel_mag)
+        vel_img = cm.ScalarMappable(cmap="coolwarm").to_rgba(vel_mag)
         return vel_img
     
     def render_vel_energy_spectrum(self, vel):
@@ -346,14 +347,14 @@ class CanvasPlotter:
             v_distribution_rgba_x = self.dummy_canvas
 
         self.heatmap_energy_plotter.add_spectrum(vel_cpu[:, :, 0], vel_cpu[:, :, 1], self.solver.iterations_counter)
-        if self.is_heatmap_checked:
+        if self.is_heatmap_checked and not np.allclose(vel_cpu, np.zeros_like(vel_cpu)):
             
             heatmap_energy  = self.heatmap_energy_plotter.plot_heatmap_rgba()
         else:
             heatmap_energy = self.dummy_canvas
 
         self.heatmap_rho_plotter.add_spectrum(rho_cpu, np.zeros_like(rho_cpu), self.solver.iterations_counter)
-        if self.is_heatmap_checked:
+        if self.is_heatmap_checked and not np.allclose(rho_cpu, np.zeros_like(rho_cpu)):
             
             heatmap_rho = self.heatmap_rho_plotter.plot_heatmap_rgba()
         else:

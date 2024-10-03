@@ -38,7 +38,7 @@ def get_config():
     solver.niu = 0.5 * 1/6
     solver.bulk_visc = 0.5 * 1/6
     solver.domain_size = (1.0, 1.0)
-    solver.turb_intensity = 1E-4
+    solver.turb_intensity =  1E-4
     solver.noise_limiter = (-1E-3, 1E-3)
     solver.dt_turb = 5 * 1E-4
     solver.k_min = 2.0 * torch.pi / min(solver.domain_size)
