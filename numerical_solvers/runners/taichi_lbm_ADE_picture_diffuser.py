@@ -20,6 +20,7 @@ from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbul
 from numerical_solvers.solvers.img_reader import read_img_in_grayscale, normalize_grayscale_image_range
 from numerical_solvers.visualization.taichi_lbm_gui import run_with_gui
 
+from configs.mnist.small_mnist_lbm_ade_config import get_config
 
 from numerical_solvers.solvers.LBM_ADE_Solver import LBM_ADE_Solver
 
@@ -50,45 +51,26 @@ ti.init(arch=ti.gpu)
 # ti.init(arch=ti.cpu)
 ti_float_precision = ti.f32
   
-if __name__ == '__main__':    
-    nx, ny = np_gray_image.shape # 768, 768 
-    # niu = 1E-3*1/6
-    niu = 1/6
-    bulk_visc = None
+if __name__ == '__main__':
     
     case_name="miau"
     
-    domain_size = (1.0, 1.0)
     grid_size = np_gray_image.shape
-    noise_limiter = (-1E3, 1E3)
-    dt_turb = 3E-4
-
-    # turb_intensity = 3E-3
-    # energy_spectrum = lambda k: np.where(np.isinf(k), 0, k)
     
-    
-    # turb_intensity = 1E-3
-    # energy_spectrum = lambda k: np.where(np.isinf(k * k), 0, k * k) # 
-    
-    turb_intensity = 1E-4
-    # energy_spectrum = lambda k: np.where(np.isinf(k ** (-1.)), 0, k ** (-1.0)) # najs
-    
-    # turb_intensity = 0*3E-3
-    energy_spectrum = lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
-    frequency_range = {'k_min': 2.0 * np.pi / min(domain_size), 
-                       'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
+    config = get_config()
     
     spectralTurbulenceGenerator = SpectralTurbulenceGenerator(
-        domain_size, grid_size, 
-        turb_intensity, noise_limiter,
-        energy_spectrum=energy_spectrum, frequency_range=frequency_range, 
-        dt_turb=dt_turb, 
+            config.solver.domain_size, grid_size, 
+            config.solver.turb_intensity, config.solver.noise_limiter,
+            energy_spectrum=config.solver.energy_spectrum, 
+            frequency_range={'k_min': config.solver.k_min, 'k_max': config.solver.k_max}, 
+            dt_turb=config.solver.dt_turb, 
         is_div_free=False)
         
     solver = LBM_ADE_Solver(
         case_name,
         np_gray_image.shape,
-        niu, bulk_visc,
+        config.solver.niu, config.solver.bulk_visc,
         spectralTurbulenceGenerator
         )
     
