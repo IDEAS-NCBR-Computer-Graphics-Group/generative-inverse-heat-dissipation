@@ -33,7 +33,7 @@ def get_config():
     training.sampling_freq = 100
     
     solver = config.solver 
-    solver.type = 'blurr'
+    solver.type = 'gaussian_blurr'
     solver.min_steps = 1
     solver.max_steps = 50
     solver.n_denoising_steps = 10

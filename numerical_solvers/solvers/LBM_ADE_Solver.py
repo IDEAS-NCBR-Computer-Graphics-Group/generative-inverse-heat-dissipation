@@ -9,12 +9,10 @@ from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
 # Fluid solver based on lattice boltzmann method using taichi language
 # Inspired by: https://github.com/hietwll/LBM_Taichi
 
-
 @ti.data_oriented
 class LBM_ADE_Solver(LBM_SolverBase):
-    def __init__(self, name, domain_size, kin_visc, bulk_visc, turbulenceGenerator: SpectralTurbulenceGenerator):
-            super().__init__(name, domain_size, kin_visc, turbulenceGenerator)
-            
+    def __init__(self, domain_size, kin_visc, bulk_visc, turbulenceGenerator: SpectralTurbulenceGenerator):
+            super().__init__(domain_size, kin_visc, turbulenceGenerator)
             
     def init(self, np_gray_image): 
         self.rho.from_numpy(np_gray_image)
@@ -69,8 +67,6 @@ class LBM_ADE_Solver(LBM_SolverBase):
             for k in ti.static(range(9)):
                 feq = self.f_eq(i, j)
                 self.f_new[i, j][k] = (1 - self.omega_kin) * self.f[i, j][k] + feq[k] * self.omega_kin
-    
-
         
     @ti.kernel
     def collide_cm(self):
@@ -151,8 +147,8 @@ class LBM_ADE_Solver(LBM_SolverBase):
             self.f_new[i,j][6] = -1/4.*self.f[i,j][5] + 1/4.*self.f[i,j][6] - 1/4.*self.f[i,j][7] + 1/4.*self.f[i,j][8]
             self.f_new[i,j][7] = 1/4.*self.f[i,j][5] - 1/4.*self.f[i,j][6] - 1/4.*self.f[i,j][7] + 1/4.*self.f[i,j][8]
             self.f_new[i,j][8] = -1/4.*self.f[i,j][5] - 1/4.*self.f[i,j][6] + 1/4.*self.f[i,j][7] + 1/4.*self.f[i,j][8]
-                                    
-      
+
+
     @ti.kernel
     def update_macro_var(self): 
         for i, j in ti.ndrange((1, self.nx-1), (1,self.ny-1)):

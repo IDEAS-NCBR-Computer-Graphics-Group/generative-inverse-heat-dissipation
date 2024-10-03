@@ -12,26 +12,31 @@ from torch.utils import tensorboard
 from scripts import utils
 from absl import app
 from absl import flags
-from ml_collections.config_flags import config_flags
+
 import numpy as np
 
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
-from numerical_solvers.data_holders.BlurringCorruptor import BlurringCorruptor
+from numerical_solvers.data_holders.LBM_ADE_Corruptor import LBM_ADE_Corruptor
+from numerical_solvers.data_holders.GaussianBlurringCorruptor import GaussianBlurringCorruptor
+from numerical_solvers.data_holders.DCTBlurringCorruptor import DCTBlurringCorruptor
+
 
 from torchvision import transforms
 from scripts.git_utils import get_git_branch, get_git_revision_hash, get_git_revision_short_hash
+from scripts.utils import load_config_from_path, setup_logging
 
 FLAGS = flags.FLAGS
 
-config_flags.DEFINE_config_file("config", None, "NN Training configuration.", lock_config=True)
+# config_flags.DEFINE_config_file("config", None, "NN Training configuration.", lock_config=True) # this return a parsed object - ConfigDict
+flags.DEFINE_string("config", None, "Path to the config file.")
 flags.DEFINE_string("workdir", None, "Work directory.")
 flags.mark_flags_as_required(["workdir", "config"])
-#flags.DEFINE_string("initialization", "prior", "How to initialize sampling")
+
 
 def main(argv):
     train(FLAGS.config, FLAGS.workdir)
 
-def train(config, workdir):
+def train(config_path, workdir):
     """Runs the training pipeline. 
     Based on code from https://github.com/yang-song/score_sde_pytorch
 
@@ -41,15 +46,23 @@ def train(config, workdir):
                     contains checkpoint training will be resumed from the latest checkpoint.
     """
 
-    if config.device == torch.device('cpu'):
-        logging.info("RUNNING ON CPU")
+    # Initial logging setup
+    logging.basicConfig(level=logging.DEBUG)
+    
+    # Setup logging once the workdir is known
+    setup_logging(workdir)
 
-    # print(f"Code version\t branch: {get_git_branch()} \t commit hash: {get_git_revision_hash()}")
     logging.info(f"Code version\t branch: {get_git_branch()} \t commit hash: {get_git_revision_hash()}")
+    logging.info(f"Execution flags: --config: {config_path} \t --workdir: {workdir}")
     
-    # TODO: copy config
-    # shutil.copy(os.path.join(workdir, "case_name"), os.path.join(workdir, "case_info")) 
+    # copy config to know what has been run
+    shutil.copy(config_path, workdir) 
+
+    config = load_config_from_path(config_path)
     
+    if config.device == torch.device('cpu'):
+        logging.warning("RUNNING ON CPU")
+
     # Create directory for saving intermediate samples
     sample_dir = os.path.join(workdir, "samples")
     Path(sample_dir).mkdir(parents=True, exist_ok=True)
@@ -87,29 +100,33 @@ def train(config, workdir):
     # Build one-step training and evaluation functions
     optimize_fn = losses.optimization_manager(config)
 
-    # Get the forward process definition
-    # scales = config.model.blur_schedule
-    # heat_forward_module = None
-
     # Get the loss function
     train_step_fn = losses.get_step_lbm_fn(train=True, config=config, optimize_fn=optimize_fn)
     eval_step_fn = losses.get_step_lbm_fn(train=False, config=config, optimize_fn=optimize_fn)
 
     # Building sampling functions
-    delta = config.model.sigma*1.25
-
-    # draw a sample by lbm-destroying some rand images
-    if config.solver.type == 'fluid':
+    # Get the forward process definition
+    if config.solver.type == 'NS':
         corruptor = LBM_NS_Corruptor(
             config,                                
             transform=transforms.Compose([transforms.ToTensor()]))
-    elif config.solver.type == 'blurr':
-        corruptor = BlurringCorruptor(
+    elif config.solver.type == 'ADE':
+        corruptor = LBM_ADE_Corruptor(
+            config, 
+            transform=transforms.Compose([transforms.ToTensor()]))        
+    elif config.solver.type == 'gasussian_blurr':
+        corruptor = GaussianBlurringCorruptor(
+            config, 
+            transform=transforms.Compose([transforms.ToTensor()]))    
+    elif config.solver.type == 'DCT':
+        corruptor = DCTBlurringCorruptor(
             config, 
             transform=transforms.Compose([transforms.ToTensor()]))
     else:
         raise ValueError(f"Invalid solver type in config'")
     
+    # draw a sample by destroying some rand images
+    delta = config.model.sigma*1.25
     n_denoising_steps = config.solver.n_denoising_steps   
     initial_sample = sampling.get_initial_corrupted_sample(
         config, n_denoising_steps, corruptor)
@@ -190,5 +207,7 @@ def train(config, workdir):
             utils.save_gif(this_sample_dir, intermediate_samples)
             utils.save_video(this_sample_dir, intermediate_samples)
 
+    logging.info("Done.")
+     
 if __name__ == "__main__":
     app.run(main)

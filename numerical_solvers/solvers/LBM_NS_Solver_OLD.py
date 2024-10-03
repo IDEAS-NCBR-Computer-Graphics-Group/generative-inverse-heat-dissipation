@@ -9,7 +9,7 @@ import numpy as np
 
 @ti.data_oriented
 class LBM_NS_Solver_OLD:
-    def __init__(self, name, domain_size, kin_visc, bulk_visc=None, spectralTurbulenceGenerator=None):
+    def __init__(self, domain_size, kin_visc, bulk_visc=None, spectralTurbulenceGenerator=None, name=None):
         self.name = name # name of the flow case
         self.nx, self.ny = domain_size    #domain size, by convention, dx = dy = dt = 1.0 (lattice units)
 

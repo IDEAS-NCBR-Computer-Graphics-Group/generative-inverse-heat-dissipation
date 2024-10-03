@@ -10,7 +10,7 @@ from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
 from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range
 
 
-class SpectralBlurringCorruptor(BaseCorruptor):
+class GaussianBlurringCorruptor(BaseCorruptor):
     def __init__(self, config, transform=None, target_transform=None):
         """
         Initialize the BlurringCorruptor with configuration, transformation, and target transformation.
@@ -20,19 +20,15 @@ class SpectralBlurringCorruptor(BaseCorruptor):
             transform: Optional transform to be applied on a PIL image.
             target_transform: Optional transform to be applied on the target.
         """
-        super(SpectralBlurringCorruptor, self).__init__(transform, target_transform)        
+        super(GaussianBlurringCorruptor, self).__init__(transform, target_transform)        
         # Grayscale normalization range from config
-        self.min_init_gray_scale = config.data.min_init_gray_scale
-        self.max_init_gray_scale = config.data.max_init_gray_scale
+        self.min_init_gray_scale = config.solver.min_init_gray_scale
+        self.max_init_gray_scale = config.solver.max_init_gray_scale
         
-        
-        self.min_blurr = config.solver.min_steps
-        self.max_blurr = config.solver.max_steps
-        self.step_size = config.solver.step_size
-        
-        DCTBlur(sigmas, config.data.image_size, device)
-        
-    def _corrupt(self, x, corruption_amount, generate_pair=False):
+        self.blurr_schedule  = config.model.blur_schedule
+        self.max_fwd_step = config.model.K
+
+    def _corrupt(self, x, fwd_steps, generate_pair=False):
         """
         Corrupts the input image by normalizing and then applying a Gaussian blur using scipy.
 
@@ -52,18 +48,21 @@ class SpectralBlurringCorruptor(BaseCorruptor):
         np_gray_img = normalize_grayscale_image_range(np_gray_img, 
                                     self.min_init_gray_scale, self.max_init_gray_scale)
 
-        # take log to spread values 
-        # np_gray_img = -np.log10(np_gray_img + 1E-6)  # this does not help 
-        
-        # Apply Gaussian blur using scipy's gaussian_filter
-        blurred_img = gaussian_filter(np_gray_img, sigma=corruption_amount)
+  
+        sigmas = self.blurr_schedule[fwd_steps]  
+        less_sigmas = self.blurr_schedule[fwd_steps-1] 
+
+        blurred_img = gaussian_filter(np_gray_img, sigma=sigmas)
         
         # Convert back to Tensor after blurring
         noisy_x = torch.tensor(blurred_img).unsqueeze(0).float()
 
         if generate_pair:
             # For the pair, use the normalized image before blurring
-            less_blurred_img = gaussian_filter(np_gray_img, sigma=(corruption_amount-self.step_size))
+            # step_size = 1
+            # less_blurred_img = gaussian_filter(np_gray_img, sigma=(corruption_amount-self.step_size))
+            
+            less_blurred_img = gaussian_filter(np_gray_img, sigma=less_sigmas)
             less_noisy_x = torch.tensor(less_blurred_img).unsqueeze(0).float()
             
             return noisy_x, less_noisy_x
@@ -105,19 +104,18 @@ class SpectralBlurringCorruptor(BaseCorruptor):
         for index in range(dataset_length):
             if index % 100 == 0:
                 print(f"Preprocessing (blurring) {index}")
-            
-            # corruption_amount = np.random.randint(self.min_blurr, self.max_blurr) # ints
-            
-            corruption_amount = np.random.uniform(low=self.min_blurr, high=self.max_blurr, size=None)
+
+            fwd_steps = np.random.randint(1, self.max_fwd_step) # ints
+
             original_pil_image, label = initial_dataset[index]
             original_image = self.transform(original_pil_image)
 
             # Use the unified corrupt function and ignore the second value if not needed
-            modified_image, pre_modified_image = self._corrupt(original_image, corruption_amount, generate_pair=process_pairs)
+            modified_image, pre_modified_image = self._corrupt(original_image, fwd_steps, generate_pair=process_pairs)
 
             data.append(original_image)
             modified_images.append(modified_image)
-            corruption_amounts.append(corruption_amount)
+            corruption_amounts.append(fwd_steps)
             labels.append(label)
 
             if process_pairs:

@@ -17,7 +17,7 @@ print(f'Using device: {device}')
 
 # %% dataset
 
-from numerical_solvers.data_holders.BlurringCorruptor import BlurringCorruptor
+from numerical_solvers.data_holders.GaussianBlurringCorruptor import GaussianBlurringCorruptor
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
 # from configs.mnist.small_mnist_lbm_ns_config import get_config as lbm_ns_config
@@ -69,7 +69,7 @@ process_all=True
 solver_config = blurring_config()
 corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
 
-corruptor = BlurringCorruptor(
+corruptor = GaussianBlurringCorruptor(
     solver_config, 
     transform=transforms.Compose([torchvision.transforms.ToTensor()]))
 

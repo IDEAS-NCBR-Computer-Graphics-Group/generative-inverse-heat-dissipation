@@ -87,10 +87,8 @@ if __name__ == '__main__':
     
     niu = 1E-0 * 1./6
     bulk_visc = niu
-    case_name="miau"   
     
     solver = LBM_NS_Solver(
-        case_name,
         grid_size,
         niu, bulk_visc,
         spectralTurbulenceGenerator
