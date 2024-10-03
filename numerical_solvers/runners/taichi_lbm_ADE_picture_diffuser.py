@@ -65,17 +65,17 @@ if __name__ == '__main__':
     dt_turb = 3E-4
 
     # turb_intensity = 3E-3
-    # energy_spectrum = lambda k: np.where(np.isinf(k), 0, k)
+    # energy_spectrum = lambda k: torch.where(torch.isinf(k), 0, k)
     
     
     # turb_intensity = 1E-3
-    # energy_spectrum = lambda k: np.where(np.isinf(k * k), 0, k * k) # 
+    # energy_spectrum = lambda k: torch.where(torch.isinf(k * k), 0, k * k) # 
     
-    turb_intensity = 1E-4
-    # energy_spectrum = lambda k: np.where(np.isinf(k ** (-1.)), 0, k ** (-1.0)) # najs
+    turb_intensity =0* 1E-4
+    energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-1.)), 0, k ** (-1.0)) # najs
     
-    turb_intensity = 3E-3
-    energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
+    # turb_intensity = 3E-3
+    # energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
     frequency_range = {'k_min': 2.0 * torch.pi / min(domain_size), 
                        'k_max': 2.0 * torch.pi / (min(domain_size) / 1024)}
     
@@ -120,7 +120,7 @@ if __name__ == '__main__':
 
     
     
-    run_with_gui(solver, np_gray_image, iter_per_frame=5)
+    run_with_gui(solver, np_gray_image, iter_per_frame=100)
 
 
 # %%

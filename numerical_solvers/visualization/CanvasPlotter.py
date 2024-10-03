@@ -127,7 +127,7 @@ class CanvasPlotter:
         self.is_energy_MSE_checked = False
         self.is_energy_SSIM_checked = False
 
-        self.buffer_size = 1000
+        self.buffer_size = 5000
         self.array_shape = (solver.nx, solver.ny)
         self.energy_history = CircularBuffer(self.buffer_size, self.array_shape)
         self.rho_history = CircularBuffer(self.buffer_size, self.array_shape)
@@ -164,6 +164,7 @@ class CanvasPlotter:
     def render_vel_mag(self, vel):
         vel_mag = np.sqrt((vel[:, :, 0] ** 2 + vel[:, :, 1] ** 2))
         vel_img = cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=0.0, vmax=0.05), cmap="coolwarm").to_rgba(vel_mag)
+        # vel_img = cm.ScalarMappable(cmap="coolwarm").to_rgba(vel_mag)
         return vel_img
     
     def render_vel_energy_spectrum(self, vel):
@@ -197,7 +198,7 @@ class CanvasPlotter:
         
         # first row - rho
         
-        rho_cpu = self.solver.rho.to_numpy()
+        rho_cpu = self.solver.rho.to_numpy() 
 
         # if self.solver.iterations_counter % 10 ==0:
         #     print("rho max:  ", rho_cpu.max())
@@ -278,9 +279,6 @@ class CanvasPlotter:
                 ssim_index = ssim(image1, image2, data_range=image1.max() - image1.min())
 
         if self.is_vel_mag_distribution_checked:
-            # border = 2
-            # vel_mag_img[border:-border,border:-border] =0
-            # plot_velocity_magnitude_distribution
             vel_mag_histogram_rgb = plot_velocity_magnitude_distribution(vel_mag_img)
             vel_mag_histogram_rgba = cm.ScalarMappable().to_rgba(np.flip(np.transpose(vel_mag_histogram_rgb, (1, 0, 2)), axis=1)) 
 
@@ -332,10 +330,6 @@ class CanvasPlotter:
 
         
         if self.is_v_distribution_checked:
-            #TODO: JJM get rid of this ugly hack
-            # border = 2
-            # vy = vy[border:-border,border:-border]
-            # vx = vx[border:-border,border:-border]
             v_distribution_y = plot_v_component_distribution(vy, "v_y component distribution")
             v_distribution_rgba_y = cm.ScalarMappable().to_rgba(np.flip(np.transpose(v_distribution_y, (1, 0, 2)), axis=1)) 
             v_distribution_x = plot_v_component_distribution(vx, "v_x component distribution")
@@ -345,8 +339,7 @@ class CanvasPlotter:
             v_distribution_rgba_x = self.dummy_canvas
 
         self.heatmap_energy_plotter.add_spectrum(vel_cpu[:, :, 0], vel_cpu[:, :, 1], self.solver.iterations_counter)
-        if self.is_heatmap_checked:
-            
+        if self.is_heatmap_checked and not np.allclose(vel_cpu, np.zeros_like(vel_cpu)):
             heatmap_energy  = self.heatmap_energy_plotter.plot_heatmap_rgba()
         else:
             heatmap_energy = self.dummy_canvas

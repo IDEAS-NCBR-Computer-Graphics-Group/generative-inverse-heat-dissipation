@@ -2,13 +2,18 @@
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-
-// Select the Interpreter in VSCode:
-// Open the Command Palette (Ctrl+Shift+P or Cmd+Shift+P on macOS).
-// Type Python: Select Interpreter
-
+    // Select the Interpreter in VSCode:
+    // Open the Command Palette (Ctrl+Shift+P or Cmd+Shift+P on macOS).
+    // Type Python: Select Interpreter
     "version": "0.2.0",
     "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
         {
             "name": "Debugger: sample.py with Arguments",
             "type": "debugpy",
@@ -16,10 +21,14 @@
             "program": "${workspaceFolder}/sample.py",
             "console": "integratedTerminal",
             "args": [
-                "--config", "configs/ffhq/img_size_128_maxblur128.py",
-                "--workdir", "runs/ffhq/img_size_128_maxblur128",
-                "--checkpoint", "0",
-                "--batch_size", "9"
+                "--config",
+                "configs/ffhq/img_size_128_maxblur128.py",
+                "--workdir",
+                "runs/ffhq/img_size_128_maxblur128",
+                "--checkpoint",
+                "0",
+                "--batch_size",
+                "9"
             ]
         },
         {
@@ -29,8 +38,10 @@
             "program": "${workspaceFolder}/train.py",
             "console": "integratedTerminal",
             "args": [
-                "--config", "configs/mnist/small_mnist.py",
-                "--workdir", "runs/mnist/small_debug_mnist"
+                "--config",
+                "configs/mnist/small_mnist.py",
+                "--workdir",
+                "runs/mnist/small_debug_mnist"
             ]
         },
         {
@@ -40,8 +51,10 @@
             "program": "${workspaceFolder}/train_corrupted.py",
             "console": "integratedTerminal",
             "args": [
-                "--config", "configs/mnist/small_mnist_blurring_config.py",
-                "--workdir", "runs/mnist/small_blurr_mnist"
+                "--config",
+                "configs/mnist/small_mnist_blurring_config.py",
+                "--workdir",
+                "runs/mnist/small_blurr_mnist"
             ]
         },
         {
@@ -51,8 +64,10 @@
             "program": "${workspaceFolder}/train_corrupted.py",
             "console": "integratedTerminal",
             "args": [
-                "--config", "configs/mnist/small_mnist_lbm_ns_config.py",
-                "--workdir", "runs/mnist/small_lbm_mnist"
+                "--config",
+                "configs/mnist/small_mnist_lbm_ns_config.py",
+                "--workdir",
+                "runs/mnist/small_lbm_mnist"
             ]
         }
     ]

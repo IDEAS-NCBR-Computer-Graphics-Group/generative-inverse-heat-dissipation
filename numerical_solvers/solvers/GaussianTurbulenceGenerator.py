@@ -56,7 +56,17 @@ class GaussianTurbulenceGenerator:
 
 
 @ti.func
-def get_gaussian_noise(mean: float, variance: float)  -> ti.types.vector(2, float):
+def get_gaussian_noise1d(mean: float, variance: float):
+    noise = ti.randn()
+    
+    max_noise = 1E-1
+    min_noise = -1E-1
+    
+    noise = ti.min(ti.max(noise, min_noise), max_noise)
+    return noise
+    
+@ti.func
+def get_gaussian_noise2d(mean: float, variance: float)  -> ti.types.vector(2, float):
     noise = ti.Vector([0.0, 0.0])  # We need two values, as the Box-Muller gives two values
     
     # build in ti.randn() 

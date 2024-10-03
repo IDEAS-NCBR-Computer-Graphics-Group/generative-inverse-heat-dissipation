@@ -283,12 +283,16 @@ class SpectrumHeatmapPlotter:
 
 
         spectrums_array = np.array(self.spectrums).T
-        m= spectrums_array.shape[0]
+        m = spectrums_array.shape[0]
 
 
         # Create the figure with the exact target size and DPI
         fig, ax = plt.subplots(figsize=(2.56, 2.56), dpi=100)
 
+        # to small floats are not rendered nicely
+        eps = 1E-9
+        spectrums_array = np.where(spectrums_array < eps, eps, spectrums_array) 
+        
         # Plot the heatmap
         cax = ax.imshow(
             spectrums_array,
