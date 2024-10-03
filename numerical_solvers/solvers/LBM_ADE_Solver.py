@@ -3,7 +3,7 @@ import taichi.math as tm
 import torch
 
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
-from numerical_solvers.solvers.GaussianTurbulenceGenerator import get_gaussian_noise
+from numerical_solvers.solvers.GaussianTurbulenceGenerator import get_gaussian_noise1d, get_gaussian_noise2d
 from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
 
 # Fluid solver based on lattice boltzmann method using taichi language
@@ -31,7 +31,7 @@ class LBM_ADE_Solver(LBM_SolverBase):
         for iteration in range(iterations):                
             self.stream()
             self.update_macro_var()
-            # self.collide()
+            # self.collide_srt()
             self.collide_cm()
              
             u_turb, v_turb = self.turbulenceGenerator.generate_turbulence(self.iterations_counter)     
@@ -152,7 +152,7 @@ class LBM_ADE_Solver(LBM_SolverBase):
             self.f_new[i,j][7] = 1/4.*self.f[i,j][5] - 1/4.*self.f[i,j][6] - 1/4.*self.f[i,j][7] + 1/4.*self.f[i,j][8]
             self.f_new[i,j][8] = -1/4.*self.f[i,j][5] - 1/4.*self.f[i,j][6] + 1/4.*self.f[i,j][7] + 1/4.*self.f[i,j][8]
                                     
-    
+      
     @ti.kernel
     def update_macro_var(self): 
         for i, j in ti.ndrange((1, self.nx-1), (1,self.ny-1)):
@@ -160,8 +160,10 @@ class LBM_ADE_Solver(LBM_SolverBase):
             self.rho[i, j] = 0
             
             for k in ti.static(range(9)):
-                self.rho[i, j] += self.f[i, j][k]
+                self.rho[i, j] += self.f[i, j][k] #+ 0.01*get_gaussian_noise1d(0,1)
 
+            # self.rho[i, j] += 0.01*get_gaussian_noise1d(0,1)
+         
             # self.vel[i, j] = self.Force[i, j]
             # self.rho[i, j] += 1E1*self.Force[i, j][0]
             

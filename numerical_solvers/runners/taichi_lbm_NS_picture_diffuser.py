@@ -45,9 +45,9 @@ target_size = (256, 256)
 
 
 
-
+drho = 1E-1
 np_gray_image = read_img_in_grayscale(img_path, target_size)
-np_gray_image = normalize_grayscale_image_range(np_gray_image, 0.95, 1.05)
+np_gray_image = normalize_grayscale_image_range(np_gray_image, 1. - drho, 1. + drho)
 
 # print(np_gray_image.shape)
 # plt.imshow(np_gray_image, cmap='gist_gray')
@@ -60,13 +60,13 @@ np_gray_image = normalize_grayscale_image_range(np_gray_image, 0.95, 1.05)
              
 ti.init(arch=ti.gpu)
 # ti.init(arch=ti.cpu)
-ti_float_precision = ti.f32
+ti_float_precision = ti.f64
   
 if __name__ == '__main__':    
 
     domain_size = (1.0, 1.0)
     grid_size = np_gray_image.shape
-    turb_intensity = 0*1E-4
+    turb_intensity = 1E-4
     noise_limiter = (-1E-3, 1E-3)
     dt_turb = 1E-3 
 
@@ -85,13 +85,13 @@ if __name__ == '__main__':
         is_div_free = False)
     
     
-    niu = 1E0 * 1./6
-    bulk_visc = 1E0 * 1./6
+    niu = 1E-0 * 1./6
+    bulk_visc = niu
     case_name="miau"   
     
     solver = LBM_NS_Solver(
         case_name,
-        np_gray_image.shape,
+        grid_size,
         niu, bulk_visc,
         spectralTurbulenceGenerator
         )
@@ -103,7 +103,7 @@ if __name__ == '__main__':
 
 
     # solver.init(1.*np.ones(grid_size, dtype=np.float32))
-    # solver.create_ic_hill(.2, 1E-2, int(0.5*grid_size[0]), int(0.5*grid_size[1])) 
+    # solver.create_ic_hill(.5, 1E-2, int(0.5*grid_size[0]), int(0.5*grid_size[1])) 
     # solver.create_ic_hill(.05, 1E-3, int(0.25*grid_size[0]), int(0.25*grid_size[1]))
     # solver.create_ic_hill(-.05, 1E-3,int(0.75*grid_size[0]), int(0.75*grid_size[1]))
     
@@ -128,7 +128,7 @@ if __name__ == '__main__':
     #########################33 TODO back standard renderer with multiple subwindows
 
 
-    run_with_gui(solver, np_gray_image, iter_per_frame = 1)
+    run_with_gui(solver, np_gray_image, iter_per_frame = 10)
 
 
 
