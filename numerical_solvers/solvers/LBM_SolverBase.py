@@ -7,7 +7,7 @@ from numerical_solvers.solvers.GaussianTurbulenceGenerator import get_gaussian_n
 
 @ti.data_oriented
 class LBM_SolverBase:
-    def __init__(self, name, domain_size, kin_visc, turbulenceGenerator: SpectralTurbulenceGenerator):
+    def __init__(self, domain_size, kin_visc, turbulenceGenerator: SpectralTurbulenceGenerator, name=None):
         self.name = name # name of the flow case
         self.nx, self.ny = domain_size  
         # nx, ny as np and ti have different convention

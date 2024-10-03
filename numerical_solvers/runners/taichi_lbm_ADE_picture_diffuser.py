@@ -29,11 +29,10 @@ from numerical_solvers.solvers.LBM_ADE_Solver import LBM_ADE_Solver
 
 
 img_path = './numerical_solvers/runners/cat_768x768.jpg'
-# img_path = 'cat_768x768.jpg'
-target_size=None
+# target_size=None
 # target_size=(512, 512)
-target_size = (256, 256) # None
-# target_size = (128, 128) # None
+target_size = (256, 256) 
+# target_size = (128, 128) 
 
 np_gray_image = read_img_in_grayscale(img_path, target_size)
 np_gray_image = normalize_grayscale_image_range(np_gray_image, 0.95, 1.05)
@@ -52,12 +51,9 @@ ti.init(arch=ti.gpu)
 ti_float_precision = ti.f32
   
 if __name__ == '__main__':    
-    nx, ny = np_gray_image.shape # 768, 768 
-    # niu = 1E-3*1/6
+    nx, ny = np_gray_image.shape
     niu = 1/6
     bulk_visc = None
-    
-    case_name="miau"
     
     domain_size = (1.0, 1.0)
     grid_size = np_gray_image.shape
@@ -66,7 +62,6 @@ if __name__ == '__main__':
 
     # turb_intensity = 3E-3
     # energy_spectrum = lambda k: torch.where(torch.isinf(k), 0, k)
-    
     
     # turb_intensity = 1E-3
     # energy_spectrum = lambda k: torch.where(torch.isinf(k * k), 0, k * k) # 
@@ -87,7 +82,6 @@ if __name__ == '__main__':
         is_div_free=False)
         
     solver = LBM_ADE_Solver(
-        case_name,
         np_gray_image.shape,
         niu, bulk_visc,
         spectralTurbulenceGenerator
@@ -117,10 +111,6 @@ if __name__ == '__main__':
     #     plt.title(f'After {(i+1)*subiterations} iterations')
     #     plt.show()
     #     cv2.imwrite(f'output/{case_name}_at_{i*subiterations}.jpg', rho_cpu)
-
-    
-    
     run_with_gui(solver, np_gray_image, iter_per_frame=100)
-
 
 # %%

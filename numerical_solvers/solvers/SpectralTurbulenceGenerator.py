@@ -176,5 +176,5 @@ class SpectralTurbulenceGenerator(t.nn.Module):
     
         u, v = self.limit_velocity_field(u, v, min_noise, max_noise)
         
-        return u.to(t.float32), v.to(t.float32)
+        return u.float(), v.float()  # equivalent of self.to(torch.float32)
 

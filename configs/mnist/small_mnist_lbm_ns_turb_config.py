@@ -7,10 +7,11 @@ def get_config():
     config = default_mnist_configs.get_default_configs()
     
     model = config.model
-    model.blur_sigma_max = 20
-    model.blur_sigma_min = 0.5
     model.model_channels = 64
     model.channel_mult = (1, 1, 1)
+    
+    model.blur_sigma_max = 20
+    model.blur_sigma_min = 0.5
     model.K = 50
     model.blur_schedule = np.exp(np.linspace(np.log(model.blur_sigma_min),
                                              np.log(model.blur_sigma_max), model.K))
@@ -19,11 +20,9 @@ def get_config():
     data = config.data
     data.showcase_comparison = True
     data.process_pairs = True
-    data.min_init_gray_scale = 0.95
-    data.max_init_gray_scale = 1.05
     data.processed_filename = 'lbm_ns_turb_pairs' if config.data.process_pairs else 'lbm_ns_turb'
     data.dataset = 'CORRUPTED_NS_MNIST'
-
+    
     training = config.training
     training.n_iters = 1001
     training.snapshot_freq = 1000
@@ -33,7 +32,9 @@ def get_config():
     training.sampling_freq = 100
     
     solver = config.solver
-    solver.type = 'fluid'
+    solver.min_init_gray_scale = 0.95
+    solver.max_init_gray_scale = 1.05
+    solver.type = 'NS'
     solver.niu = 0.5 * 1/6
     solver.bulk_visc = 0.5 * 1/6
     solver.domain_size = (1.0, 1.0)
@@ -44,7 +45,8 @@ def get_config():
     solver.k_max = 2.0 * torch.pi / (min(solver.domain_size) / 1024)
     solver.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
     solver.min_steps = 1
-    solver.max_steps = 10
-    solver.n_denoising_steps = 10
+    solver.max_steps = 20
+    solver.is_divergence_free = False
+    solver.n_denoising_steps = 20
 
     return config
