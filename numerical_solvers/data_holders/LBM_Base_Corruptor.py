@@ -57,7 +57,7 @@ class LBM_Base_Corruptor(BaseCorruptor):
 
             return noisy_x, less_noisy_x
         else:
-            # Solve up to lbm_steps - step_difference if generating pairs, else directly to lbm_steps
+            # Solve up to (lbm_steps - step_difference) if generating pairs, else directly to lbm_steps
             self.solver.solve(steps)
             rho_cpu = self.solver.rho.to_numpy()
             rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
