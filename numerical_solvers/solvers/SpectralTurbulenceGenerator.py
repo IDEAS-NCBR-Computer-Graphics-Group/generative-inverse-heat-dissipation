@@ -167,13 +167,13 @@ class SpectralTurbulenceGenerator:
             
 
         # Apply limiter
-        min_noise, max_noise = self.noise_limiter
+        # min_noise, max_noise = self.noise_limiter
 
         # Limiting the values of u and v elementwise
         # u = np.clip(u, min_noise, max_noise)
         # v = np.clip(v, min_noise, max_noise)
     
-        u, v = self.limit_velocity_field(u, v, min_noise, max_noise)
+        # u, v = self.limit_velocity_field(u, v, min_noise, max_noise)
         
         return np.float32(u), np.float32(v)
 
