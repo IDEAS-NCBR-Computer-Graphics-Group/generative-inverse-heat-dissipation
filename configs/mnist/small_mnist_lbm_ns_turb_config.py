@@ -21,6 +21,7 @@ def get_config():
     data = config.data
     data.showcase_comparison = True
     data.process_pairs = True
+    data.process_all = False 
     data.processed_filename = 'lbm_ns_turb_pairs' if config.data.process_pairs else 'lbm_ns_turb'
     data.dataset = 'MNIST'
     data.transform = transforms.Compose([])

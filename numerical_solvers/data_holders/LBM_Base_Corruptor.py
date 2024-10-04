@@ -15,12 +15,11 @@ class LBM_Base_Corruptor(BaseCorruptor):
         super(LBM_Base_Corruptor, self).__init__(transform, target_transform)
 
         # Set LBM steps (can be made configurable too)
-        self.min_steps = config.solver.min_steps
-        self.max_steps = config.solver.max_steps
+        self.min_steps = config.solver.min_fwd_steps
+        self.max_steps = config.solver.max_fwd_steps
 
         self.min_init_gray_scale = config.solver.min_init_gray_scale
         self.max_init_gray_scale = config.solver.max_init_gray_scale
-
 
     def _corrupt(self, x, steps, generate_pair=False):
         """

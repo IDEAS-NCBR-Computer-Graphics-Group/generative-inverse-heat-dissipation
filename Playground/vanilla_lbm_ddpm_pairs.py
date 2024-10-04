@@ -21,7 +21,7 @@ from numerical_solvers.data_holders.GaussianBlurringCorruptor import GaussianBlu
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
 # from configs.mnist.small_mnist_lbm_ns_config import get_config as lbm_ns_config
-from configs.mnist.small_mnist_blurring_config import get_config as blurring_config
+from configs.mnist.small_mnist_gaussian_blurring_config import get_config as get_small_mnist_config
 # from configs.mnist.small_mnist_lbm_ns_turb_config import get_lbm_ns_config as get_lbm_ns_turb_config
 
 # %% figure out paths
@@ -41,50 +41,50 @@ print(f"Input data folder: {input_data_dir}")
 start = timer()
 process_all=True
 
-# solver_config = lbm_ns_config()
+# config = lbm_ns_config()
 # corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
 
-# solver_config = get_lbm_ns_turb_config()
+# config = get_lbm_ns_turb_config()
 # corrupted_dataset_dir = os.path.join(output_data_dir, 'lbm_ns_turb')
 
 
 # corruptor = LBM_NS_Corruptor(
-#     solver_config,                                
+#     config,                                
 #     transform=transforms.Compose([torchvision.transforms.ToTensor()]))
 
 # corruptor._preprocess_and_save_data(
 #     initial_dataset=datasets.MNIST(root=input_data_dir, train=True, download=True),
 #     save_dir=corrupted_dataset_dir,
 #     is_train_dataset = True,
-#     process_pairs = solver_config.data.process_pairs,
+#     process_pairs = config.data.process_pairs,
 #     process_all=True)
 
 # corruptor._preprocess_and_save_data(
 #     initial_dataset=datasets.MNIST(root=input_data_dir, train=False, download=True),
 #     save_dir=corrupted_dataset_dir,
 #     is_train_dataset = False,
-#     process_pairs = solver_config.data.process_pairs,
+#     process_pairs = config.data.process_pairs,
 #     process_all=True)    
 
-solver_config = blurring_config()
-corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
+config = get_small_mnist_config()
+corrupted_dataset_dir = os.path.join(output_data_dir, config.data.processed_filename)
 
 corruptor = GaussianBlurringCorruptor(
-    solver_config, 
+    config, 
     transform=transforms.Compose([torchvision.transforms.ToTensor()]))
 
 corruptor._preprocess_and_save_data(
     initial_dataset=datasets.MNIST(root=input_data_dir, train=True, download=True),
     save_dir=corrupted_dataset_dir,
     is_train_dataset = True,
-    process_pairs = solver_config.data.process_pairs,
+    process_pairs = config.data.process_pairs,
     process_all=True)
 
 corruptor._preprocess_and_save_data(
     initial_dataset=datasets.MNIST(root=input_data_dir, train=False, download=True),
     save_dir=corrupted_dataset_dir,
     is_train_dataset = False,
-    process_pairs = solver_config.data.process_pairs,
+    process_pairs = config.data.process_pairs,
     process_all=True) 
     
 end = timer()
@@ -128,32 +128,39 @@ axs[0].imshow(torchvision.utils.make_grid(clean_x)[0], cmap='Greys');
 # axs[1].imshow(torchvision.utils.make_grid(noisy_x)[0].clip(0.95, 1.05), cmap='Greys')
 # axs[2].imshow(torchvision.utils.make_grid(less_noisy_x)[0].clip(0.95, 1.05), cmap='Greys')
 
-axs[1].imshow(torchvision.utils.make_grid(blurred_x)[0].clip(solver_config.data.min_init_gray_scale, solver_config.data.max_init_gray_scale), cmap='Greys')
-axs[2].imshow(torchvision.utils.make_grid(less_blurred_x)[0].clip(solver_config.data.min_init_gray_scale, solver_config.data.max_init_gray_scale), cmap='Greys')
+axs[1].imshow(torchvision.utils.make_grid(blurred_x)[0].clip(config.solver.min_init_gray_scale, config.solver.max_init_gray_scale), cmap='Greys')
+axs[2].imshow(torchvision.utils.make_grid(less_blurred_x)[0].clip(config.solver.min_init_gray_scale, config.solver.max_init_gray_scale), cmap='Greys')
 
 
 # %% The model
-net = UNet2DModel(
-    sample_size=28,           # the target image resolution
-    in_channels=1,            # the number of input channels, 3 for RGB images
-    out_channels=1,           # the number of output channels
-    layers_per_block=2,       # how many ResNet layers to use per UNet block
-    block_out_channels=(32, 64, 64), # Roughly matching our basic unet example
-    down_block_types=(
-        "DownBlock2D",        # a regular ResNet downsampling block
-        "AttnDownBlock2D",    # a ResNet downsampling block with spatial self-attention
-        "AttnDownBlock2D",
-    ),
-    up_block_types=(
-        "AttnUpBlock2D",
-        "AttnUpBlock2D",      # a ResNet upsampling block with spatial self-attention
-        "UpBlock2D",          # a regular ResNet upsampling block
-      ),
-)
+
+# 
+# net = UNet2DModel(
+#     sample_size=28,           # the target image resolution
+#     in_channels=1,            # the number of input channels, 3 for RGB images
+#     out_channels=1,           # the number of output channels
+#     layers_per_block=2,       # how many ResNet layers to use per UNet block
+#     block_out_channels=(32, 64, 64), # Roughly matching our basic unet example
+#     down_block_types=(
+#         "DownBlock2D",        # a regular ResNet downsampling block
+#         "AttnDownBlock2D",    # a ResNet downsampling block with spatial self-attention
+#         "AttnDownBlock2D",
+#     ),
+#     up_block_types=(
+#         "AttnUpBlock2D",
+#         "AttnUpBlock2D",      # a ResNet upsampling block with spatial self-attention
+#         "UpBlock2D",          # a regular ResNet upsampling block
+#       ),
+# )
 
 model_save_path =  os.path.join(current_file_path.parents[0], "unet_model_pairs.pth")
 
-# print(net)
+# use the same network as in ihd paper
+from model_code import utils as mutils
+from configs.mnist.small_mnist import get_config as get_small_mnist_config
+small_mnist_config = get_small_mnist_config()
+net = mutils.create_model(config)
+print(net)
 
 print(f"No of parameters: {sum([p.numel() for p in net.parameters()])}") # 1.7M vs the ~309k parameters of the BasicUNet
 net.to(device)
@@ -166,13 +173,15 @@ net.to(device)
 loss_fn = nn.MSELoss()
 
 # The optimizer
-opt = torch.optim.Adam(net.parameters(), lr=1e-3)
+# opt = torch.optim.Adam(net.parameters(), lr=1e-4)
 
+from scripts import losses
+opt = losses.get_optimizer(config, net.parameters())
 # Keeping a record of the losses for later viewing
 losses = []
 
 # How many runs through the data should we do?
-n_epochs = 6
+n_epochs = 5
 
 # %% Run training
 print(f"batch_size={training_batch_size},\n" 
@@ -219,13 +228,18 @@ for epoch in range(n_epochs):
         corruption_amount = corruption_amount.to(device)
         # pred = net(noisy_x, corruption_amount).sample #<<< Using timestep 0 always, adding .sample
         
+        # noise = torch.randn_like(blurred_x) * sigma
+        # perturbed_data = blurred_x + noise # add training noise
+        # diff = net(perturbed_data, corruption_amount).sample #<<< Using timestep 0 always, adding .sample
+        # prediction = perturbed_data + diff #instead of less noisy learn the diff
+        
         noise = torch.randn_like(blurred_x) * sigma
-        perturbed_data = blurred_x + noise # add training noise
-        diff = net(blurred_x, corruption_amount).sample #<<< Using timestep 0 always, adding .sample
-        pred = blurred_x + diff #instead of less noisy learn the diff
+        perturbed_data = blurred_x + noise
+        diff = net(perturbed_data, corruption_amount)
+        prediction = perturbed_data + diff
         
         # Calculate the loss
-        loss = loss_fn(pred, less_blurred_x) # How close is the output to the true 'less_noisy_x'?
+        loss = loss_fn(less_blurred_x, prediction) # How close is the output to the true 'less_noisy_x'?
 
         # Backprop and update the params:
         opt.zero_grad()
@@ -264,18 +278,17 @@ plt.show()
 
 
 # %% Generate noisy samples
-fig, axs = plt.subplots(1, 3, figsize=(20, 16))
+
 
 # n_steps = int(solver_config.solver.max_steps) # 5
-n_steps = 20
+n_denoising_steps = fwd_steps = 50
 # noisy_x = torch.rand(64, 1, 28, 28).to(device) # pure noise
 # x, (noisy_x, less_noisy_x, corruption_amount, label) = next(iter(test_dataloader))
 clean_x, (_, _, _, _) = next(iter(test_dataloader))
 
-max_noise_level = 3
 blurred_x = torch.empty_like(clean_x)
 for index in range(clean_x.shape[0]):
-    tmp, _ = corruptor._corrupt(clean_x[index], max_noise_level) # blur to the max level
+    tmp, _ = corruptor._corrupt(clean_x[index], fwd_steps) # blur to the max level
     blurred_x[index] = tmp
 
 step_history = [blurred_x.detach().cpu()]
@@ -286,22 +299,24 @@ deblurred_x = blurred_x.clone()
 
 print("corruption_amount[0].item(), n_steps, i")
 
-# %% denoise samples
-for i in range(n_steps):
-#   noise_amount = torch.ones((noisy_x.shape[0], )).to(device) * (1-(i/n_steps)) # Starting high going low
-  corruption_amount = torch.ones(blurred_x.shape[0], device=device, dtype=torch.float) *(max_noise_level - i/n_steps)
-  with torch.no_grad():
-    diff = net(deblurred_x, corruption_amount).sample
+# denoise samples
+with torch.no_grad():
+    for i in range(n_denoising_steps, 0, -1):
+        vec_fwd_steps = torch.ones(blurred_x.shape[0], device=device, dtype=torch.long) * i
+        # diff = net(deblurred_x, vec_fwd_steps).sample
+        diff = net(deblurred_x, vec_fwd_steps)
+        
+        deblurred_x = deblurred_x + diff
+        
+        # add sampling noise
+        noise = torch.randn_like(deblurred_x)
+        deblurred_x = deblurred_x + noise*delta 
+        
+        pred_output_history.append(diff.detach().cpu())
+        step_history.append(deblurred_x.detach().cpu())
+        print(vec_fwd_steps[0].item(), n_denoising_steps, i)
 
-  deblurred_x = deblurred_x + diff
-  noise = torch.randn_like(deblurred_x)
-  u = deblurred_x + noise*delta # add sampling noise
-   
-  pred_output_history.append(diff.detach().cpu())
-  step_history.append(deblurred_x.detach().cpu())
-  print(corruption_amount[0].item(), n_steps, i)
-
-
+fig, axs = plt.subplots(1, 3, figsize=(20, 16))
 axs[0].imshow(torchvision.utils.make_grid(clean_x, nrow=8)[0].clip(0, 1), cmap='Greys')
 axs[0].set_title('Clean input');
 
@@ -310,26 +325,20 @@ axs[1].set_title('Denoised');
 
 axs[2].imshow(torchvision.utils.make_grid(blurred_x.detach().cpu(), nrow=8)[0].clip(0, 1), cmap='Greys')
 axs[2].set_title('Noise to sample from');
+plt.show()
+plt.close()
 
-# for ax in axs:
-#     ax.axis('off')# %%
-
-fig, axs = plt.subplots(n_steps, 2, figsize=(20, 20), sharex=True)
+fig, axs = plt.subplots(n_denoising_steps, 2, figsize=(20, 25), sharex=True)
 axs[0,0].set_title('x (model input)')
 axs[0,1].set_title('NN prediction')
-for i in range(n_steps):
+for i in range(n_denoising_steps):
     axs[i, 0].imshow(torchvision.utils.make_grid(
-        step_history[i])[0].clip(solver_config.data.min_init_gray_scale, 
-                                 solver_config.data.max_init_gray_scale), cmap='Greys')
+        step_history[i])[0].clip(config.solver.min_init_gray_scale, 
+                                 config.solver.max_init_gray_scale), cmap='Greys')
     axs[i, 1].imshow(torchvision.utils.make_grid(
         pred_output_history[i])[0].clip(
-            solver_config.data.min_init_gray_scale, 
-            solver_config.data.max_init_gray_scale), cmap='Greys')
-
-# for ax in axs:
-#     ax.axis('off')
-# stuff = denoised_x.detach().cpu()[0]
-# print(stuff[0])
+            config.solver.min_init_gray_scale, 
+            config.solver.max_init_gray_scale), cmap='Greys')
 
 
 # %%

@@ -8,19 +8,15 @@ def get_config():
     config = default_mnist_configs.get_default_configs()
     
     model = config.model
-    model.blur_sigma_max = 20
-    model.blur_sigma_min = 0.5
     model.model_channels = 64
     model.channel_mult = (1, 1, 1)
-    model.K = 50
-    model.blur_schedule = np.exp(np.linspace(np.log(model.blur_sigma_min),
-                                             np.log(model.blur_sigma_max), model.K))
-    model.blur_schedule = np.array([0] + list(model.blur_schedule))  # Add the k=0 timestep
     
+
     data = config.data
     data.showcase_comparison = True
     data.process_pairs = True
-    data.processed_filename = 'lbm_ns_turb_pairs' if config.data.process_pairs else 'lbm_ns_turb'
+    data.process_all = True 
+    data.processed_filename = 'gaussian_blurr_pairs' if config.data.process_pairs else 'gaussian_blurr'
     data.dataset = 'MNIST'
     data.transform = transforms.Compose([])
 
@@ -33,11 +29,20 @@ def get_config():
     training.sampling_freq = 100
     
     solver = config.solver 
-    solver.min_init_gray_scale = 0.0
-    solver.max_init_gray_scale = 1.0
-    solver.type = 'gaussian'
-    solver.min_steps = 1
-    solver.max_steps = 50
-    solver.n_denoising_steps = 10
+    solver.type = 'gaussian_blurr'
+    solver.min_init_gray_scale = 0.
+    solver.max_init_gray_scale = 1.
+    
+    
+    solver.min_fwd_steps = 1
+    solver.n_denoising_steps = solver.max_fwd_steps = 50
+    
+    solver.blur_sigma_min = 0.5
+    solver.blur_sigma_max = 20
+
+
+    solver.blur_schedule = np.exp(np.linspace(np.log(solver.blur_sigma_min),
+                                             np.log(solver.blur_sigma_max), solver.max_fwd_steps))
+    solver.blur_schedule = np.array([0] + list(solver.blur_schedule))  # Add the k=0 timestep
 
     return config

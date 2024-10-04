@@ -80,7 +80,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
             corruptor._preprocess_and_save_data(
                 initial_dataset=training_data,
                 save_dir=save_dir,
-                process_all=False,
+                process_all=config.data.process_all,
                 is_train_dataset = True,
                 process_pairs = config.data.process_pairs
                 )
@@ -89,7 +89,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
                 initial_dataset=test_data,
                 save_dir=save_dir,
                 is_train_dataset = False,
-                process_all = False,
+                process_all = config.data.process_all,
                 process_pairs = config.data.process_pairs
                 )    
             end = timer()
@@ -329,26 +329,26 @@ def prepare_batch(data_loader_iterator, device):
 
     # Unpack eval_batch and move each tensor to the GPU
     if len(batch) == 4:  # Case with pre-modified images
-        modified_image, pre_modified_image, corruption_amount, label = batch
+        corrupted_image, less_corrupted_image, corruption_amount, label = batch
         
         # Move everything to the GPU
-        modified_image = modified_image.to(device).float()
-        pre_modified_image = pre_modified_image.to(device).float()
+        corrupted_image = corrupted_image.to(device).float()
+        less_corrupted_image = less_corrupted_image.to(device).float()
         corruption_amount = corruption_amount.to(device)  # Already float32
         label = label.to(device)  # Already long
 
         # Efficient packing after moving to GPU
-        batch = (modified_image, pre_modified_image, corruption_amount, label)
+        batch = (corrupted_image, less_corrupted_image, corruption_amount, label)
     else:  # Case without pre-modified images
-        modified_image, corruption_amount, label = batch
+        corrupted_image, corruption_amount, label = batch
         
         # Move everything to the GPU
-        modified_image = modified_image.to(device).float()
+        corrupted_image = corrupted_image.to(device).float()
         corruption_amount = corruption_amount.to(device)  # Already float32
         if type(label) != type({}): 
             label = label.to(device)  # Already long
 
         # Efficient packing after moving to GPU
-        batch = (modified_image, corruption_amount, label)
+        batch = (corrupted_image, corruption_amount, label)
 
     return original_image, batch

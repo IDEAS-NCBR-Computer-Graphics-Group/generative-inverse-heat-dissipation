@@ -13,7 +13,7 @@ from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
 
 AVAILABLE_CORRUPTORS = {
     'dct': DCTBlurringCorruptor,
-    'gaussian': GaussianBlurringCorruptor,
+    'gaussian_blurr': GaussianBlurringCorruptor,
     'ns': LBM_NS_Corruptor,
     'ade': LBM_ADE_Corruptor
     }
