@@ -20,7 +20,7 @@ def get_config():
     data = config.data
     data.showcase_comparison = True
     data.process_pairs = True
-    data.process_all = False # for debugging
+    data.process_all = True
     data.processed_filename = 'lbm_ade_turb_pairs' if config.data.process_pairs else 'lbm_ade_turb'
     data.dataset = 'CORRUPTED_NS_MNIST'
     
