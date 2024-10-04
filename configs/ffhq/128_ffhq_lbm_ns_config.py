@@ -29,7 +29,6 @@ def get_default_configs():
     data.min_init_gray_scale = 0.95
     data.max_init_gray_scale = 1.05 
     data.image_size = 128
-
     data.transform = transforms.Compose([transforms.ToTensor(),
                                          transforms.Grayscale()
                                          ])
@@ -44,7 +43,9 @@ def get_default_configs():
     training.sampling_freq = 100
 
     solver = config.solver
-    solver.type = 'fluid'
+    solver.type = 'ns'
+    solver.min_init_gray_scale = 0.95
+    solver.max_init_gray_scale = 1.05
     solver.niu = 0.5 * 1/6
     solver.bulk_visc = 0.5 * 1/6
     solver.domain_size = (1.0, 1.0)
@@ -56,7 +57,7 @@ def get_default_configs():
     solver.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
     solver.min_steps = 1
     solver.max_steps = 20
-    
+    solver.is_divergence_free = False
     solver.n_denoising_steps = 20
 
     optim = config.optim

@@ -5,12 +5,18 @@ from pathlib import Path
 import logging
 import os
 
-from numerical_solvers.data_holders.GaussianBlurringCorruptor import GaussianBlurringCorruptor
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
+from numerical_solvers.data_holders.LBM_ADE_Corruptor import LBM_ADE_Corruptor
+from numerical_solvers.data_holders.DCTBlurringCorruptor import DCTBlurringCorruptor
+from numerical_solvers.data_holders.GaussianBlurringCorruptor import GaussianBlurringCorruptor
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
-from scripts import datasets as ihd_datasets
 
-AVAILABLE_CORRUPTORS = {'fluid': LBM_NS_Corruptor, 'blurr': BlurringCorruptor}
+AVAILABLE_CORRUPTORS = {
+    'dct': DCTBlurringCorruptor,
+    'gaussian': GaussianBlurringCorruptor,
+    'ns': LBM_NS_Corruptor,
+    'ade': LBM_ADE_Corruptor
+    }
 
 def corrupt_datasets(train, test, config, save_dir):
     dataset_name = f'corrupted_{config.data.dataset}'

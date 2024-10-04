@@ -27,8 +27,7 @@ def get_default_configs():
     data.process_pairs = True
     data.processed_filename = 'lbm_ns_turb_pairs' if data.process_pairs else 'lbm_ns_turb'
     data.dataset = 'FFHQ_128'
-    data.min_init_gray_scale = 0.0
-    data.max_init_gray_scale = 1.0 
+
     data.image_size = 128
     data.transform = transforms.Compose([transforms.ToTensor(),
                                          transforms.Grayscale()
@@ -45,10 +44,14 @@ def get_default_configs():
     training.sampling_freq = 100
 
     solver = config.solver 
-    solver.type = 'blurr'
+    data.min_init_gray_scale = 0.0
+    data.max_init_gray_scale = 1.0 
+    solver.type = 'gaussian'
     solver.min_steps = 1
     solver.max_steps = 50
     solver.n_denoising_steps = 10
+    solver.is_divergence_free = False
+
 
     optim = config.optim
     optim.automatic_mp = False

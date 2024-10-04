@@ -15,13 +15,7 @@ import logging
 
 import os
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
-from numerical_solvers.data_holders.CorruptedDatasetCreator import preprocess_dataset
-from numerical_solvers.data_holders.BlurringCorruptor import BlurringCorruptor
-from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
-from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
-
-AVAILABLE_CORRUPTORS = {'fluid': LBM_NS_Corruptor, 'blurr': BlurringCorruptor}
-
+from numerical_solvers.data_holders.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
 
 class UniformDequantize(object):
     def __init__(self):

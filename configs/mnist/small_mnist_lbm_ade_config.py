@@ -35,7 +35,7 @@ def get_config():
     solver = config.solver
     solver.min_init_gray_scale = 0.95
     solver.max_init_gray_scale = 1.05
-    solver.type = 'ADE'
+    solver.type = 'ade'
     solver.niu = 0.5 * 1/6
     solver.bulk_visc = 0.5 * 1/6
     solver.domain_size = (1.0, 1.0)

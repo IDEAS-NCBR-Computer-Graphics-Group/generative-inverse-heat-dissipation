@@ -23,8 +23,7 @@ def get_config():
     data.process_pairs = True
     data.processed_filename = 'lbm_ns_turb_pairs' if config.data.process_pairs else 'lbm_ns_turb'
     data.dataset = 'MNIST'
-    data.min_init_gray_scale = 0.95
-    data.max_init_gray_scale = 1.05
+
     data.transform = transforms.Compose([])
     
     training = config.training
@@ -36,7 +35,9 @@ def get_config():
     training.sampling_freq = 100
     
     solver = config.solver
-    solver.type = 'NS'
+    solver.min_init_gray_scale = 0.95
+    solver.max_init_gray_scale = 1.05
+    solver.type = 'ns'
     solver.niu = 0.5 * 1/6
     solver.bulk_visc = 0.5 * 1/6
     solver.domain_size = (1.0, 1.0)

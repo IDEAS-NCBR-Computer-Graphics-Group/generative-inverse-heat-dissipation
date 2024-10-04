@@ -37,8 +37,8 @@ class LBM_NS_Corruptor(LBM_Base_Corruptor):
         self.min_steps = config.solver.min_steps
         self.max_steps = config.solver.max_steps
         
-        self.min_init_gray_scale = config.data.min_init_gray_scale
-        self.max_init_gray_scale = config.data.max_init_gray_scale
+        self.min_init_gray_scale = config.solver.min_init_gray_scale
+        self.max_init_gray_scale = config.solver.max_init_gray_scale
         
         
     def _corrupt(self, x, steps, generate_pair=False):
@@ -83,93 +83,3 @@ class LBM_NS_Corruptor(LBM_Base_Corruptor):
             rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
             noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
             return noisy_x, None
-
-    def _preprocess_and_save_data(self, initial_dataset, save_dir, is_train_dataset: bool, process_pairs=False, process_all=True, process_images=False):
-        """
-        Preprocesses data and saves it to the specified directory.
-
-        Args:
-            initial_dataset (list): The initial dataset containing images and labels.
-            save_dir (str): The directory to save the preprocessed data.
-            process_pairs (bool): Flag indicating whether to process pairs of images (True) 
-                                  or single corrupted images (False). Default is False.
-        """
-        file_name = f"{'train' if is_train_dataset else 'test'}_data.pt"
-        file_path = os.path.join(save_dir, file_name)
-        
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-            
-        if os.path.exists(file_path):
-            warnings.warn("[EXIT] Data not generated. Reason: file exist {file_path} ")
-            return
-      
-
-        data = []
-        modified_images = [] 
-        corruption_amounts = []
-        labels = []
-
-        # Only needed if processing pairs
-        pre_modified_images = [] if process_pairs else None  
-
-        dataset_length = len(initial_dataset)
-        if not process_all:
-            dataset_length = 500 # process just a bit 
-            
-        for index in range(dataset_length):
-            if index % 100 == 0:
-                print(f"Preprocessing (lbm) {index}")
-            
-            corruption_amount = np.random.randint(self.min_steps, self.max_steps) # TODO: add +1 as max_steps is excluded from tossing, or modify no of denoising steps
-            original_pil_image, label = initial_dataset[index]
-            if process_images:
-                original_pil_image = np.transpose(original_pil_image, [1, 2, 0])
-            original_image = self.transform(original_pil_image)
-
-            # Use the unified corrupt function and ignore the second value if not needed
-            modified_image, pre_modified_image = self._corrupt(original_image, corruption_amount, generate_pair=process_pairs)
-
-            data.append(original_image)
-            modified_images.append(modified_image)
-            corruption_amounts.append(corruption_amount)
-            if not process_images:
-                labels.append(label)
-
-            if process_pairs:
-                pre_modified_images.append(pre_modified_image)
-
-        # Convert lists to tensors 
-        # Be carfull, tensors dont match the order of transforms in the original ihd code
-        # You are likely to use the following later 
-            #  transform = [
-            #     transforms.ToPILImage(), 
-            #     transforms.Resize(config.data.image_size),
-            #     transforms.CenterCrop(config.data.image_size),
-            #     transforms.RandomHorizontalFlip(),
-            #     transforms.ToTensor()
-            #     ]
-            
-        data = torch.stack(data)
-        modified_images = torch.stack(modified_images)
-        corruption_amounts = torch.tensor(corruption_amounts)
-        labels = torch.tensor(labels)
-
-        if process_pairs:
-            pre_modified_images = torch.stack(pre_modified_images)
-            torch.save((data, modified_images, pre_modified_images, corruption_amounts, labels if not process_images else None), file_path)
-        else:
-            torch.save((data, modified_images, corruption_amounts, labels if not process_images else None), file_path)
-
-        # Convert lists to ndarrays
-        # data = np.array(data)
-        # modified_images = np.array(modified_images)
-        # corruption_amounts = np.array(corruption_amounts)
-        # labels = np.array(labels)
-
-        # print(f"Writing to {file_path}")
-        # if process_pairs:
-        #     pre_modified_images = np.array(pre_modified_images)
-        #     torch.save((data, modified_images, pre_modified_images, corruption_amounts, labels), file_path)
-        # else:
-        #     torch.save((data, modified_images, corruption_amounts, labels), file_path)
