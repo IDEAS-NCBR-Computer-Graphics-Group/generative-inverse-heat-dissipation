@@ -17,6 +17,7 @@ class CorruptedDataset(Dataset):
         self.transform = transform
         self.target_transform = target_transform
         self.download = download
+        self.handle_labels = True
         
         file_path = os.path.join(load_dir, f"{'train' if self.train else 'test'}_data.pt")
         
@@ -30,11 +31,19 @@ class CorruptedDataset(Dataset):
         if len(loaded_data) == 4:
             # Original mode with no pre-modified images
             data, modified_images, corruption_amounts, labels = loaded_data
-            targets = list(zip(modified_images, corruption_amounts, labels))
+            if labels is not None:
+                targets = list(zip(modified_images, corruption_amounts, labels))
+            else:
+                self.handle_labels = False
+                targets = list(zip(modified_images, corruption_amounts, torch.zeros_like(corruption_amounts)))
         elif len(loaded_data) == 5:
             # Pair mode with pre-modified images
             data, modified_images, pre_modified_images, corruption_amounts, labels = loaded_data
-            targets = list(zip(modified_images, pre_modified_images, corruption_amounts, labels))
+            if labels is not None:
+                targets = list(zip(modified_images, pre_modified_images, corruption_amounts, labels))
+            else:
+                self.handle_labels = False
+                targets = list(zip(modified_images, pre_modified_images, corruption_amounts, torch.zeros_like(corruption_amounts)))
         else:
             raise ValueError(f"Unexpected data format in {file_path}, expected 4 or 5 elements, got {len(loaded_data)}")
 
@@ -47,7 +56,11 @@ class CorruptedDataset(Dataset):
         original_image = self.data[index]
         
         if len(self.targets[index]) == 4:  # Check if there are pre-modified images
-            modified_image, less_modified_image, corruption_amount, label = self.targets[index]
+            if self.handle_labels:
+                modified_image, less_modified_image, corruption_amount, label = self.targets[index]
+            else:
+                modified_image, less_modified_image, corruption_amount, label = self.targets[index]
+
             # Convert numpy array to PIL Image directly with mode 'L' for grayscale images
             # original_image = Image.fromarray(original_image.astype('uint8'), mode='RGB')
             # modified_image = Image.fromarray(modified_image.astype('uint8'), mode='RGB')
@@ -59,7 +72,11 @@ class CorruptedDataset(Dataset):
                 modified_image = self.transform(modified_image)
                 less_modified_image = self.transform(less_modified_image)
 
-            return original_image, (modified_image, less_modified_image, corruption_amount.item(), label.item())
+            if self.handle_labels:
+                return original_image, (modified_image, less_modified_image, corruption_amount.item(), label.item())
+            else:
+                return original_image, (modified_image, less_modified_image, corruption_amount.item(), label.item())
+        
         else:
             modified_image, corruption_amount, label = self.targets[index]
             
@@ -68,4 +85,7 @@ class CorruptedDataset(Dataset):
                 original_image = self.transform(original_image)
                 modified_image = self.transform(modified_image)
 
-            return original_image, (modified_image, corruption_amount.item(), label.item())
+            if self.handle_labels:
+                return original_image, (modified_image, corruption_amount.item(), label.item())
+            else:
+                return original_image, (modified_image, corruption_amount.item(), label.item())

@@ -40,6 +40,9 @@ def get_default_configs():
     data.uniform_dequantization = False
     data.num_channels = 3
 
+    # solver
+    config.solver = solver = ml_collections.ConfigDict()
+
     # model
     config.model = model = ml_collections.ConfigDict()
     model.K = 200

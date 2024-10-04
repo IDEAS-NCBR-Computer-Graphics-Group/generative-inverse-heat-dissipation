@@ -1,184 +1,76 @@
 
-# %% dataset
-import torch
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader, Dataset
-from PIL import Image, ImageFilter
-import os, errno
-import torchvision
-import numpy as np
-from matplotlib import pyplot as plt
-import matplotlib.colors as mcolors
-import matplotlib.pyplot as plt
-import matplotlib
+from torch.utils.data import DataLoader
 from timeit import default_timer as timer
-
-import sys
 from pathlib import Path
+import logging
+import os
 
-from numerical_solvers.data_holders.GaussianBlurringCorruptor import GaussianBlurringCorruptor
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
+from numerical_solvers.data_holders.LBM_ADE_Corruptor import LBM_ADE_Corruptor
+from numerical_solvers.data_holders.DCTBlurringCorruptor import DCTBlurringCorruptor
+from numerical_solvers.data_holders.GaussianBlurringCorruptor import GaussianBlurringCorruptor
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
-from scripts import datasets as ihd_datasets
-from scripts.utils import save_png_norm
-from configs.mnist.small_mnist_lbm_ns_config import get_config as get_lbm_ns_config
-from configs.mnist.small_mnist_blurring_config import get_config as get_blurr_config
 
+AVAILABLE_CORRUPTORS = {
+    'dct': DCTBlurringCorruptor,
+    'gaussian': GaussianBlurringCorruptor,
+    'ns': LBM_NS_Corruptor,
+    'ade': LBM_ADE_Corruptor
+    }
 
-# sys.path.insert(0, '../../')
-                                
-# %% dataset
-# Create the DiffusedMNIST dataset
-if __name__ == '__main__': 
-    print(f"Current working directory \t {os.getcwd()}")
-    current_file_path = Path(__file__).resolve()
-    # Determine the base folder (project root)
-    base_folder = current_file_path.parents[2]  # Adjust the number depending on your project structure
-    print(f"Base folder: {base_folder}")
-    
-    is_train_dataset = True
+def corrupt_datasets(train, test, config, save_dir):
+    dataset_name = f'corrupted_{config.data.dataset}'
 
-    input_data_dir = os.path.join(base_folder, "data")
-    output_data_dir = os.path.join(input_data_dir, 'corrupted_MNIST')
-    
-    # https://github.com/pytorch/vision/blob/main/references/segmentation/transforms.py
-    transform = transforms.Compose([torchvision.transforms.ToTensor()])
-    original_dataloader = DataLoader(torchvision.datasets.MNIST(root=input_data_dir, 
-                                    train=is_train_dataset, download=True, transform=transform), 
-                                    batch_size=8, shuffle=True)
-
-    x, y = next(iter(original_dataloader))
-    print('Input shape:', x.shape)
-    print('batch_size = x.shape[0]:', x.shape[0])
-    print('Labels:', y.shape)
-    plt.imshow(torchvision.utils.make_grid(x)[0], cmap='Greys');
-    
-    # %% lbmize
+    logging.info(f"Corruption on {dataset_name} dataset")
     start = timer()
-    process_all=True
-    solver_config = get_lbm_ns_config()
 
-    corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
+    corruptor = AVAILABLE_CORRUPTORS[config.solver.type](
+        config=config,                                
+        transform=config.data.transform
+    )
 
-    corruptor = LBM_NS_Corruptor(
-        solver_config,                                
-        transform=transforms.Compose([torchvision.transforms.ToTensor()]))
-
+    logging.info("Fluid corruption on train split")
     corruptor._preprocess_and_save_data(
-        initial_dataset=datasets.MNIST(root=input_data_dir, train=True, download=True),
-        save_dir=corrupted_dataset_dir,
+        initial_dataset=train.dataset,
+        save_dir=save_dir,
+        process_all=False,
         is_train_dataset = True,
-        process_pairs = solver_config.data.process_pairs,
-        process_all=process_all)
+        process_pairs = config.data.process_pairs
+        )
 
+    logging.info("Fluid corruption on test split")
     corruptor._preprocess_and_save_data(
-        initial_dataset=datasets.MNIST(root=input_data_dir, train=False, download=True),
-        save_dir=corrupted_dataset_dir,
+        initial_dataset=test.dataset,
+        save_dir=save_dir,
         is_train_dataset = False,
-        process_pairs = solver_config.data.process_pairs,
-        process_all=process_all)    
+        process_all = False,
+        process_pairs = config.data.process_pairs
+        )    
 
     end = timer()
-    print(f"Time in seconds: {end - start:.2f}")
+    logging.info(f"Fluid corruption took {end - start:.2f} seconds")
 
-    # %% blurr        
-    # start = timer()
-    # process_all=True
-    # solver_config = get_blurr_config()
+def prepare_datasets(save_dir):
     
-    # corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
+    logging.info(f"Preparing datasets.") 
+    corrupted_train_dataset = CorruptedDataset(train=True, load_dir=save_dir)
+    corrupted_test_dataset = CorruptedDataset(train=False, load_dir=save_dir)
+    corrupted_train_dataloader = DataLoader(corrupted_train_dataset, batch_size=8, shuffle=True)
+    corrupted_test_dataloader = DataLoader(corrupted_test_dataset, batch_size=8, shuffle=True)
     
-    # corruptor = BlurringCorruptor(
-    #     solver_config, 
-    #     transform=transforms.Compose([torchvision.transforms.ToTensor()]))
-            
-    # corruptor._preprocess_and_save_data(
-    #     initial_dataset=datasets.MNIST(root=input_data_dir, train=True, download=True),
-    #     save_dir=corrupted_dataset_dir,
-    #     is_train_dataset = True,
-    #     process_pairs = solver_config.data.process_pairs,
-    #     process_all=process_all)
+    return corrupted_train_dataloader, corrupted_test_dataloader
 
-    # corruptor._preprocess_and_save_data(
-    #     initial_dataset=datasets.MNIST(root=input_data_dir, train=False, download=True),
-    #     save_dir=corrupted_dataset_dir,
-    #     is_train_dataset = False,
-    #     process_pairs = solver_config.data.process_pairs,
-    #     process_all=process_all)    
+def preprocess_dataset(trainloader, testloader, config):
 
-    # end = timer()
-    # print(f"Time in seconds: {end - start:.2f}")
+    current_file_path = Path(__file__).resolve()
+    base_folder = current_file_path.parents[2]
+
+    input_data_dir = os.path.join(base_folder, "data")
+    dataset_name = f'corrupted_{config.data.dataset}'
+    output_data_dir = os.path.join(input_data_dir, dataset_name)
+    save_dir = os.path.join(output_data_dir, f'{config.solver.type}_ns_pair')
+
+    corrupt_datasets(trainloader, testloader, config, save_dir)
+    data = prepare_datasets(save_dir)
     
-    
-    # %% see what you have done 
-    
-    # use same transform as in ihd code
-    # transform = [
-    #             torchvision.transforms.ToPILImage()
-    #             transforms.Resize(28),
-    #             transforms.CenterCrop(28),
-    #             transforms.RandomHorizontalFlip(),
-    #             transforms.ToTensor()
-    #             ]
-    # transform = transforms.Compose(transform)
-    
-    transform = None # the dataset is saved as torchtensor
-    mnist_pairs = CorruptedDataset(train=is_train_dataset, 
-                                       transform=transform, 
-                                       target_transform=None, 
-                                       load_dir=corrupted_dataset_dir)
-    
-    corrupted_dataloader = DataLoader(mnist_pairs, batch_size=32, shuffle=True)
-    if solver_config.data.process_pairs:
-        print(f"==processing pairs===")
-        # x, (y, pre_y, corruption_amount, labels) = next(iter(corrupted_dataloader))
-        # alternatively
-        x, batch = ihd_datasets.prepare_batch(iter(corrupted_dataloader),'cpu')
-        y, pre_y, corruption_amount, labels = batch
-    else:
-        x, (y, corruption_amount, labels) = next(iter(corrupted_dataloader))
-    print('Input shape:', x.shape)
-    print('batch_size = x.shape[0]:', x.shape[0])
-    print('Labels:', labels)
-    print('corruption_amount:', corruption_amount)
-
-
-    clean_x, (noisy_x, less_noisy_x, corruption_amount, label) = next(iter(corrupted_dataloader))
-
-    print('Input shape:', clean_x.shape)
-    print('corruption_amount:', corruption_amount)
-    print('batch_size = x.shape[0]:', clean_x.shape[0])
-    print('Labels:', label.shape)
-
-    fig, axs = plt.subplots(1, 3, figsize=(20, 20), sharex=True)
-    axs[0].set_title('clean x')
-    axs[1].set_title('noisy x')
-    axs[2].set_title('less noisy x')
-
-    axs[0].imshow(torchvision.utils.make_grid(clean_x)[0], cmap='Greys')
-    axs[1].imshow(torchvision.utils.make_grid(noisy_x)[0], cmap='Greys')
-    axs[2].imshow(torchvision.utils.make_grid(less_noisy_x)[0], cmap='Greys')
-    
-    # axs[1].imshow(torchvision.utils.make_grid(noisy_x)[0].clip(0.95, 1.05), cmap='Greys')
-    # axs[2].imshow(torchvision.utils.make_grid(less_noisy_x)[0].clip(0.95, 1.05), cmap='Greys')
-
-
-# %%
-
-max_noise_level = 2
-blurred_x = torch.empty_like(clean_x)
-for index in range(clean_x.shape[0]):
-    tmp, _ = corruptor._corrupt(clean_x[index], max_noise_level) # blur to the max level
-    blurred_x[index] = tmp
-    
-plt.imshow(torchvision.utils.make_grid(blurred_x)[0], cmap='Greys');
-# %%
-
-from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range
-np_gray_img = clean_x[0].numpy()[0, :, :]
-x = normalize_grayscale_image_range(np_gray_img, 0.95, 1.05)
-x = corruptor._corrupt(clean_x[0], 1)[0].numpy()[0]
-#TODO: print(x) - there is zero in a corner, which affects rescaling 
-# x = normalize_grayscale_image_range(x, 0., 1.0)
-plt.imshow(x, cmap='Greys');
-# %%
+    return data

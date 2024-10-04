@@ -1,13 +1,18 @@
-from configs.mnist import default_mnist_configs
 import ml_collections
+from configs.ffhq import default_ffhq_configs
 import numpy as np
 import torch
 from torchvision import transforms
 
 def get_config():
-    config = default_mnist_configs.get_default_configs()
-    
+    return get_default_configs()
+
+def get_default_configs():
+    config = default_ffhq_configs.get_default_configs()
+    config.training.batch_size = 4
+
     model = config.model
+
     model.blur_sigma_max = 20
     model.blur_sigma_min = 0.5
     model.model_channels = 64
@@ -20,8 +25,15 @@ def get_config():
     data = config.data
     data.showcase_comparison = True
     data.process_pairs = True
-    data.processed_filename = 'lbm_ade_turb_pairs' if config.data.process_pairs else 'lbm_ade_turb'
-    data.dataset = 'CORRUPTED_NS_MNIST'
+    data.processed_filename = 'lbm_ns_turb_pairs' if data.process_pairs else 'lbm_ns_turb'
+    data.dataset = 'FFHQ_128'
+
+    data.image_size = 128
+    data.transform = transforms.Compose([transforms.ToTensor(),
+                                         transforms.Grayscale()
+                                         ])
+    data.num_channels = 1
+
     
     training = config.training
     training.n_iters = 1001
@@ -30,25 +42,20 @@ def get_config():
     training.log_freq = 50
     training.eval_freq = 100
     training.sampling_freq = 100
-    data.transform = transforms.Compose([])
-    
-    solver = config.solver
-    solver.min_init_gray_scale = 0.95
-    solver.max_init_gray_scale = 1.05
-    solver.type = 'ade'
-    solver.niu = 0.5 * 1/6
-    solver.bulk_visc = 0.5 * 1/6
-    solver.domain_size = (1.0, 1.0)
-    solver.turb_intensity = 1E-4
-    solver.noise_limiter = (-1E-3, 1E-3)
-    solver.dt_turb = 5 * 1E-4
-    solver.k_min = 2.0 * torch.pi / min(solver.domain_size)
-    solver.k_max = 2.0 * torch.pi / (min(solver.domain_size) / 1024)
-    solver.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
+
+    solver = config.solver 
+    data.min_init_gray_scale = 0.0
+    data.max_init_gray_scale = 1.0 
+    solver.type = 'gaussian'
     solver.min_steps = 1
-    solver.max_steps = 20
+    solver.max_steps = 50
+    solver.n_denoising_steps = 10
     solver.is_divergence_free = False
+
+
+    optim = config.optim
+    optim.automatic_mp = False
     
-    solver.n_denoising_steps = 20
 
     return config
+    

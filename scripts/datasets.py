@@ -9,9 +9,13 @@ from torchvision import datasets
 from torchvision import transforms, datasets
 import torch
 from PIL import Image
+from timeit import default_timer as timer
+from pathlib import Path
+import logging
 
 import os
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
+from numerical_solvers.data_holders.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
 
 class UniformDequantize(object):
     def __init__(self):
@@ -33,6 +37,20 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
     https://github.com/fyu/lsun
     """
 
+    if getattr(config, 'solver'):
+        
+        current_file_path = Path(__file__).resolve()
+        base_folder = current_file_path.parents[1]
+        input_data_dir = os.path.join(base_folder, "data")
+        dataset_name = f'corrupted_{config.data.dataset}'
+        output_data_dir = os.path.join(input_data_dir, dataset_name)
+        save_dir = os.path.join(output_data_dir, f'{config.solver.type}_ns_pair')
+        
+        corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
+        config=config,                                
+        transform=config.data.transform
+        )
+
     transform = [transforms.Resize(config.data.image_size),
                  transforms.CenterCrop(config.data.image_size)]
     if config.data.random_flip:
@@ -52,40 +70,40 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
             root="data", train=True, download=True, transform=transform)
         test_data = datasets.MNIST(
             root="data", train=False, download=True, transform=transform)
-    elif config.data.dataset == 'CORRUPTED_NS_MNIST':
-        # TODO: create corruptor according to config
-        
-        # TODO: try to run corruptor - it will do nothing if files exist
-        
-        
-        # TODO: make it consistent
-        transform = [
+        if getattr(config, 'solver'):
+            start = timer()
+            corruptor = AVAILABLE_CORRUPTORS[config.solver.type](
+                config=config,                                
+                transform=config.data.transform
+            )
+            logging.info("Corruption on train split")
+            corruptor._preprocess_and_save_data(
+                initial_dataset=training_data,
+                save_dir=save_dir,
+                process_all=False,
+                is_train_dataset = True,
+                process_pairs = config.data.process_pairs
+                )
+            logging.info("Corruption on test split")
+            corruptor._preprocess_and_save_data(
+                initial_dataset=test_data,
+                save_dir=save_dir,
+                is_train_dataset = False,
+                process_all = False,
+                process_pairs = config.data.process_pairs
+                )    
+            end = timer()
+            logging.info(f"Corruption took {end - start:.2f} seconds")
+            transform = [
                 transforms.ToPILImage(), 
                 transforms.Resize(config.data.image_size),
                 transforms.CenterCrop(config.data.image_size),
-                # transforms.RandomHorizontalFlip(), #TODO: read from config; random_flip is FALSE!
                 transforms.ToTensor()
                 ]
-        transform = transforms.Compose(transform)
-        # transform = None
-        corrupted_dataset_dir = os.path.join('data', 'corrupted_MNIST', 'lbm_ns_pairs')
-        training_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=True, transform=transform)
-        test_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=False, transform=transform)
-    elif config.data.dataset == 'CORRUPTED_BLURR_MNIST':
-        # TODO: make it consistent
-        transform = [
-                transforms.ToPILImage(), 
-                transforms.Resize(config.data.image_size),
-                transforms.CenterCrop(config.data.image_size),
-                # transforms.RandomHorizontalFlip(),  #TODO: read from config; random_flip is FALSE!
-                transforms.ToTensor()
-                ]
-        transform = transforms.Compose(transform)
-        # transform = None
-        corrupted_dataset_dir = os.path.join('data', 'corrupted_MNIST', 'blurr_pairs') 
-        training_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=True, transform=transform)
-        test_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=False, transform=transform) 
-    
+            transform = transforms.Compose(transform)
+            training_data = CorruptedDataset(load_dir=save_dir, train=True, transform=transform)
+            test_data = CorruptedDataset(load_dir=save_dir, train=False, transform=transform)
+
     elif config.data.dataset == 'CIFAR10':
         training_data = datasets.CIFAR10(
             root="data", train=True, download=True, transform=transform)
@@ -103,7 +121,8 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         testloader = load_data(data_dir="data/ffhq-dataset/images1024x1024",
                                batch_size=eval_batch_size, image_size=config.data.image_size,
                                random_flip=False)
-        return trainloader, testloader
+        if not getattr(config, 'solver', None):
+            return trainloader, testloader
     elif config.data.dataset == 'FFHQ_128':
         trainloader = load_data(data_dir="data/ffhq-128-70k",
                                 batch_size=train_batch_size, image_size=config.data.image_size,
@@ -111,7 +130,39 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         testloader = load_data(data_dir="data/ffhq-128-70k",
                                batch_size=eval_batch_size, image_size=config.data.image_size,
                                random_flip=False)
-        return trainloader, testloader
+        if getattr(config, 'solver'):
+            start = timer()
+            logging.info("Fluid corruption on train split")
+            corruptor._preprocess_and_save_data(
+                initial_dataset=trainloader.dataset,
+                save_dir=save_dir,
+                process_all=False,
+                is_train_dataset=True,
+                process_pairs=config.data.process_pairs,
+                process_images=True
+                )
+            logging.info("Fluid corruption on test split")
+            corruptor._preprocess_and_save_data(
+                initial_dataset=testloader.dataset,
+                save_dir=save_dir,
+                is_train_dataset=False,
+                process_all=False,
+                process_pairs=config.data.process_pairs,
+                process_images=True
+                )    
+            end = timer()
+            logging.info(f"Fluid corruption took {end - start:.2f} seconds")
+            transform = [
+                transforms.ToPILImage(), 
+                transforms.Resize(config.data.image_size),
+                transforms.CenterCrop(config.data.image_size),
+                transforms.ToTensor()
+                ]
+            transform = transforms.Compose(transform)
+            training_data = CorruptedDataset(load_dir=save_dir, train=True, transform=transform)
+            test_data = CorruptedDataset(load_dir=save_dir, train=False, transform=transform)
+        else:
+            return trainloader, testloader
     elif config.data.dataset == 'AFHQ':
         trainloader = load_data(data_dir="data/afhq/train",
                                 batch_size=train_batch_size, image_size=config.data.image_size,
@@ -119,7 +170,8 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         testloader = load_data(data_dir="data/afhq/val",
                                batch_size=eval_batch_size, image_size=config.data.image_size,
                                random_flip=False)
-        return trainloader, testloader
+        if not getattr(config, 'solver', None):
+            return trainloader, testloader
     else:
         raise ValueError
 
@@ -252,10 +304,10 @@ class ImageDataset(Dataset):
         # arr = arr.astype(np.float32) / 127.5 - 1
         arr = arr.astype(np.float32) / 255
 
-        out_dict = {}
+        out = {}
         if self.local_classes is not None:
-            out_dict["y"] = np.array(self.local_classes[idx], dtype=np.int64)
-        return np.transpose(arr, [2, 0, 1]), out_dict
+            out["y"] = np.array(self.local_classes[idx], dtype=np.int64)
+        return np.transpose(arr, [2, 0, 1]), out
 
 
 def prepare_batch(data_loader_iterator, device):
@@ -293,7 +345,8 @@ def prepare_batch(data_loader_iterator, device):
         # Move everything to the GPU
         modified_image = modified_image.to(device).float()
         corruption_amount = corruption_amount.to(device)  # Already float32
-        label = label.to(device)  # Already long
+        if type(label) != type({}): 
+            label = label.to(device)  # Already long
 
         # Efficient packing after moving to GPU
         batch = (modified_image, corruption_amount, label)
