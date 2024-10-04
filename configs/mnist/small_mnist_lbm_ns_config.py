@@ -2,6 +2,7 @@ from configs.mnist import default_mnist_configs
 import ml_collections
 import numpy as np
 import torch
+from torchvision import transforms
 
 def get_config():
     config = default_mnist_configs.get_default_configs()
@@ -20,7 +21,10 @@ def get_config():
     data.showcase_comparison = True
     data.process_pairs = True
     data.processed_filename = 'lbm_ns_turb_pairs' if config.data.process_pairs else 'lbm_ns_turb'
-    data.dataset = 'CORRUPTED_NS_MNIST'
+    data.dataset = 'MNIST'
+    data.min_init_gray_scale = 0.95
+    data.max_init_gray_scale = 1.05
+    data.transform = transforms.Compose([])
     
     training = config.training
     training.n_iters = 1001
@@ -31,8 +35,6 @@ def get_config():
     training.sampling_freq = 100
     
     solver = config.solver
-    solver.min_init_gray_scale = 0.95
-    solver.max_init_gray_scale = 1.05
     solver.type = 'fluid'
     solver.niu = 0.5 * 1/6
     solver.bulk_visc = 0.5 * 1/6

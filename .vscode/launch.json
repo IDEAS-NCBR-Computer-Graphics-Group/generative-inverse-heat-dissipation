@@ -69,6 +69,71 @@
                 "--workdir",
                 "runs/mnist/small_lbm_mnist"
             ]
-        }
+        },
+        {
+            "name": "Debugger: large-debug-mnist",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/train.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--config",
+                "configs/mnist/default_mnist_configs.py",
+                "--workdir",
+                "runs/mnist/default_mnist"
+            ]
+        },
+        {
+            "name": "Debugger: small-debug-ffhq",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/train.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--config",
+                "configs/ffhq/img_size_128.py",
+                "--workdir",
+                "runs/ffhq/default_ffhq"
+            ]
+        },
+        {
+            "name": "Debugger: small-debug-mnist-corrupt-blurr",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/train_corrupted.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--config",
+                "configs/mnist/small_mnist_blurring_config.py",
+                "--workdir",
+                "runs/mnist/corrupt"
+            ]
+        },
+        {
+            "name": "Debugger: 128-ffhq",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/train_corrupted.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--config",
+                "configs/ffhq/img_size_128.py",
+                "--workdir",
+                "runs/ffhq/128_ffhq"
+            ]
+        },
+        {
+            "name": "Debugger: blurr-128-ffhq",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/train_corrupted.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--config",
+                "configs/ffhq/128_ffhq_blurring_config.py",
+                "--workdir",
+                "runs/ffhq/128_ffhq_blurr"
+            ]
+        },
     ]
 }

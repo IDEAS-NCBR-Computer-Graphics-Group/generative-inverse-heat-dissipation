@@ -90,7 +90,7 @@ class LBM_NS_Corruptor(BaseCorruptor):
             noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
             return noisy_x, None
 
-    def _preprocess_and_save_data(self, initial_dataset, save_dir, is_train_dataset: bool, process_pairs=False, process_all=True):
+    def _preprocess_and_save_data(self, initial_dataset, save_dir, is_train_dataset: bool, process_pairs=False, process_all=True, process_images=False):
         """
         Preprocesses data and saves it to the specified directory.
 
@@ -129,6 +129,8 @@ class LBM_NS_Corruptor(BaseCorruptor):
             
             corruption_amount = np.random.randint(self.min_steps, self.max_steps) # TODO: add +1 as max_steps is excluded from tossing, or modify no of denoising steps
             original_pil_image, label = initial_dataset[index]
+            if process_images:
+                original_pil_image = np.transpose(original_pil_image, [1, 2, 0])
             original_image = self.transform(original_pil_image)
 
             # Use the unified corrupt function and ignore the second value if not needed
@@ -137,7 +139,8 @@ class LBM_NS_Corruptor(BaseCorruptor):
             data.append(original_image)
             modified_images.append(modified_image)
             corruption_amounts.append(corruption_amount)
-            labels.append(label)
+            if not process_images:
+                labels.append(label)
 
             if process_pairs:
                 pre_modified_images.append(pre_modified_image)
@@ -160,9 +163,9 @@ class LBM_NS_Corruptor(BaseCorruptor):
 
         if process_pairs:
             pre_modified_images = torch.stack(pre_modified_images)
-            torch.save((data, modified_images, pre_modified_images, corruption_amounts, labels), file_path)
+            torch.save((data, modified_images, pre_modified_images, corruption_amounts, labels if not process_images else None), file_path)
         else:
-            torch.save((data, modified_images, corruption_amounts, labels), file_path)
+            torch.save((data, modified_images, corruption_amounts, labels if not process_images else None), file_path)
 
         # Convert lists to ndarrays
         # data = np.array(data)
