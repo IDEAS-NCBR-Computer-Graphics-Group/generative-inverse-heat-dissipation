@@ -26,7 +26,15 @@ def get_sampling_fn_inverse_lbm_ns(
         with torch.no_grad():
             u = initial_sample.to(device).float()
             if intermediate_sample_indices != None and n_denoising_steps in intermediate_sample_indices:
-                intermediate_samples_out.append((u, u))
+                intermediate_samples_out.append((u, u)) # store the initial (fully blurred) sample
+                
+            # assuming n_denoising_steps=3, then
+            # for i in range(n_denoising_steps, 0, -1):
+            #     print(i):
+            #         3
+            #         2
+            #         1
+
             for i in range(n_denoising_steps, 0, -1):
                 # vec_fwd_steps = vec_fwd_steps * (float(max_noise_level) * float(i)/float(n_denoising_steps))
                 

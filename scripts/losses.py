@@ -92,30 +92,20 @@ def get_inverse_heat_loss_fn(config, train, scales, device, heat_forward_module)
 
 
 def get_inverse_lbm_ns_loss_fn(train):
-
     # sigma = config.model.sigma # TODO: fix variance in STG
-    # label_sampling_fn = get_label_sampling_function(config.model.K) # TODO: this is just number of forward steps, isnt it?
-
     sigma = 0.01
 
     def loss_fn(model, batch):
         model_fn = mutils.get_model_fn(model, train=train)  # get train/eval model
         
-         # TODO: load a duo-pack from dataloader
+        # unload the datapack from batch
         blurred_batch, less_blurred_batch, fwd_steps, labels = batch
-        
-        # fwd_steps = label_sampling_fn(batch.shape[0], batch.device)
-        # blurred_batch = heat_forward_module(batch, fwd_steps).float()
-        # less_blurred_batch = heat_forward_module(batch, fwd_steps-1).float()
-        
-        # TODO: the corruptor is nondeterministic, so we may skip adding more noise here
+                
+        # although the corruptor is nondeterministic, so we add noise here
         noise = torch.randn_like(blurred_batch) * sigma
         perturbed_data = blurred_batch + noise
         diff = model_fn(perturbed_data, fwd_steps)
         prediction = perturbed_data + diff
-        
-        # diff = model_fn(blurred_batch, fwd_steps)
-        # prediction = blurred_batch + diff
         
         losses = (less_blurred_batch - prediction)**2
         losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1)

@@ -73,6 +73,9 @@ def train(config_path, workdir):
 
     # Initialize model
     model = mutils.create_model(config)
+    logging.info(f"No of network parameters: {sum([p.numel() for p in model.parameters()])}")
+    logging.info(f"NN architecture:\n{model}")
+    
     optimizer = losses.get_optimizer(config, model.parameters())
     ema = ExponentialMovingAverage(
         model.parameters(), decay=config.model.ema_rate)
@@ -114,7 +117,7 @@ def train(config_path, workdir):
         corruptor = LBM_ADE_Corruptor(
             config, 
             transform=transforms.Compose([transforms.ToTensor()]))        
-    elif config.solver.type == 'gasussian_blurr':
+    elif config.solver.type == 'gaussian_blurr':
         corruptor = GaussianBlurringCorruptor(
             config, 
             transform=transforms.Compose([transforms.ToTensor()]))    
@@ -134,7 +137,7 @@ def train(config_path, workdir):
     sampling_fn = sampling.get_sampling_fn_inverse_lbm_ns(
         n_denoising_steps = n_denoising_steps,
         initial_sample = initial_sample, 
-        intermediate_sample_indices=list(range(n_denoising_steps+1)), # TODO: list(range(config.model.K+1))
+        intermediate_sample_indices=list(range(n_denoising_steps+1)), # assuming n_denoising_steps=3, then intermediate_sample_indices = [0, 1, 2, 3]
         delta=delta, device=config.device)
 
     num_train_steps = config.training.n_iters

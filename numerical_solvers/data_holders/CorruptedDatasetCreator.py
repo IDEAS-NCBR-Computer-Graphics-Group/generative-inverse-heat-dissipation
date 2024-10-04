@@ -22,7 +22,7 @@ from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
 from scripts import datasets as ihd_datasets
 from scripts.utils import save_png_norm
 from configs.mnist.small_mnist_lbm_ns_config import get_config as get_lbm_ns_config
-from configs.mnist.small_mnist_blurring_config import get_config as get_blurr_config
+from configs.mnist.small_mnist_gaussian_blurring_config import get_config as get_blurr_config
 
 
 # sys.path.insert(0, '../../')
@@ -53,45 +53,17 @@ if __name__ == '__main__':
     print('Labels:', y.shape)
     plt.imshow(torchvision.utils.make_grid(x)[0], cmap='Greys');
     
-    # %% lbmize
-    start = timer()
-    process_all=True
-    solver_config = get_lbm_ns_config()
-
-    corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
-
-    corruptor = LBM_NS_Corruptor(
-        solver_config,                                
-        transform=transforms.Compose([torchvision.transforms.ToTensor()]))
-
-    corruptor._preprocess_and_save_data(
-        initial_dataset=datasets.MNIST(root=input_data_dir, train=True, download=True),
-        save_dir=corrupted_dataset_dir,
-        is_train_dataset = True,
-        process_pairs = solver_config.data.process_pairs,
-        process_all=process_all)
-
-    corruptor._preprocess_and_save_data(
-        initial_dataset=datasets.MNIST(root=input_data_dir, train=False, download=True),
-        save_dir=corrupted_dataset_dir,
-        is_train_dataset = False,
-        process_pairs = solver_config.data.process_pairs,
-        process_all=process_all)    
-
-    end = timer()
-    print(f"Time in seconds: {end - start:.2f}")
-
-    # %% blurr        
+    # # %% lbmize
     # start = timer()
     # process_all=True
-    # solver_config = get_blurr_config()
-    
+    # solver_config = get_lbm_ns_config()
+
     # corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
-    
-    # corruptor = BlurringCorruptor(
-    #     solver_config, 
+
+    # corruptor = LBM_NS_Corruptor(
+    #     solver_config,                                
     #     transform=transforms.Compose([torchvision.transforms.ToTensor()]))
-            
+
     # corruptor._preprocess_and_save_data(
     #     initial_dataset=datasets.MNIST(root=input_data_dir, train=True, download=True),
     #     save_dir=corrupted_dataset_dir,
@@ -108,6 +80,34 @@ if __name__ == '__main__':
 
     # end = timer()
     # print(f"Time in seconds: {end - start:.2f}")
+
+    # %% blurr        
+    start = timer()
+    process_all=True
+    solver_config = get_blurr_config()
+    
+    corrupted_dataset_dir = os.path.join(output_data_dir, solver_config.data.processed_filename)
+    
+    corruptor = GaussianBlurringCorruptor(
+        solver_config, 
+        transform=transforms.Compose([torchvision.transforms.ToTensor()]))
+            
+    corruptor._preprocess_and_save_data(
+        initial_dataset=datasets.MNIST(root=input_data_dir, train=True, download=True),
+        save_dir=corrupted_dataset_dir,
+        is_train_dataset = True,
+        process_pairs = solver_config.data.process_pairs,
+        process_all=process_all)
+
+    corruptor._preprocess_and_save_data(
+        initial_dataset=datasets.MNIST(root=input_data_dir, train=False, download=True),
+        save_dir=corrupted_dataset_dir,
+        is_train_dataset = False,
+        process_pairs = solver_config.data.process_pairs,
+        process_all=process_all)    
+
+    end = timer()
+    print(f"Time in seconds: {end - start:.2f}")
     
     
     # %% see what you have done 

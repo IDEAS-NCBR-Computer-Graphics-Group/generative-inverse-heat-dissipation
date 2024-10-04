@@ -82,7 +82,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
                 ]
         transform = transforms.Compose(transform)
         # transform = None
-        corrupted_dataset_dir = os.path.join('data', 'corrupted_MNIST', 'blurr_pairs') 
+        corrupted_dataset_dir = os.path.join('data', 'corrupted_MNIST', 'gaussian_blurr_pairs') 
         training_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=True, transform=transform)
         test_data = CorruptedDataset(load_dir=corrupted_dataset_dir, train=False, transform=transform) 
     

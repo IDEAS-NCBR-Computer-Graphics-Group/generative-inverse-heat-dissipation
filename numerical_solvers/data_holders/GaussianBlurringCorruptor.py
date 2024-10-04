@@ -25,8 +25,8 @@ class GaussianBlurringCorruptor(BaseCorruptor):
         self.min_init_gray_scale = config.solver.min_init_gray_scale
         self.max_init_gray_scale = config.solver.max_init_gray_scale
         
-        self.blurr_schedule  = config.model.blur_schedule
-        self.max_fwd_step = config.model.K
+        self.blurr_schedule  = config.solver.blur_schedule
+        self.max_fwd_steps = config.solver.max_fwd_steps
 
     def _corrupt(self, x, fwd_steps, generate_pair=False):
         """
@@ -48,10 +48,8 @@ class GaussianBlurringCorruptor(BaseCorruptor):
         np_gray_img = normalize_grayscale_image_range(np_gray_img, 
                                     self.min_init_gray_scale, self.max_init_gray_scale)
 
-  
         sigmas = self.blurr_schedule[fwd_steps]  
         less_sigmas = self.blurr_schedule[fwd_steps-1] 
-
         blurred_img = gaussian_filter(np_gray_img, sigma=sigmas)
         
         # Convert back to Tensor after blurring
@@ -105,7 +103,7 @@ class GaussianBlurringCorruptor(BaseCorruptor):
             if index % 100 == 0:
                 print(f"Preprocessing (blurring) {index}")
 
-            fwd_steps = np.random.randint(1, self.max_fwd_step) # ints
+            fwd_steps = np.random.randint(1, self.max_fwd_steps) 
 
             original_pil_image, label = initial_dataset[index]
             original_image = self.transform(original_pil_image)
