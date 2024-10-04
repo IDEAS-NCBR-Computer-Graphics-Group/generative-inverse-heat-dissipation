@@ -8,10 +8,11 @@ def get_config():
     config = default_mnist_configs.get_default_configs()
     
     model = config.model
-    model.blur_sigma_max = 20
-    model.blur_sigma_min = 0.5
     model.model_channels = 64
     model.channel_mult = (1, 1, 1)
+    
+    model.blur_sigma_max = 20
+    model.blur_sigma_min = 0.5
     model.K = 50
     model.blur_schedule = np.exp(np.linspace(np.log(model.blur_sigma_min),
                                              np.log(model.blur_sigma_max), model.K))
@@ -35,11 +36,12 @@ def get_config():
     training.sampling_freq = 100
     
     solver = config.solver
-    solver.type = 'fluid'
+    solver.type = 'NS'
     solver.niu = 0.5 * 1/6
     solver.bulk_visc = 0.5 * 1/6
     solver.domain_size = (1.0, 1.0)
-    solver.turb_intensity = 1E-4
+    
+    solver.turb_intensity = 0*1E-4
     solver.noise_limiter = (-1E-3, 1E-3)
     solver.dt_turb = 5 * 1E-4
     solver.k_min = 2.0 * torch.pi / min(solver.domain_size)
@@ -47,6 +49,7 @@ def get_config():
     solver.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
     solver.min_steps = 1
     solver.max_steps = 20
+    solver.is_divergence_free = False
     
     solver.n_denoising_steps = 20
 

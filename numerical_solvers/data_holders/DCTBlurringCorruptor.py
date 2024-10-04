@@ -25,7 +25,7 @@ class DCTBlurringCorruptor(BaseCorruptor):
         """
         super(DCTBlurringCorruptor, self).__init__(transform, target_transform)        
         # Grayscale normalization range from config        
-        self.K =  config.model.K
+        self.K = config.model.K
         
         self.forward_process_module = DCTBlur(
             config.model.blur_schedule, 

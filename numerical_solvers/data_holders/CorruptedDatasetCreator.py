@@ -5,7 +5,7 @@ from pathlib import Path
 import logging
 import os
 
-from numerical_solvers.data_holders.BlurringCorruptor import BlurringCorruptor
+from numerical_solvers.data_holders.GaussianBlurringCorruptor import GaussianBlurringCorruptor
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
 from scripts import datasets as ihd_datasets
