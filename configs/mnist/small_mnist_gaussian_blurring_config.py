@@ -2,6 +2,7 @@ from configs.mnist import default_mnist_configs
 import ml_collections
 import numpy as np
 import torch
+from torchvision import transforms
 
 def get_config():
     config = default_mnist_configs.get_default_configs()
@@ -14,8 +15,10 @@ def get_config():
     data = config.data
     data.showcase_comparison = True
     data.process_pairs = True
+    data.process_all = True 
     data.processed_filename = 'gaussian_blurr_pairs' if config.data.process_pairs else 'gaussian_blurr'
-    data.dataset = 'CORRUPTED_BLURR_MNIST'
+    data.dataset = 'MNIST'
+    data.transform = transforms.Compose([])
 
     training = config.training
     training.n_iters = 1001

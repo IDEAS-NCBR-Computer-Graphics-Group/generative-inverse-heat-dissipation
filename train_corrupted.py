@@ -74,7 +74,7 @@ def train(config_path, workdir):
     # Initialize model
     model = mutils.create_model(config)
     logging.info(f"No of network parameters: {sum([p.numel() for p in model.parameters()])}")
-    logging.info(f"NN architecture:\n{model}")
+    # logging.info(f"NN architecture:\n{model}")
     
     optimizer = losses.get_optimizer(config, model.parameters())
     ema = ExponentialMovingAverage(
@@ -109,11 +109,11 @@ def train(config_path, workdir):
 
     # Building sampling functions
     # Get the forward process definition
-    if config.solver.type == 'NS':
+    if config.solver.type == 'ns':
         corruptor = LBM_NS_Corruptor(
             config,                                
             transform=transforms.Compose([transforms.ToTensor()]))
-    elif config.solver.type == 'ADE':
+    elif config.solver.type == 'ade':
         corruptor = LBM_ADE_Corruptor(
             config, 
             transform=transforms.Compose([transforms.ToTensor()]))        
@@ -121,7 +121,7 @@ def train(config_path, workdir):
         corruptor = GaussianBlurringCorruptor(
             config, 
             transform=transforms.Compose([transforms.ToTensor()]))    
-    elif config.solver.type == 'DCT':
+    elif config.solver.type == 'dct':
         corruptor = DCTBlurringCorruptor(
             config, 
             transform=transforms.Compose([transforms.ToTensor()]))
