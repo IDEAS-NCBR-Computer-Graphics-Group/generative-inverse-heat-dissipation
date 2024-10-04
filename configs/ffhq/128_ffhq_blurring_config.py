@@ -24,8 +24,9 @@ def get_default_configs():
     
     data = config.data
     data.showcase_comparison = True
+    data.process_all = True
     data.process_pairs = True
-    data.processed_filename = 'lbm_ns_turb_pairs' if data.process_pairs else 'lbm_ns_turb'
+    data.processed_filename = 'gaussian_blurr_pairs' if data.process_pairs else 'gaussian_blurr'
     data.dataset = 'FFHQ_128'
 
     data.image_size = 128
@@ -44,14 +45,22 @@ def get_default_configs():
     training.sampling_freq = 100
 
     solver = config.solver 
-    data.min_init_gray_scale = 0.0
-    data.max_init_gray_scale = 1.0 
-    solver.type = 'gaussian'
-    solver.min_steps = 1
-    solver.max_steps = 50
-    solver.n_denoising_steps = 10
-    solver.is_divergence_free = False
+    solver.type = 'gaussian_blurr'
+    solver.min_init_gray_scale = 0.
+    solver.max_init_gray_scale = 1.
+    
+    
+    solver.min_fwd_steps = 1
+    solver.n_denoising_steps = solver.max_fwd_steps = 200
+    
+    model.blur_sigma_max = 128
+    model.blur_sigma_min = 0.5
 
+    solver.blur_schedule = np.exp(np.linspace(np.log(solver.blur_sigma_min),
+                                             np.log(solver.blur_sigma_max), solver.max_fwd_steps))
+    solver.blur_schedule = np.array([0] + list(solver.blur_schedule))  # Add the k=0 timestep
+
+ 
 
     optim = config.optim
     optim.automatic_mp = False

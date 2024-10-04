@@ -23,11 +23,11 @@ def get_default_configs():
     
     data = config.data
     data.showcase_comparison = True
+    data.process_all = True
     data.process_pairs = True
-    data.processed_filename = 'lbm_ns_turb_pairs' if data.process_pairs else 'lbm_ns_turb'
+    data.processed_filename = 'lbm_ns_pairs' if data.process_pairs else 'lbm_ns'
     data.dataset = 'FFHQ_128'
-    data.min_init_gray_scale = 0.95
-    data.max_init_gray_scale = 1.05 
+    
     data.image_size = 128
     data.transform = transforms.Compose([transforms.ToTensor(),
                                          transforms.Grayscale()
@@ -44,12 +44,14 @@ def get_default_configs():
 
     solver = config.solver
     solver.type = 'ns'
+    
     solver.min_init_gray_scale = 0.95
     solver.max_init_gray_scale = 1.05
     solver.niu = 0.5 * 1/6
     solver.bulk_visc = 0.5 * 1/6
     solver.domain_size = (1.0, 1.0)
-    solver.turb_intensity = 1E-4
+    
+    solver.turb_intensity = 0 #*1E-4
     solver.noise_limiter = (-1E-3, 1E-3)
     solver.dt_turb = 5 * 1E-4
     solver.k_min = 2.0 * torch.pi / min(solver.domain_size)
