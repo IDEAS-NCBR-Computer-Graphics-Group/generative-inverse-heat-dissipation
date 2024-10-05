@@ -28,7 +28,7 @@ def get_config():
     data.transform = transforms.Compose([])
     
     training = config.training
-    training.n_iters = 1001
+    training.n_iters = 10001
     training.snapshot_freq = 1000
     training.snapshot_freq_for_preemption = 100
     training.log_freq = 50

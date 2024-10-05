@@ -37,7 +37,7 @@ def get_default_configs():
     data.num_channels = 1
     
     training = config.training
-    training.n_iters = 10001
+    training.n_iters = 1000001
     training.snapshot_freq = 1000
     training.snapshot_freq_for_preemption = 100
     training.log_freq = 50

@@ -72,10 +72,6 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
             root="data", train=False, download=True, transform=transform)
         if getattr(config, 'solver'):
             start = timer()
-            corruptor = AVAILABLE_CORRUPTORS[config.solver.type](
-                config=config,                                
-                transform=config.data.transform
-            )
             logging.info("Corruption on train split")
             corruptor._preprocess_and_save_data(
                 initial_dataset=training_data,
