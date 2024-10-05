@@ -1,14 +1,13 @@
+import os
 from absl import flags
 from absl import app
-# from ml_collections.config_flags import config_flags
-
-import os
+from timeit import default_timer as timer
+import torchvision
+import matplotlib.pyplot as plt
 
 from scripts import datasets as ihd_datasets
 from scripts.utils import save_png_norm, save_png
 from numerical_solvers.data_holders.CorruptedDatasetCreator import preprocess_dataset
-import torchvision
-import matplotlib.pyplot as plt
 from scripts.utils import load_config_from_path
 
 FLAGS = flags.FLAGS
@@ -23,14 +22,14 @@ def main(argv):
   
 def produce_sample(config_path):
     config = load_config_from_path(config_path)
+    
     trainloader, testloader = ihd_datasets.get_dataset(config, uniform_dequantization=config.data.uniform_dequantization)
 
     storage_dir = 'runs'
     save_scriptname = 'corruption_samples'
     save_dir = os.path.join(storage_dir, save_scriptname)
     os.makedirs(save_dir, exist_ok=True)
-
-    # # x, batch = next(iter(trainloader))
+    
     clean_image, batch = ihd_datasets.prepare_batch(iter(trainloader),'cpu')
     corrupted_image, less_corrupted_image, corruption_amount, label = batch
 

@@ -4,6 +4,7 @@ import torch
 from scipy.ndimage import gaussian_filter
 from abc import ABC
 import warnings
+import logging
 
 import taichi as ti
 
@@ -72,7 +73,7 @@ class DCTBlurringCorruptor(BaseCorruptor):
             os.makedirs(save_dir)
             
         if os.path.exists(file_path):
-            warnings.warn(f"[EXIT] Data not generated. Reason: file exists {file_path}")
+            logging.warning(f"[EXIT] Data not generated. Reason: file exists {file_path}")
             return
         
         data = []
@@ -85,11 +86,11 @@ class DCTBlurringCorruptor(BaseCorruptor):
 
         dataset_length = len(initial_dataset)
         if not process_all:
-            dataset_length = 500  # Process just a bit 
+            dataset_length = 256  # Process just a bit 
         
         for index in range(dataset_length):
             if index % 100 == 0:
-                print(f"Preprocessing (blurring) {index}")
+                 logging.info(f"Preprocessing (blurring) {index}")
 
             fwd_steps = np.random.randint(1, self.K) # ints
 

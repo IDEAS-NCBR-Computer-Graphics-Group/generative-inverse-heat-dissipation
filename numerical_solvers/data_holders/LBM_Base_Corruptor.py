@@ -3,6 +3,7 @@ import os
 import torch
 from abc import ABC
 import warnings
+import logging
 
 import taichi as ti
 from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range
@@ -81,7 +82,7 @@ class LBM_Base_Corruptor(BaseCorruptor):
             os.makedirs(save_dir)
             
         if os.path.exists(file_path):
-            warnings.warn("[EXIT] Data not generated. Reason: file exist {file_path} ")
+            logging.warning("[EXIT] Data not generated. Reason: file exist {file_path} ")
             return
       
 
@@ -95,11 +96,11 @@ class LBM_Base_Corruptor(BaseCorruptor):
 
         dataset_length = len(initial_dataset)
         if not process_all:
-            dataset_length = 500 # process just a bit 
+            dataset_length = 256 # process just a bit 
             
         for index in range(dataset_length):
             if index % 100 == 0:
-                print(f"Preprocessing (lbm) {index}")
+                logging.info(f"Preprocessing (lbm) {index}")
             
             corruption_amount = np.random.randint(self.min_steps, self.max_steps) # TODO: add +1 as max_steps is excluded from tossing, or modify no of denoising steps
             original_pil_image, label = initial_dataset[index]
