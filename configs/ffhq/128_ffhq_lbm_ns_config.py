@@ -57,10 +57,10 @@ def get_default_configs():
     solver.k_min = 2.0 * torch.pi / min(solver.domain_size)
     solver.k_max = 2.0 * torch.pi / (min(solver.domain_size) / 1024)
     solver.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
-    solver.min_steps = 1
-    solver.max_steps = 20
     solver.is_divergence_free = False
-    solver.n_denoising_steps = 20
+    
+    solver.min_fwd_steps = 1
+    solver.n_denoising_steps = solver.max_fwd_steps = 200
 
     optim = config.optim
     optim.automatic_mp = False
