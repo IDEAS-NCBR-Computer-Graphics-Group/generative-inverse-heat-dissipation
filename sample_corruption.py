@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 from scripts import datasets as ihd_datasets
 from scripts.utils import save_png_norm, save_png
 from numerical_solvers.data_holders.CorruptedDatasetCreator import preprocess_dataset
+import torchvision
+import matplotlib.pyplot as plt
+import matplotlib
 from scripts.utils import load_config_from_path
 
 FLAGS = flags.FLAGS
@@ -38,6 +41,7 @@ def produce_sample(config_path):
     print('batch_size = x.shape[0]:', clean_image.shape[0])
     print('Labels:', label.shape)
     
+    matplotlib.use('TkAgg')
     fig, axs = plt.subplots(1, 3, figsize=(20, 20), sharex=True)
     axs[0].set_title('clean x')
     axs[1].set_title('noisy x')
@@ -46,6 +50,7 @@ def produce_sample(config_path):
     axs[0].imshow(torchvision.utils.make_grid(clean_image)[0], cmap='Greys')
     axs[1].imshow(torchvision.utils.make_grid(corrupted_image)[0], cmap='Greys')
     axs[2].imshow(torchvision.utils.make_grid(less_corrupted_image)[0], cmap='Greys')
+    plt.savefig('output.png')
     plt.show()
     
 
