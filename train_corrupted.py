@@ -19,7 +19,7 @@ from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.LBM_ADE_Corruptor import LBM_ADE_Corruptor
 from numerical_solvers.data_holders.GaussianBlurringCorruptor import GaussianBlurringCorruptor
 from numerical_solvers.data_holders.DCTBlurringCorruptor import DCTBlurringCorruptor
-
+from numerical_solvers.data_holders.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
 
 from torchvision import transforms
 from scripts.git_utils import get_git_branch, get_git_revision_hash, get_git_revision_short_hash
@@ -109,25 +109,11 @@ def train(config_path, workdir):
 
     # Building sampling functions
     # Get the forward process definition
-    if config.solver.type == 'ns':
-        corruptor = LBM_NS_Corruptor(
-            config,                                
-            transform=transforms.Compose([transforms.ToTensor()]))
-    elif config.solver.type == 'ade':
-        corruptor = LBM_ADE_Corruptor(
-            config, 
-            transform=transforms.Compose([transforms.ToTensor()]))        
-    elif config.solver.type == 'gaussian_blurr':
-        corruptor = GaussianBlurringCorruptor(
-            config, 
-            transform=transforms.Compose([transforms.ToTensor()]))    
-    elif config.solver.type == 'dct':
-        corruptor = DCTBlurringCorruptor(
-            config, 
-            transform=transforms.Compose([transforms.ToTensor()]))
-    else:
-        raise ValueError(f"Invalid solver type in config'")
-    
+    corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
+        config=config,
+        transform=config.data.transform
+    )
+               
     # draw a sample by destroying some rand images
     delta = config.model.sigma*1.25
     n_denoising_steps = config.solver.n_denoising_steps   

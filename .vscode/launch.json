@@ -135,5 +135,16 @@
                 "runs/ffhq/128_ffhq_blurr"
             ]
         },
+        {
+            "name": "Debugger: sample_corruption.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/sample_corruption.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--config",
+                "configs/ffhq/128_ffhq_lbm_ns_config.py",
+            ]
+        },
     ]
 }

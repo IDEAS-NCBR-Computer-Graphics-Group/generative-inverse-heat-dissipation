@@ -47,8 +47,8 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         save_dir = os.path.join(output_data_dir, f'{config.data.processed_filename}')
         
         corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
-        config=config,                                
-        transform=config.data.transform
+            config=config,
+            transform=config.data.transform
         )
 
     transform = [transforms.Resize(config.data.image_size),

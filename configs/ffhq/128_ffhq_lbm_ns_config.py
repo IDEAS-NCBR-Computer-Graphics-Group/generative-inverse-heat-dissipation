@@ -9,12 +9,11 @@ def get_config():
 
 def get_default_configs():
     config = default_lbm_ffhq_config.get_default_configs()
-    
 
     data = config.data
     data.showcase_comparison = True
     data.process_all = True
-    data.process_pairs = False
+    data.process_pairs = True
     data.processed_filename = 'lbm_ns_pairs' if data.process_pairs else 'lbm_ns'
     data.dataset = 'FFHQ_128'
     
@@ -31,7 +30,7 @@ def get_default_configs():
     training.log_freq = 100
     training.eval_freq = 200
     training.sampling_freq = 1000
-    # config.training.batch_size = 16 # rtx4080
+
 
     turbulence = config.turbulence 
     turbulence.turb_intensity = 0 #*1E-4
@@ -50,6 +49,13 @@ def get_default_configs():
     solver.niu = solver.bulk_visc =  0.5 * 1/6
     solver.min_fwd_steps = 1
     solver.n_denoising_steps = solver.max_fwd_steps = 100
-    
+
+    debug = True
+    if debug:
+        data.processed_filename = 'lbm_ns_pairs_debug' if data.process_pairs else 'lbm_ns_debug'
+        data.process_all = False
+        config.training.batch_size = 6 # rtx2080
+        # config.training.batch_size = 16 # rtx4080
+
     return config
     
