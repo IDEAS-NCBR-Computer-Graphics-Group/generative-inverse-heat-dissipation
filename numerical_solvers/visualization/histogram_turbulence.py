@@ -96,11 +96,30 @@ def plot_v_component_distribution(v_data, title):
 domain_size = (1.0, 1.0)  # Size of the domain in meters (Lx, Ly)
 grid_size = (256, 256)     # Number of grid points (Nx, Ny)
 
+def blue_noise_spectrum(k, k_peak = 10000, exponent=1.0):
+    """
+    Example blue noise spectrum with a peak at k_peak.
+    """
+    return (k / k_peak)**exponent * t.exp(-(k - k_peak)**2 / (2 * (k_peak / 5)**2)) 
+
+def blue_noise_spectrum2(k):
+    return k 
+
+def gaussian_spectrum(k, k_peak=10, sigma=2):
+    return t.exp(-(k - k_peak)**2 / (2 * sigma**2))
 
 
 # Initialize the SpectralTurbulenceGenerator (assuming it is already defined somewhere)
+# turbulence_generator = SpectralTurbulenceGenerator(
+#     domain_size, grid_size, turb_intensity=0.0001, noise_limiter=(-1E-3, 1E-3), energy_spectrum = lambda k: t.where(t.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0)), frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
+# )
+
+# turbulence_generator = SpectralTurbulenceGenerator(
+#     domain_size, grid_size, turb_intensity=0.0001, noise_limiter=(-1E-3, 1E-3), energy_spectrum = blue_noise_spectrum2, frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
+# )
+
 turbulence_generator = SpectralTurbulenceGenerator(
-    domain_size, grid_size, turb_intensity=0.0001, noise_limiter=(-1E-3, 1E-3), energy_spectrum = lambda k: t.where(t.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0)), frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
+    domain_size, grid_size, turb_intensity=0.0001, noise_limiter=(-1E-3, 1E-3), energy_spectrum = blue_noise_spectrum, frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
 )
 
 # Generate the turbulent velocity field
@@ -121,7 +140,7 @@ fig = plt.figure(figsize=(6, 4))
 # Create Axes with space for the title and labels
 ax = fig.add_axes([0.2, 0.2, 0.7, 0.7])  # [left, bottom, width, height] as fractions of the figure size
 # Plot the current energy spectrum
-ax.set_ylim([1E-7, 1E2])
+# ax.set_ylim([1E-7, 1E2])
 ax.loglog(k_cpu[1:len(k_cpu) // 2], 
           energy_spectrum_cpu[1:len(k_cpu) // 2], 
           'b>', label='Energy spectrum')
@@ -141,9 +160,9 @@ v_fig, v_mean, v_variance, v_integral = plot_v_component_distribution(v, "v-comp
 u_fig, u_mean, u_variance, u_integral = plot_v_component_distribution(u, "u-component distribution")
 
 # Save the plots
-fig.savefig("spectrum.png")
-v_fig.savefig("v_distribution.png")
-u_fig.savefig("u_distribution.png")  
+# fig.savefig("spectrum.png")
+# v_fig.savefig("v_distribution.png")
+# u_fig.savefig("u_distribution.png")  
 
 print("V-component Mean:", v_mean)
 print("V-component Variance:", v_variance)
@@ -153,5 +172,3 @@ print("V-component Integral:", v_integral)
 print("U-component Mean:", u_mean)
 print("U-component Variance:", u_variance)
 print("U-component Integral:", u_integral)
-
-
