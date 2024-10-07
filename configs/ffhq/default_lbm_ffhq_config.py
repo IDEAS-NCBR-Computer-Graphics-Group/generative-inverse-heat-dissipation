@@ -18,6 +18,7 @@ def get_default_configs():
     training.log_freq = 50
     training.eval_freq = 100
     training.sampling_freq = 5000 #10000
+    training.n_evals = 25 # 25 batches for test-set evaluation, arbitrary choice
 
     # store additional checkpoints for preemption in cloud computing environments
     training.snapshot_freq_for_preemption = 2500 # 10000

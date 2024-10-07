@@ -82,14 +82,10 @@ class LBM_Base_Corruptor(BaseCorruptor):
         
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        
-        setup_logging(save_dir)
-        
-           
+
         if os.path.exists(file_path):
-            logging.warning("[EXIT] Data not generated. Reason: file exist {file_path} ")
+            logging.warning(f"[EXIT] Data not generated. Reason: file exist {file_path}")
             return
-      
 
         data = []
         modified_images = [] 
@@ -102,6 +98,7 @@ class LBM_Base_Corruptor(BaseCorruptor):
         dataset_length = len(initial_dataset)
         if not process_all:
             dataset_length = 256 # process just a bit 
+            logging.info(f"Preprocessing (lbm) a piece of dataset: {dataset_length}")
             
         for index in range(dataset_length):
             if index % 100 == 0:

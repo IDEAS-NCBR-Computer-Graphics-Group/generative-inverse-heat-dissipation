@@ -50,6 +50,7 @@ def get_default_configs():
     solver.min_fwd_steps = 1
     solver.n_denoising_steps = solver.max_fwd_steps = 100
 
+    
     debug = True
     if debug:
         data.processed_filename = 'lbm_ns_pairs_debug' if data.process_pairs else 'lbm_ns_debug'

@@ -15,23 +15,6 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Debugger: sample.py with Arguments",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/sample.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--config",
-                "configs/ffhq/img_size_128_maxblur128.py",
-                "--workdir",
-                "runs/ffhq/img_size_128_maxblur128",
-                "--checkpoint",
-                "0",
-                "--batch_size",
-                "9"
-            ]
-        },
-        {
             "name": "Debugger: small-debug-mnist",
             "type": "debugpy",
             "request": "launch",
@@ -84,19 +67,6 @@
             ]
         },
         {
-            "name": "Debugger: small-debug-ffhq",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/train.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--config",
-                "configs/ffhq/img_size_128.py",
-                "--workdir",
-                "runs/ffhq/default_ffhq"
-            ]
-        },
-        {
             "name": "Debugger: small-debug-mnist-corrupt-blurr",
             "type": "debugpy",
             "request": "launch",
@@ -123,16 +93,16 @@
             ]
         },
         {
-            "name": "Debugger: blurr-128-ffhq",
+            "name": "Debugger: ffhq-128-ns",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/train_corrupted.py",
             "console": "integratedTerminal",
             "args": [
                 "--config",
-                "configs/ffhq/128_ffhq_blurring_config.py",
+                "configs/ffhq/128_ffhq_lbm_ns_config.py",
                 "--workdir",
-                "runs/ffhq/128_ffhq_blurr"
+                "runs/ffhq/128_ffhq_lbm_ns"
             ]
         },
         {

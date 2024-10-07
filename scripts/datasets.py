@@ -138,14 +138,15 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
                 process_images=True
                 )
             logging.info("Corruption on test split")
-            corruptor._preprocess_and_save_data(
-                initial_dataset=testloader.dataset,
-                save_dir=save_dir,
-                is_train_dataset=False,
-                process_all=config.data.process_all,
-                process_pairs=config.data.process_pairs,
-                process_images=True
-                )    
+            corruptor.copy_train_dataset_as_test_dataset(save_dir)
+            # corruptor._preprocess_and_save_data(
+            #     initial_dataset=testloader.dataset,
+            #     save_dir=save_dir,
+            #     is_train_dataset=False,
+            #     process_all=config.data.process_all,
+            #     process_pairs=config.data.process_pairs,
+            #     process_images=True
+            #     )    
             end = timer()
             logging.info(f"Corruption took {end - start:.2f} seconds")
             transform = [
