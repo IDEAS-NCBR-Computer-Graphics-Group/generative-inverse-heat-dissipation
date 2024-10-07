@@ -16,6 +16,7 @@
 
 runs/
 data/
+6_experiments/
 
 __pycache__
 
@@ -28,3 +29,4 @@ imgui.ini
 *.pyc
 
 test_configs/
+
