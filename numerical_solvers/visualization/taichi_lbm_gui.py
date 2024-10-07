@@ -48,6 +48,6 @@ def run_with_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show
         
         window.show()
         
-        if solver.iterations_counter % 1000 ==0:
-            canvasPlotter.write_canvas_to_file(img, f'output/iteration_{solver.iterations_counter}.jpg')
+        # if solver.iterations_counter % 500 ==0:
+        #     window.save_image(f'output/iteration_{solver.iterations_counter}.jpg')
         
