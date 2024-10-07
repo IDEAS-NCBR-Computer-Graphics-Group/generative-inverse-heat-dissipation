@@ -13,7 +13,7 @@ from timeit import default_timer as timer
 import sys
 from pathlib import Path
 
-from numerical_solvers.data_holders.BlurringCorruptor import BlurringCorruptor
+from numerical_solvers.data_holders.GaussianBlurringCorruptor import GaussianBlurringCorruptor
 # from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     
     # Define the transformations
     corrupted_dataset_dir = os.path.join(output_data_dir, 'blurred')
-    blurringCorruptor = BlurringCorruptor(
+    blurringCorruptor = GaussianBlurringCorruptor(
         initial_dataset=datasets.MNIST(root=input_data_dir, train=is_train_dataset, download=True), 
         train=is_train_dataset, 
         transform=transform, 

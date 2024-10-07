@@ -13,7 +13,48 @@ from model_code import utils as mutils
 from scripts import losses
 from model_code.ema import ExponentialMovingAverage
 import pickle
+import importlib.util
 
+from ml_collections.config_dict import ConfigDict
+
+def setup_logging(workdir):
+    # Set up file logging after workdir is available
+    os.makedirs(workdir, exist_ok=True)
+    
+    # Remove existing handlers to avoid duplicates
+    root_logger = logging.getLogger('')
+    root_logger.handlers = []  # Clear existing handlers
+
+    # Set up the format you want, including the line number
+    formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s', 
+                                  datefmt='%Y-%m-%d %H:%M:%S')
+
+    # Set up file logging
+    file_handler = logging.FileHandler(os.path.join(workdir, 'training.log'), mode='w')
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
+    root_logger.addHandler(file_handler)
+
+    # Set up console logging
+    console = logging.StreamHandler()
+    console.setLevel(logging.INFO)
+    console.setFormatter(formatter)
+    root_logger.addHandler(console)
+
+    # Set logging level for third-party libraries like absl or TensorFlow
+    logging.getLogger('absl').setLevel(logging.WARNING)  # Suppress absl logging if applicable
+
+
+def load_config_from_path(config_path):
+    spec = importlib.util.spec_from_file_location("config_module", config_path)
+    config_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(config_module)
+    
+    # Assuming the config file defines a function get_config()
+    config_data = config_module.get_config()
+    
+    # Convert to ConfigDict
+    return ConfigDict(config_data)
 
 def restore_checkpoint(ckpt_dir, state, device):
     """Taken from https://github.com/yang-song/score_sde_pytorch"""
@@ -23,7 +64,7 @@ def restore_checkpoint(ckpt_dir, state, device):
                         f"Returned the same state as input")
         return state
     else:
-        loaded_state = torch.load(ckpt_dir, map_location=device)
+        loaded_state = torch.load(ckpt_dir, map_location=device) #, weights_only=True)
         state['optimizer'].load_state_dict(loaded_state['optimizer'])
         state['model'].load_state_dict(loaded_state['model'], strict=False)
         state['step'] = loaded_state['step']

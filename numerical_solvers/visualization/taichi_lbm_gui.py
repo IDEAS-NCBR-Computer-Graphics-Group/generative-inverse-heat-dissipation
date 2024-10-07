@@ -12,10 +12,10 @@ def run_with_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show
     gui = window.get_gui()
     canvas = window.get_canvas()
     
-    canvasPlotter = CanvasPlotter(solver, (1.0*np_init_gray_image.min(), 1.0*np_init_gray_image.max()))
+    canvasPlotter = CanvasPlotter(solver, (0.9*np_init_gray_image.min(), 1.1*np_init_gray_image.max()))
     
     # warm up
-    solver.solve(iterations=10)   
+    solver.solve(iterations=1)   
     solver.iterations_counter=0 # reset counter
     img = canvasPlotter.make_frame()
     
@@ -23,7 +23,7 @@ def run_with_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show
     canvasPlotter.write_canvas_to_file(img, f'output/iteration_{solver.iterations_counter}.jpg')
        
     while window.running:
-        with gui.sub_window('MAIN MENU', x=0, y=0, width=0.2, height=0.15):
+        with gui.sub_window('MAIN MENU', x=0, y=0, width=0.2, height=0.25):
             # if gui.button('option1'): print("ach")
             # if gui.button('option2'): print("och")
             canvasPlotter.is_f_checked = gui.checkbox('plot f', canvasPlotter.is_f_checked)
@@ -40,9 +40,9 @@ def run_with_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show
             canvasPlotter.is_heatmap_checked = gui.checkbox('heatmap', canvasPlotter.is_heatmap_checked)
             canvasPlotter.is_vel_mag_distribution_checked = gui.checkbox('plot norm(v) ', canvasPlotter.is_vel_mag_distribution_checked)
             
-                              
+        img = canvasPlotter.make_frame()                      
         solver.solve(iter_per_frame)      
-        img = canvasPlotter.make_frame()
+        
     
         canvas.set_image(img.astype(np.float32))
         

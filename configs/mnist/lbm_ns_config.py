@@ -39,7 +39,8 @@ class SolverConfig:
 
 
     min_steps: int = 1
-    max_steps: int = 10
+    max_steps: int = 20
+    n_denoising_steps: int = 20 # its same as max_steps, but lets experiment with less blurred input for a while
     
     def __post_init__(self):
         # Calculate k_min and k_max based on domain_size

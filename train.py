@@ -91,7 +91,7 @@ def train(config, workdir):
     delta = config.model.sigma*1.25 # std deviation of the sampling noise
     initial_sample, _ = sampling.get_initial_sample(config, heat_forward_module, delta)
     sampling_fn = sampling.get_sampling_fn_inverse_heat(
-        config,initial_sample, 
+        config, initial_sample, 
         intermediate_sample_indices=list(range(config.model.K+1)),
         delta=delta, device=config.device)
 

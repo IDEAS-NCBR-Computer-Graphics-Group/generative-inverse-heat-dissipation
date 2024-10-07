@@ -4,11 +4,10 @@ import logging
 from scripts import datasets
 # from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
-from configs.mnist.lbm_ns_config import LBMConfig
 from torchvision import transforms
 
 def get_sampling_fn_inverse_lbm_ns(
-    max_noise_level, n_denoising_steps,
+    n_denoising_steps,
     initial_sample, intermediate_sample_indices, 
     delta, device, share_noise=False):
     """ Returns our inverse heat process sampling function. 
@@ -27,11 +26,20 @@ def get_sampling_fn_inverse_lbm_ns(
         with torch.no_grad():
             u = initial_sample.to(device).float()
             if intermediate_sample_indices != None and n_denoising_steps in intermediate_sample_indices:
-                intermediate_samples_out.append((u, u))
+                intermediate_samples_out.append((u, u)) # store the initial (fully blurred) sample
+                
+            # assuming n_denoising_steps=3, then
+            # for i in range(n_denoising_steps, 0, -1):
+            #     print(i):
+            #         3
+            #         2
+            #         1
+
             for i in range(n_denoising_steps, 0, -1):
-                vec_fwd_steps = torch.ones(initial_sample.shape[0], device=device, dtype=torch.long) 
-                #TODO: get rid of casting
-                vec_fwd_steps = vec_fwd_steps * (float(max_noise_level) * float(i)/float(n_denoising_steps)) # todo: keep attention to dtype, 
+                # vec_fwd_steps = vec_fwd_steps * (float(max_noise_level) * float(i)/float(n_denoising_steps))
+                
+                # we assume max_noise_level=n_denoising_steps
+                vec_fwd_steps = torch.ones(initial_sample.shape[0], device=device, dtype=torch.long) * i
                 # Predict less blurry img
                 u_pred =  model(u, vec_fwd_steps) + u # the NN predicts the difference between blurry_x and less_blurry_x
 
@@ -75,7 +83,7 @@ def get_sampling_fn_inverse_heat(config, initial_sample,
             for i in range(K, 0, -1):
                 vec_fwd_steps = torch.ones(initial_sample.shape[0], device=device, dtype=torch.long) * i
                 # Predict less blurry mean
-                u_mean = model(u, vec_fwd_steps) + u # mean is as the NN learn difference between blurred_x and less_blurred_x
+                u_mean = model(u, vec_fwd_steps) + u # the NN learn difference between blurred_x and less_blurred_x
                 # Sampling step
                 if share_noise:
                     noise = noises[i-1]
@@ -165,8 +173,7 @@ def get_initial_corrupted_sample(dataset_config, corruption_amount, solver: Base
     noisy_sample = torch.empty_like(initial_sample)
   
     for index in range(initial_sample.shape[0]):
-        # corruption_amount = np.random.randint(solver_config.solver.min_lbm_steps, solver_config.solver.max_lbm_steps)
         tmp, _ = solver._corrupt(initial_sample[index], corruption_amount)
-        
         noisy_sample[index] = tmp
+        
     return noisy_sample

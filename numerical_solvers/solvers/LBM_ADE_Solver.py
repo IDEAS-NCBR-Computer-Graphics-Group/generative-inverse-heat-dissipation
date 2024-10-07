@@ -1,28 +1,27 @@
 import taichi as ti
 import taichi.math as tm
-import numpy as np
+import torch
 
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
-from numerical_solvers.solvers.GaussianTurbulenceGenerator import get_gaussian_noise
+from numerical_solvers.solvers.GaussianTurbulenceGenerator import get_gaussian_noise1d, get_gaussian_noise2d
 from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
 
 # Fluid solver based on lattice boltzmann method using taichi language
 # Inspired by: https://github.com/hietwll/LBM_Taichi
 
-
 @ti.data_oriented
 class LBM_ADE_Solver(LBM_SolverBase):
-    def __init__(self, name, domain_size, kin_visc, bulk_visc, turbulenceGenerator: SpectralTurbulenceGenerator):
-            super().__init__(name, domain_size, kin_visc, turbulenceGenerator)
-            
+    def __init__(self, domain_size, kin_visc, bulk_visc, turbulenceGenerator: SpectralTurbulenceGenerator):
+            super().__init__(domain_size, kin_visc, turbulenceGenerator)
             
     def init(self, np_gray_image): 
         self.rho.from_numpy(np_gray_image)
         # self.rho.fill(1)
         self.vel.fill(0)
-        # u_spec, v_spec = self.spectralTurbulenceGenerator.generate_turbulence(0)     
-        # force_numpy = np.stack((u_spec, v_spec), axis=-1)  # Shape becomes (128, 128, 2)
-        # self.Force.from_numpy(force_numpy)
+
+        # u_spec, v_spec = self.turbulenceGenerator.generate_turbulence(0)     
+        # force_numpy = torch.stack((u_spec, v_spec), axis=-1)  # Shape becomes (128, 128, 2)
+        # self.Force.from_torch(force_numpy)
         
         # self.init_gaussian_force_field(0*1E-3, 0, 1)
         self.init_fields()
@@ -31,13 +30,13 @@ class LBM_ADE_Solver(LBM_SolverBase):
         for iteration in range(iterations):                
             self.stream()
             self.update_macro_var()
-            # self.collide()
+            # self.collide_srt()
             self.collide_cm()
              
             u_turb, v_turb = self.turbulenceGenerator.generate_turbulence(self.iterations_counter)     
-            turb_numpy = np.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
-            self.vel.from_numpy(turb_numpy)
-            self.Force.from_numpy(turb_numpy)
+            turb_numpy = torch.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
+            self.vel.from_torch(turb_numpy)
+            self.Force.from_torch(turb_numpy)
             
             # self.init_gaussian_force_field(1E-2, 0, 1)
             # self.init_gaussian_velocity_field(1E-2, 0, 1)
@@ -69,8 +68,6 @@ class LBM_ADE_Solver(LBM_SolverBase):
             for k in ti.static(range(9)):
                 feq = self.f_eq(i, j)
                 self.f_new[i, j][k] = (1 - self.omega_kin) * self.f[i, j][k] + feq[k] * self.omega_kin
-    
-
         
     @ti.kernel
     def collide_cm(self):
@@ -151,8 +148,8 @@ class LBM_ADE_Solver(LBM_SolverBase):
             self.f_new[i,j][6] = -1/4.*self.f[i,j][5] + 1/4.*self.f[i,j][6] - 1/4.*self.f[i,j][7] + 1/4.*self.f[i,j][8]
             self.f_new[i,j][7] = 1/4.*self.f[i,j][5] - 1/4.*self.f[i,j][6] - 1/4.*self.f[i,j][7] + 1/4.*self.f[i,j][8]
             self.f_new[i,j][8] = -1/4.*self.f[i,j][5] - 1/4.*self.f[i,j][6] + 1/4.*self.f[i,j][7] + 1/4.*self.f[i,j][8]
-                                    
-    
+
+
     @ti.kernel
     def update_macro_var(self): 
         for i, j in ti.ndrange((1, self.nx-1), (1,self.ny-1)):
@@ -160,8 +157,10 @@ class LBM_ADE_Solver(LBM_SolverBase):
             self.rho[i, j] = 0
             
             for k in ti.static(range(9)):
-                self.rho[i, j] += self.f[i, j][k]
+                self.rho[i, j] += self.f[i, j][k] #+ 0.01*get_gaussian_noise1d(0,1)
 
+            # self.rho[i, j] += 0.01*get_gaussian_noise1d(0,1)
+         
             # self.vel[i, j] = self.Force[i, j]
             # self.rho[i, j] += 1E1*self.Force[i, j][0]
             

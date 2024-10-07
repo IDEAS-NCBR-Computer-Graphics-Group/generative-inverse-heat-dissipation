@@ -19,8 +19,7 @@ print(f'Using device: {device}')
 
 from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
-from configs.mnist.lbm_ns_config import get_lbm_ns_config
-from configs.mnist.lbm_ns_turb_config import get_lbm_ns_config as get_lbm_ns_turb_config
+from configs.mnist.small_mnist_lbm_ns_turb_config import get_config as get_lbm_ns_turb_config
 
 # %% figure out paths
 

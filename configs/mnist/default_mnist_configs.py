@@ -40,6 +40,9 @@ def get_default_configs():
     data.uniform_dequantization = False
     data.num_channels = 1
 
+    # solver
+    config.solver = solver = ml_collections.ConfigDict()
+
     # model
     config.model = model = ml_collections.ConfigDict()
     model.K = 100
@@ -81,7 +84,9 @@ def get_default_configs():
     optim.automatic_mp = False
 
     config.seed = 42
-    config.device = torch.device(
-        'cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+    
+    # config.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
+    config.device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+        
     return config

@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib
 from matplotlib import cm
 import matplotlib.pyplot as plt
+import torch
 
 import taichi as ti
 import taichi.math as tm
@@ -29,11 +30,10 @@ from numerical_solvers.solvers.LBM_ADE_Solver import LBM_ADE_Solver
 
 
 img_path = './numerical_solvers/runners/cat_768x768.jpg'
-# img_path = 'cat_768x768.jpg'
-target_size=None
+# target_size=None
 # target_size=(512, 512)
-target_size = (256, 256) # None
-# target_size = (128, 128) # None
+target_size = (256, 256) 
+# target_size = (128, 128) 
 
 np_gray_image = read_img_in_grayscale(img_path, target_size)
 np_gray_image = normalize_grayscale_image_range(np_gray_image, 0.95, 1.05)
@@ -68,7 +68,6 @@ if __name__ == '__main__':
         is_div_free=False)
         
     solver = LBM_ADE_Solver(
-        case_name,
         np_gray_image.shape,
         config.solver.niu, config.solver.bulk_visc,
         spectralTurbulenceGenerator
