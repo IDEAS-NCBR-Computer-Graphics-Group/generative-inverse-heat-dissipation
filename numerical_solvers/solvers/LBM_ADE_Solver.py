@@ -16,7 +16,6 @@ class LBM_ADE_Solver(LBM_SolverBase):
             
     def init(self, np_gray_image): 
         self.rho.from_numpy(np_gray_image)
-        # self.rho.fill(1)
         self.vel.fill(0)
 
         # u_spec, v_spec = self.turbulenceGenerator.generate_turbulence(0)     
