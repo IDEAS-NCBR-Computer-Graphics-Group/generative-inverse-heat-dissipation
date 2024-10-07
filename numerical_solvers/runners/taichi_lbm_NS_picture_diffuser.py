@@ -14,15 +14,12 @@ import numpy as np
 import taichi as ti
 import taichi.math as tm
 import itertools
-from pathlib import Path
 
 import cv2 # conda install conda-forge::opencv || pip install opencv-python
 
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from numerical_solvers.solvers.img_reader import read_img_in_grayscale, normalize_grayscale_image_range, standarize_grayscale_image_range
 from numerical_solvers.visualization.taichi_lbm_gui import run_with_gui
-
-from configs.mnist.small_mnist_lbm_ns_config import get_config
 
 
 from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
@@ -67,43 +64,35 @@ ti_float_precision = ti.f64
   
 if __name__ == '__main__':    
 
+    domain_size = (1.0, 1.0)
     grid_size = np_gray_image.shape
+    turb_intensity = 1E-4
+    noise_limiter = (-1E-3, 1E-3)
+    dt_turb = 1E-3 
 
-    config = get_config()
 
+    # energy_spectrum = lambda k: np.where(np.isinf(k), 0, k)
+    
+    energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
+    frequency_range = {'k_min': 2.0 * torch.pi / min(domain_size),
+                       'k_max': 2.0 * torch.pi / (min(domain_size) / 1024)}
+    
     spectralTurbulenceGenerator = SpectralTurbulenceGenerator(
-            config.solver.domain_size, grid_size, 
-            config.solver.turb_intensity, config.solver.noise_limiter,
-            energy_spectrum=config.solver.energy_spectrum, 
-            frequency_range={'k_min': config.solver.k_min, 'k_max': config.solver.k_max}, 
-            dt_turb=config.solver.dt_turb, 
-            is_div_free=False)
-
+        domain_size, grid_size, 
+        turb_intensity, noise_limiter,
+        energy_spectrum=energy_spectrum, frequency_range=frequency_range, 
+        dt_turb=dt_turb, 
+        is_div_free = False)
+    
+    
+    niu = 1E-0 * 1./6
+    bulk_visc = niu
+    
     solver = LBM_NS_Solver(
-        "miau",
         grid_size,
-        config.solver.niu, config.solver.bulk_visc,
+        niu, bulk_visc,
         spectralTurbulenceGenerator
-    )
-
-
-    # spectralTurbulenceGenerator = SpectralTurbulenceGenerator(
-    #     domain_size, grid_size, 
-    #     turb_intensity, noise_limiter,
-    #     energy_spectrum=energy_spectrum, frequency_range=frequency_range, 
-    #     dt_turb=dt_turb, 
-    #     is_div_free = False)
-    
-    
-    # niu = 1E0 * 1./6
-    # bulk_visc = 1E0 * 1./6
-    # case_name="miau"   
-    # solver = LBM_NS_Solver(
-    #     case_name,
-    #     np_gray_image.shape,
-    #     niu, bulk_visc,
-    #     spectralTurbulenceGenerator
-    #     )
+        )
     
     solver.init(np_gray_image)
 
@@ -112,7 +101,19 @@ if __name__ == '__main__':
 
 
     # solver.init(1.*np.ones(grid_size, dtype=np.float32))
-    # solver.creatmin_init_gray_scalerbar()
+    # solver.create_ic_hill(.5, 1E-2, int(0.5*grid_size[0]), int(0.5*grid_size[1])) 
+    # solver.create_ic_hill(.05, 1E-3, int(0.25*grid_size[0]), int(0.25*grid_size[1]))
+    # solver.create_ic_hill(-.05, 1E-3,int(0.75*grid_size[0]), int(0.75*grid_size[1]))
+    
+    # for i in range(3):
+    #     subiterations = 100
+    #     solver.solve(subiterations)
+    #     rho_cpu = solver.rho.to_numpy()
+
+    #     os.makedirs("output", exist_ok=True)
+    #     matplotlib.use('TkAgg')
+    #     plt.imshow(rho_cpu, vmin=np_gray_image.min(), vmax=np_gray_image.max(), cmap="gist_gray", interpolation='none') 
+    #     plt.colorbar()
     #     ax = plt.gca()
     #     ax.set_xlim([0, nx])
     #     ax.set_ylim([0, ny])
