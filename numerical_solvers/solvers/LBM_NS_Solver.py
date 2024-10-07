@@ -1,6 +1,6 @@
 import taichi as ti
 import taichi.math as tm
-import torch
+import torch as t
 
 from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
@@ -37,7 +37,7 @@ class LBM_NS_Solver(LBM_SolverBase):
             self.collide_cm()
              
             u_turb, v_turb = self.turbulenceGenerator.generate_turbulence(self.iterations_counter)     
-            turb_numpy = np.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
+            turb_numpy = t.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
             self.Force.from_numpy(turb_numpy)
             
             # self.init_gaussian_force_field(1E-3, 0, 1)

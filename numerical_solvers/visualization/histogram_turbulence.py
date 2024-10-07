@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib
 from matplotlib import cm
 import cv2
+import torch as t
 
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 
@@ -35,22 +36,22 @@ def compute_kolmogorov_spectrum(u, v, Lx, Ly):
     Nx, Ny = u.shape
 
     # Compute the 2D Fourier transforms of the velocity fields
-    u_hat = np.fft.fft2(u)
-    v_hat = np.fft.fft2(v)
+    u_hat = t.fft.fft2(u)
+    v_hat = t.fft.fft2(v)
 
     # Compute the energy spectrum as the sum of the squared magnitudes of the Fourier coefficients
-    energy_spectrum = np.abs(u_hat)**2 + np.abs(v_hat)**2
+    energy_spectrum = t.abs(u_hat)**2 + t.abs(v_hat)**2
 
     # Average the energy spectrum over one dimension (e.g., the y-dimension)
-    energy_spectrum = np.mean(energy_spectrum, axis=0)
+    energy_spectrum = t.mean(energy_spectrum, axis=0)
 
     # Corresponding wavenumbers
-    kx = np.fft.fftfreq(Nx, d=Lx/Nx) * 2 * np.pi
-    ky = np.fft.fftfreq(Ny, d=Ly/Ny) * 2 * np.pi
-    k = np.sqrt(kx**2 + ky**2)
+    kx = t.fft.fftfreq(Nx, d=Lx/Nx) * 2 * t.pi
+    ky = t.fft.fftfreq(Ny, d=Ly/Ny) * 2 * t.pi
+    k = t.sqrt(kx**2 + ky**2)
 
     # Sort the spectrum by wavenumber
-    idx = np.argsort(k)
+    idx = t.argsort(k)
     k_sorted = k[idx]
     energy_spectrum_sorted = energy_spectrum[idx]
 
@@ -58,10 +59,10 @@ def compute_kolmogorov_spectrum(u, v, Lx, Ly):
 
 def plot_v_component_distribution(v_data, title):
     # Ensure the data is a 1D array
-    v_data = v_data.reshape(-1)  # Flatten the data
+    v_data = v_data.reshape(-1).cpu()  # Flatten the data
 
     num_bins = 128
-    counts, bins = np.histogram(v_data, bins=num_bins, density=True)
+    counts, bins = np.histogram(v_data, bins=num_bins, density=True) 
 
     bin_widths = np.diff(bins)
     integral = np.sum(counts * bin_widths)
@@ -99,7 +100,7 @@ grid_size = (256, 256)     # Number of grid points (Nx, Ny)
 
 # Initialize the SpectralTurbulenceGenerator (assuming it is already defined somewhere)
 turbulence_generator = SpectralTurbulenceGenerator(
-    domain_size, grid_size, turb_intensity=0.0001, noise_limiter=(-1E-3, 1E-3), energy_spectrum = lambda k: np.where(np.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0)), frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
+    domain_size, grid_size, turb_intensity=0.0001, noise_limiter=(-1E-3, 1E-3), energy_spectrum = lambda k: t.where(t.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0)), frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
 )
 
 # Generate the turbulent velocity field
@@ -112,14 +113,18 @@ u, v = turbulence_generator.generate_turbulence(time=0.5)
 
 k, energy_spectrum = compute_kolmogorov_spectrum(u, v, 1, 1)
 
+k_cpu = k.cpu()
+energy_spectrum_cpu = energy_spectrum.cpu()
+
 fig = plt.figure(figsize=(6, 4))
         
 # Create Axes with space for the title and labels
 ax = fig.add_axes([0.2, 0.2, 0.7, 0.7])  # [left, bottom, width, height] as fractions of the figure size
 # Plot the current energy spectrum
 ax.set_ylim([1E-7, 1E2])
-ax.loglog(k[1:len(k) // 2], energy_spectrum[1:len(k) // 2], 'b>', label='Energy spectrum')
-
+ax.loglog(k_cpu[1:len(k_cpu) // 2], 
+          energy_spectrum_cpu[1:len(k_cpu) // 2], 
+          'b>', label='Energy spectrum')
 
 # Add grid and labels
 ax.grid(True, which="both", ls="--")
