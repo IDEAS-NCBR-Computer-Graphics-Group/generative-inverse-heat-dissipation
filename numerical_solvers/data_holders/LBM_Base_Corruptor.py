@@ -11,6 +11,8 @@ from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
 
+from scripts.utils import load_config_from_path, setup_logging
+
 class LBM_Base_Corruptor(BaseCorruptor):
     def __init__(self, config, transform=None, target_transform=None):
         super(LBM_Base_Corruptor, self).__init__(transform, target_transform)
@@ -80,7 +82,10 @@ class LBM_Base_Corruptor(BaseCorruptor):
         
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-            
+        
+        setup_logging(save_dir)
+        
+           
         if os.path.exists(file_path):
             logging.warning("[EXIT] Data not generated. Reason: file exist {file_path} ")
             return

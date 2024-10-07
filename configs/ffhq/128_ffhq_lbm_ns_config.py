@@ -54,8 +54,12 @@ def get_default_configs():
     if debug:
         data.processed_filename = 'lbm_ns_pairs_debug' if data.process_pairs else 'lbm_ns_debug'
         data.process_all = False
-        config.training.batch_size = 6 # rtx2080
+        config.training.batch_size = 4 # rtx2080
+        config.eval.batch_size = 4
         # config.training.batch_size = 16 # rtx4080
 
+        training.n_iters = 5001
+        training.sampling_freq = 100
+        
     return config
     
