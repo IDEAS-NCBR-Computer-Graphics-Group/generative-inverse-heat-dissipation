@@ -1,5 +1,5 @@
 import ml_collections
-from configs.ffhq import default_ffhq_configs
+from configs.ffhq import default_lbm_ffhq_config
 import numpy as np
 import torch
 from torchvision import transforms
@@ -8,21 +8,9 @@ def get_config():
     return get_default_configs()
 
 def get_default_configs():
-    config = default_ffhq_configs.get_default_configs()
-    config.training.batch_size = 4
-
-    model = config.model
-    model.model_channels = 64
-    model.channel_mult = (1, 1, 1)
+    config = default_lbm_ffhq_config.get_default_configs()
     
-    model.blur_sigma_max = 20
-    model.blur_sigma_min = 0.5
 
-    model.K = 50
-    model.blur_schedule = np.exp(np.linspace(np.log(model.blur_sigma_min),
-                                             np.log(model.blur_sigma_max), model.K))
-    model.blur_schedule = np.array([0] + list(model.blur_schedule))  # Add the k=0 timestep
-    
     data = config.data
     data.showcase_comparison = True
     data.process_all = True
@@ -39,13 +27,13 @@ def get_default_configs():
     training = config.training
     training.n_iters = 1000001
     training.snapshot_freq = 1000
-    training.snapshot_freq_for_preemption = 100
-    training.log_freq = 50
-    training.eval_freq = 100
-    training.sampling_freq = 250
+    training.snapshot_freq_for_preemption = 1000
+    training.log_freq = 100
+    training.eval_freq = 200
+    training.sampling_freq = 1000
+    # config.training.batch_size = 16 # rtx4080
 
-
-    config.turbulence = turbulence = ml_collections.ConfigDict()
+    turbulence = config.turbulence 
     turbulence.turb_intensity = 0 #*1E-4
     turbulence.noise_limiter = (-1E-3, 1E-3)
     turbulence.domain_size = (1.0, 1.0)
@@ -62,11 +50,6 @@ def get_default_configs():
     solver.niu = solver.bulk_visc =  0.5 * 1/6
     solver.min_fwd_steps = 1
     solver.n_denoising_steps = solver.max_fwd_steps = 100
-
-    # config.training.batch_size = 16 # rtx4080
-    
-    optim = config.optim
-    optim.automatic_mp = False
     
     return config
     

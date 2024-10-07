@@ -43,6 +43,8 @@ def get_default_configs():
     # solver
     config.solver = solver = ml_collections.ConfigDict()
 
+    config.turbulence = turbulence = ml_collections.ConfigDict()
+    
     # model
     config.model = model = ml_collections.ConfigDict()
     
@@ -66,14 +68,6 @@ def get_default_configs():
     model.num_heads_upsample = -1
     model.skip_rescale = True
     
-    model.K = 200
-    model.blur_sigma_max = 128
-    model.blur_sigma_min = 0.5
-    model.blur_schedule = np.exp(np.linspace(np.log(model.blur_sigma_min),
-                                             np.log(model.blur_sigma_max), model.K))
-    model.blur_schedule = np.array(
-        [0] + list(model.blur_schedule))  # Add the k=0 timestep
-
     # optimization
     config.optim = optim = ml_collections.ConfigDict()
     optim.weight_decay = 0
