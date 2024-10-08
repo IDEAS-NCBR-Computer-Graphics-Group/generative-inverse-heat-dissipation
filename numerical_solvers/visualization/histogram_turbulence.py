@@ -16,7 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 
-
+# from numerical_solvers.visualization.KolmogorovSpectrumPlotter import compute_kolmogorov_spectrum
 
 def compute_kolmogorov_spectrum(u, v, Lx, Ly):
     """
@@ -103,7 +103,7 @@ def blue_noise_spectrum(k, k_peak = 10000, exponent=1.0):
     return (k / k_peak)**exponent * t.exp(-(k - k_peak)**2 / (2 * (k_peak / 5)**2)) 
 
 def blue_noise_spectrum2(k):
-    return k**(1.0 /5.0) #t.exp(t.sqrt(k)) 
+    return k**(2.0) #t.exp(t.sqrt(k)) 
 
 def gaussian_spectrum(k, k_peak=0, sigma=1):
     return t.exp(-(k - k_peak)**2 / (2 * sigma**2))/(2*t.pi*sigma) 
@@ -118,7 +118,7 @@ def generate_blue_noise_spectrum_torch(wavenumbers, beta = 2):
     
     return blue_noise_spectrum
 
-def generate_linear_increasing_spectrum(k, alpha =  5.0):
+def generate_linear_increasing_spectrum(k, alpha =  1.0, c = 10000):
     """
     Generates a spectrum that increases linearly on a log-log plot.
     
@@ -132,7 +132,7 @@ def generate_linear_increasing_spectrum(k, alpha =  5.0):
     - spectrum: energy spectrum proportional to k^alpha
     """
     # Generate wavenumbers from 1 to 500
-    spectrum = k**alpha  # E(k) = k^alpha for linear increase in log-log plot
+    spectrum = c*k**alpha  # E(k) = k^alpha for linear increase in log-log plot
     return spectrum
 
 
@@ -144,7 +144,7 @@ M = 1E-1
 # )
 
 turbulence_generator = SpectralTurbulenceGenerator(
-    domain_size, grid_size, turb_intensity=0.01, noise_limiter=(-M, M), energy_spectrum = generate_linear_increasing_spectrum, frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
+    domain_size, grid_size, turb_intensity=0.01, noise_limiter=(-M, M), energy_spectrum = generate_linear_increasing_spectrum, frequency_range= {'k_min':1E-6, 'k_max': 1E6}
 )
 
 # turbulence_generator = SpectralTurbulenceGenerator(
@@ -153,7 +153,7 @@ turbulence_generator = SpectralTurbulenceGenerator(
 
 
 # turbulence_generator = SpectralTurbulenceGenerator(
-#     domain_size, grid_size, turb_intensity=0.0001, noise_limiter=(-1E-3, 1E-3), energy_spectrum = blue_noise_spectrum2, frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
+#     domain_size, grid_size, turb_intensity=0.01, noise_limiter=(-M, M), energy_spectrum = blue_noise_spectrum2, frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
 # )
 
 # turbulence_generator = SpectralTurbulenceGenerator(
