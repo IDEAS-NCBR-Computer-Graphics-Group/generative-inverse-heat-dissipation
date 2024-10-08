@@ -48,8 +48,10 @@ def compute_kolmogorov_spectrum(u, Lx):
     idx = t.argsort(kx)
     k_sorted = kx[idx]
     energy_spectrum_sorted = energy_spectrum[idx]
+    
+    return kx, energy_spectrum
 
-    return k_sorted, energy_spectrum_sorted
+    # return k_sorted, energy_spectrum_sorted
 
 
 
@@ -187,7 +189,7 @@ def plot_v_component_distribution(v_data, title):
     return fig, mu, sigma**2, integral # Return mean, variance along with the plot
 
 
-def generate_linear_increasing_spectrum(k, alpha =  2, c = 1):
+def generate_linear_increasing_spectrum(k, alpha =  2.0, c = 1.0):
     """
     Generates a spectrum that increases linearly on a log-log plot.
     
@@ -211,8 +213,8 @@ M = 1E0
 # turbulence_generator = SpectralTurbulenceGenerator(
 #     domain_size, grid_size, turb_intensity=0.0001, noise_limiter=(-1E-3, 1E-3), energy_spectrum = lambda k: t.where(t.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0)), frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
 # )
-domain_size = 1
-grid_size = 512
+domain_size = 1.0
+grid_size = 256
 
 
 # Initialize the 1D turbulence generator
@@ -226,7 +228,7 @@ turbulence_generator = SpectralTurbulenceGenerator1D(
 u = turbulence_generator.generate_turbulence(time=0.5)
 
 # Calculate the Kolmogorov spectrum
-k, energy_spectrum = compute_kolmogorov_spectrum(u, 1)  # Removed v from the input
+k, energy_spectrum = compute_kolmogorov_spectrum(u, 1.0)  # Removed v from the input
 k_cpu = k.cpu()
 energy_spectrum_cpu = energy_spectrum.cpu()
 
