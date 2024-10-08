@@ -3,6 +3,7 @@ from configs.ffhq import default_ffhq_configs
 import numpy as np
 import torch
 from torchvision import transforms
+from configs.ConfigGridMaker import hash_solver
 
 def get_config():
     return get_default_configs()
@@ -48,13 +49,11 @@ def get_default_configs():
     solver.type = 'gaussian_blurr'
     solver.min_init_gray_scale = 0.
     solver.max_init_gray_scale = 1.
-    
-    
     solver.min_fwd_steps = 1
     solver.n_denoising_steps = solver.max_fwd_steps = 200
-    
     model.blur_sigma_max = 128
     model.blur_sigma_min = 0.5
+    solver.hash = hash_solver(solver)
 
     solver.blur_schedule = np.exp(np.linspace(np.log(solver.blur_sigma_min),
                                              np.log(solver.blur_sigma_max), solver.max_fwd_steps))

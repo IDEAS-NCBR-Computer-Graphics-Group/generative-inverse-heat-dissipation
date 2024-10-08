@@ -1,6 +1,6 @@
 from absl import flags
 from absl import app
-# from ml_collections.config_flags import config_flags
+from ml_collections.config_flags import config_flags
 
 import os
 
@@ -9,21 +9,19 @@ from scripts.utils import save_png_norm, save_png
 from numerical_solvers.data_holders.CorruptedDatasetCreator import preprocess_dataset
 import torchvision
 import matplotlib.pyplot as plt
-from scripts.utils import load_config_from_path
 
 FLAGS = flags.FLAGS
 
 # config_flags.DEFINE_config_file("config", None, "Training configuration.", lock_config=True)
-flags.DEFINE_string("config", None, "Path to the config file.")
+
+config_flags.DEFINE_config_file("config", None, "Training configuration.", lock_config=True)
 flags.mark_flags_as_required(["config"])
 
 def main(argv):
     produce_sample(FLAGS.config)
   
-  
-def produce_sample(config_path):
-    config = load_config_from_path(config_path)
-    trainloader, testloader = ihd_datasets.get_dataset(config, uniform_dequantization=config.data.uniform_dequantization)
+def produce_sample(config):
+    trainloader, testloader = ihd_datasets.get_dataset(config, config.data.uniform_dequantization)
 
     storage_dir = 'runs'
     save_scriptname = 'corruption_samples'

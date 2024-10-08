@@ -38,19 +38,18 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
     """
 
     if getattr(config, 'solver'):
-        
+        solver_hash = config.solver.hash      
         current_file_path = Path(__file__).resolve()
         base_folder = current_file_path.parents[1]
         input_data_dir = os.path.join(base_folder, "data")
         dataset_name = f'corrupted_{config.data.dataset}'
         output_data_dir = os.path.join(input_data_dir, dataset_name)
-        save_dir = os.path.join(output_data_dir, f'{config.solver.type}_ns_pair')
-        
+        save_dir = os.path.join(output_data_dir, f'{config.data.processed_filename}_{solver_hash}')
         corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
         config=config,                                
         transform=config.data.transform
         )
-
+    
     transform = [transforms.Resize(config.data.image_size),
                  transforms.CenterCrop(config.data.image_size)]
     if config.data.random_flip:
@@ -130,39 +129,38 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         testloader = load_data(data_dir="data/ffhq-128-70k",
                                batch_size=eval_batch_size, image_size=config.data.image_size,
                                random_flip=False)
-        if getattr(config, 'solver'):
-            start = timer()
-            logging.info("Fluid corruption on train split")
-            corruptor._preprocess_and_save_data(
-                initial_dataset=trainloader.dataset,
-                save_dir=save_dir,
-                process_all=False,
-                is_train_dataset=True,
-                process_pairs=config.data.process_pairs,
-                process_images=True
-                )
-            logging.info("Fluid corruption on test split")
-            corruptor._preprocess_and_save_data(
-                initial_dataset=testloader.dataset,
-                save_dir=save_dir,
-                is_train_dataset=False,
-                process_all=False,
-                process_pairs=config.data.process_pairs,
-                process_images=True
-                )    
-            end = timer()
-            logging.info(f"Fluid corruption took {end - start:.2f} seconds")
-            transform = [
-                transforms.ToPILImage(), 
-                transforms.Resize(config.data.image_size),
-                transforms.CenterCrop(config.data.image_size),
-                transforms.ToTensor()
-                ]
-            transform = transforms.Compose(transform)
-            training_data = CorruptedDataset(load_dir=save_dir, train=True, transform=transform)
-            test_data = CorruptedDataset(load_dir=save_dir, train=False, transform=transform)
-        else:
+        if not getattr(config, 'solver'):
             return trainloader, testloader
+        start = timer()
+        logging.info("Fluid corruption on train split")
+        corruptor._preprocess_and_save_data(
+            initial_dataset=trainloader.dataset,
+            save_dir=save_dir,
+            process_all=False,
+            is_train_dataset=True,
+            process_pairs=config.data.process_pairs,
+            process_images=True
+            )
+        logging.info("Fluid corruption on test split")
+        corruptor._preprocess_and_save_data(
+            initial_dataset=testloader.dataset,
+            save_dir=save_dir,
+            is_train_dataset=False,
+            process_all=False,
+            process_pairs=config.data.process_pairs,
+            process_images=True
+            )    
+        end = timer()
+        logging.info(f"Fluid corruption took {end - start:.2f} seconds")
+        transform = [
+            transforms.ToPILImage(), 
+            transforms.Resize(config.data.image_size),
+            transforms.CenterCrop(config.data.image_size),
+            transforms.ToTensor()
+            ]
+        transform = transforms.Compose(transform)
+        training_data = CorruptedDataset(load_dir=save_dir, train=True, transform=transform)
+        test_data = CorruptedDataset(load_dir=save_dir, train=False, transform=transform)
     elif config.data.dataset == 'AFHQ':
         trainloader = load_data(data_dir="data/afhq/train",
                                 batch_size=train_batch_size, image_size=config.data.image_size,

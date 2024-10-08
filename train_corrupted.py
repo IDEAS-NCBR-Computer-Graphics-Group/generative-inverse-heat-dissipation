@@ -97,6 +97,7 @@ def train(config_path, workdir):
     # Build data iterators
     trainloader, testloader = datasets.get_dataset(
         config, uniform_dequantization=config.data.uniform_dequantization)
+    shutil.copy(config_path, os.path.join(f'data/corrupted_{config.data.dataset}', f'{config.data.processed_filename}_{config.solver.hash}')) 
     train_iter = iter(trainloader)
     eval_iter = iter(testloader)
 

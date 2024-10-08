@@ -9,6 +9,8 @@ def get_config():
     config = default_ffhq_configs.get_default_configs()
     model = config.model
     config.data.image_size = 128
+    config.training.batch_size = 4
+    
     config.data.dataset = 'FFHQ_128' 
     
     return config

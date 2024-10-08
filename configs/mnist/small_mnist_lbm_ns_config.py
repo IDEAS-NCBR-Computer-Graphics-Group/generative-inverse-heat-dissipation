@@ -3,6 +3,7 @@ import ml_collections
 import numpy as np
 import torch
 from torchvision import transforms
+from configs.ConfigGridMaker import hash_solver
 
 def get_config():
     config = default_mnist_configs.get_default_configs()
@@ -49,10 +50,10 @@ def get_config():
     solver.dt_turb = 5 * 1E-4
     solver.k_min = 2.0 * torch.pi / min(solver.domain_size)
     solver.k_max = 2.0 * torch.pi / (min(solver.domain_size) / 1024)
-    solver.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
     solver.is_divergence_free = False
-
     solver.min_fwd_steps = 1
     solver.max_fwd_steps = solver.n_denoising_steps = 50
+    solver.hash = hash_solver(solver)
+    solver.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
     
     return config
