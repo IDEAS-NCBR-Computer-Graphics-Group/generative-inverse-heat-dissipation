@@ -1,4 +1,4 @@
-from configs.mnist import default_mnist_configs
+from configs.mnist.ihd import default_mnist_configs
 import numpy as np
 
 

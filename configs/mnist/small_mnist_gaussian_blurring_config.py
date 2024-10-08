@@ -1,11 +1,11 @@
-from configs.mnist import default_mnist_configs
+from configs.mnist.ihd_configs import default_mnist_configs as default_ihd_mnist_configs
 import ml_collections
 import numpy as np
 import torch
 from torchvision import transforms
 
 def get_config():
-    config = default_mnist_configs.get_default_configs()
+    config = default_ihd_mnist_configs.get_default_configs()
     
     model = config.model
     model.model_channels = 64

@@ -23,7 +23,7 @@ from ml_collections.config_dict import ConfigDict
 #     console.setLevel(logging.INFO)
 #     console.setFormatter(formatter)
     
-def setup_logging(workdir, logger_name=''):
+def setup_logging(workdir):
     # Set up file logging after workdir is available
     os.makedirs(workdir, exist_ok=True)
     

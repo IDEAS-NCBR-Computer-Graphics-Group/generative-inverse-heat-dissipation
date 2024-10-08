@@ -8,13 +8,13 @@ import numpy as np
 def get_config():
     config = default_ffhq_configs.get_default_configs()
     model = config.model
-    config.training.batch_size = 12 # to fit rtx 4080
+    # config.training.batch_size = 12 # to fit rtx 4080
     config.data.image_size = 128
     config.data.dataset = 'FFHQ_128' 
-    config.training.n_iters = 1001
+    config.training.n_iters = 20001
 
-    config.training.snapshot_freq = 1000
-    config.training.snapshot_freq_for_preemption = 100
-    config.training.sampling_freq = 100
+    config.training.snapshot_freq = 10000
+    config.training.snapshot_freq_for_preemption = 2500
+    config.training.sampling_freq = 2000
     
     return config

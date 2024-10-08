@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=ffhq-128
-#SBATCH --time=08:00:00
+#SBATCH --time=04:00:00
 #SBATCH --account=plgclb2024-gpu-a100
 #SBATCH --partition=plgrid-gpu-a100 
 #SBATCH --nodes=1
@@ -16,12 +16,16 @@
 
 
 module load Python/3.10.4
+echo "Job started on $(date) at $HOSTNAME"
 
-
-echo $(date)
 source $SCRATCH/py-ihd-env/bin/activate
-
 cd $SCRATCH/generative-inverse-heat-dissipation
 # mpiexec 
 
-python train.py --config configs/mnist/small_mnist_lbm_ns_config.py --workdir runs/mnist/small_mnist_lbm_ns
+CMD="python train.py --config configs/ffhq/small_img_size_128_lin_sched.py --workdir runs/ffhq/128_ffhq_dct_lin_sched"
+echo "Executing CMD:"
+echo $CMD
+
+eval $CMD
+
+echo "Job finished on $(date)"

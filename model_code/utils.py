@@ -5,7 +5,6 @@ import logging
 import numpy as np
 from model_code.unet import UNetModel
 from model_code import torch_dct
-from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from scipy.ndimage import gaussian_filter
 
 class GaussianBlurNaiveLayer(nn.Module):

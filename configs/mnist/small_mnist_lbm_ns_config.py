@@ -1,4 +1,4 @@
-from configs.mnist import default_mnist_configs
+from configs.mnist import default_lbm_mnist_configs as default_mnist_configs
 import ml_collections
 import numpy as np
 import torch
@@ -52,6 +52,6 @@ def get_config():
     solver.type = 'ns'
     solver.niu = solver.bulk_visc = 0.5 * 1/6
     solver.min_fwd_steps = 1
-    solver.max_fwd_steps = solver.n_denoising_steps = 50
+    solver.max_fwd_steps = solver.n_denoising_steps = 20
     
     return config

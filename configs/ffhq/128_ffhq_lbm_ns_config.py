@@ -25,11 +25,11 @@ def get_default_configs():
     
     training = config.training
     training.n_iters = 1000001
-    training.snapshot_freq = 1000
-    training.snapshot_freq_for_preemption = 1000
+    training.snapshot_freq = 2000
+    training.snapshot_freq_for_preemption = 2000
     training.log_freq = 100
     training.eval_freq = 200
-    training.sampling_freq = 1000
+    training.sampling_freq = 2000
 
 
     turbulence = config.turbulence 
@@ -51,7 +51,7 @@ def get_default_configs():
     solver.n_denoising_steps = solver.max_fwd_steps = 100
 
     
-    debug = True
+    debug = False
     if debug:
         data.processed_filename = 'lbm_ns_pairs_debug' if data.process_pairs else 'lbm_ns_debug'
         data.process_all = False

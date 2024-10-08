@@ -19,7 +19,8 @@ def get_default_configs():
     training.sampling_freq = 1000
     # store additional checkpoints for preemption in cloud computing environments
     training.snapshot_freq_for_preemption = 10000 
-
+    training.n_evals = 25 # 25 batches for test-set evaluation, arbitrary choice
+    
     # sampling
     config.sampling = sampling = ml_collections.ConfigDict()
 
@@ -45,7 +46,6 @@ def get_default_configs():
 
     # model
     config.model = model = ml_collections.ConfigDict()
-    model.K = 100
     model.sigma = 0.01
     model.dropout = 0.1
     model.model_channels = 128  # Base amount of channels in the model
@@ -65,12 +65,6 @@ def get_default_configs():
     model.num_head_channels = -1
     model.num_heads_upsample = -1
     model.skip_rescale = True
-    model.blur_sigma_max = 20
-    model.blur_sigma_min = 0.5
-    model.blur_schedule = np.exp(np.linspace(np.log(model.blur_sigma_min),
-                                             np.log(model.blur_sigma_max), model.K))
-    model.blur_schedule = np.array(
-        [0] + list(model.blur_schedule))  # Add the k=0 timestep
 
     # optimization
     config.optim = optim = ml_collections.ConfigDict()

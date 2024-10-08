@@ -28,3 +28,4 @@ imgui.ini
 *.pyc
 
 test_configs/
+slurm-*

@@ -116,12 +116,14 @@ def train(config_path, workdir):
 
     # draw a sample by destroying some rand images 
     n_denoising_steps = config.solver.n_denoising_steps   
-    initial_sample = sampling.get_initial_corrupted_sample(
+    initial_corrupted_sample, clean_initial_sample = sampling.get_initial_corrupted_sample(
         trainloader, n_denoising_steps, corruptor)
+    
+    utils.save_png(workdir, clean_initial_sample, "clean_init.png")
     
     sampling_fn = sampling.get_sampling_fn_inverse_lbm_ns(
         n_denoising_steps = n_denoising_steps,
-        initial_sample = initial_sample, 
+        initial_sample = initial_corrupted_sample, 
         intermediate_sample_indices=list(range(n_denoising_steps+1)), # assuming n_denoising_steps=3, then intermediate_sample_indices = [0, 1, 2, 3]
         delta=config.model.sigma*1.25, 
         device=config.device)
@@ -139,6 +141,7 @@ def train(config_path, workdir):
             _, batch = datasets.prepare_batch(train_iter, config.device)
             
         except StopIteration:  # Start new epoch if run out of data
+            logging.info(f"New epoch at step={step}.")
             train_iter = iter(trainloader)
             _, batch = datasets.prepare_batch(train_iter, config.device)
         loss, _, _ = train_step_fn(state, batch)
@@ -167,7 +170,7 @@ def train(config_path, workdir):
 
         # Save a checkpoint periodically
         if step != 0 and step % config.training.snapshot_freq == 0 or step == num_train_steps:
-            logging.info(f"Saving a checkpointat step={step}")
+            logging.info(f"Saving a checkpoint at step={step}")
             # Save the checkpoint.
             save_step = step // config.training.snapshot_freq
             utils.save_checkpoint(os.path.join(
@@ -185,8 +188,8 @@ def train(config_path, workdir):
             utils.save_tensor(this_sample_dir, sample, "final.np")
             utils.save_png(this_sample_dir, sample, "final.png")
 
-            if initial_sample != None:
-                utils.save_png(this_sample_dir, initial_sample, "init.png")
+            if initial_corrupted_sample != None:
+                utils.save_png(this_sample_dir, initial_corrupted_sample, "init.png")
 
             utils.save_gif(this_sample_dir, intermediate_samples)
             utils.save_video(this_sample_dir, intermediate_samples)
