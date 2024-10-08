@@ -103,24 +103,64 @@ def blue_noise_spectrum(k, k_peak = 10000, exponent=1.0):
     return (k / k_peak)**exponent * t.exp(-(k - k_peak)**2 / (2 * (k_peak / 5)**2)) 
 
 def blue_noise_spectrum2(k):
-    return k 
+    return k**(1.0 /5.0) #t.exp(t.sqrt(k)) 
 
-def gaussian_spectrum(k, k_peak=10, sigma=2):
-    return t.exp(-(k - k_peak)**2 / (2 * sigma**2))
+def gaussian_spectrum(k, k_peak=0, sigma=1):
+    return t.exp(-(k - k_peak)**2 / (2 * sigma**2))/(2*t.pi*sigma) 
 
+def generate_blue_noise_spectrum_torch(wavenumbers, beta = 2):
+    # Convert list of wavenumbers to a PyTorch tensor
+    wavenumbers_tensor = t.tensor(wavenumbers)
+    
+    
+    # Apply a linear scaling based on wavenumbers
+    blue_noise_spectrum = (1 + wavenumbers_tensor**beta)
+    
+    return blue_noise_spectrum
+
+def generate_linear_increasing_spectrum(k, alpha =  5.0):
+    """
+    Generates a spectrum that increases linearly on a log-log plot.
+    
+    Parameters:
+    - u, v: velocity components (not used directly in this simplified function)
+    - grid_dim: grid dimension (not used directly in this simplified function)
+    - alpha: the exponent to create a linearly increasing spectrum on a log-log plot
+
+    Returns:
+    - k: wavenumbers
+    - spectrum: energy spectrum proportional to k^alpha
+    """
+    # Generate wavenumbers from 1 to 500
+    spectrum = k**alpha  # E(k) = k^alpha for linear increase in log-log plot
+    return spectrum
+
+
+M = 1E-1
 
 # Initialize the SpectralTurbulenceGenerator (assuming it is already defined somewhere)
 # turbulence_generator = SpectralTurbulenceGenerator(
 #     domain_size, grid_size, turb_intensity=0.0001, noise_limiter=(-1E-3, 1E-3), energy_spectrum = lambda k: t.where(t.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0)), frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
 # )
 
+turbulence_generator = SpectralTurbulenceGenerator(
+    domain_size, grid_size, turb_intensity=0.01, noise_limiter=(-M, M), energy_spectrum = generate_linear_increasing_spectrum, frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
+)
+
+# turbulence_generator = SpectralTurbulenceGenerator(
+#     domain_size, grid_size, turb_intensity=0.0001, noise_limiter=(-1E-3, 1E-3), energy_spectrum = gaussian_spectrum, frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
+# )
+
+
 # turbulence_generator = SpectralTurbulenceGenerator(
 #     domain_size, grid_size, turb_intensity=0.0001, noise_limiter=(-1E-3, 1E-3), energy_spectrum = blue_noise_spectrum2, frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
 # )
 
-turbulence_generator = SpectralTurbulenceGenerator(
-    domain_size, grid_size, turb_intensity=0.0001, noise_limiter=(-1E-3, 1E-3), energy_spectrum = blue_noise_spectrum, frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
-)
+# turbulence_generator = SpectralTurbulenceGenerator(
+#     domain_size, grid_size, turb_intensity=0.0001, noise_limiter=(-1E-3, 1E-3), energy_spectrum = generate_blue_noise_spectrum_torch, frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
+# )
+
+
 
 # Generate the turbulent velocity field
 u, v = turbulence_generator.generate_turbulence(time=0.5)
@@ -141,8 +181,8 @@ fig = plt.figure(figsize=(6, 4))
 ax = fig.add_axes([0.2, 0.2, 0.7, 0.7])  # [left, bottom, width, height] as fractions of the figure size
 # Plot the current energy spectrum
 # ax.set_ylim([1E-7, 1E2])
-ax.loglog(k_cpu[1:len(k_cpu) // 2], 
-          energy_spectrum_cpu[1:len(k_cpu) // 2], 
+ax.loglog(k_cpu[1:len(k_cpu) ], 
+          energy_spectrum_cpu[1:len(k_cpu) ], 
           'b>', label='Energy spectrum')
 
 # Add grid and labels
