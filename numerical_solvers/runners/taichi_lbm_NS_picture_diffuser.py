@@ -59,9 +59,12 @@ np_gray_image = normalize_grayscale_image_range(np_gray_image, 1. - drho, 1. + d
 # %% run sovler
 
              
-# ti.init(arch=ti.gpu)
-ti.init(arch=ti.cpu)
-ti_float_precision = ti.f64
+is_gpu_avail = torch.cuda.is_available()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+ti.init(arch=ti.gpu) if torch.cuda.is_available() else ti.init(arch=ti.cpu)
+print(f"device = {device}")
+ti_float_precision = ti.f32
+
   
 if __name__ == '__main__':    
 
@@ -83,7 +86,8 @@ if __name__ == '__main__':
         turb_intensity, noise_limiter,
         energy_spectrum=energy_spectrum, frequency_range=frequency_range, 
         dt_turb=dt_turb, 
-        is_div_free = False)
+        is_div_free = False
+        device=device)
     
     
     niu = 0.5 * 1./6
@@ -101,7 +105,7 @@ if __name__ == '__main__':
     ######################################################################################################### TODO Code with Michal's renderer
 
 
-    # solver.init(1.*np.ones(grid_size, dtype=np.float32))
+    solver.init(1.*np.ones(grid_size, dtype=np.float32))
     # solver.create_ic_hill(.5, 1E-2, int(0.5*grid_size[0]), int(0.5*grid_size[1])) 
     # solver.create_ic_hill(.05, 1E-3, int(0.25*grid_size[0]), int(0.25*grid_size[1]))
     # solver.create_ic_hill(-.05, 1E-3,int(0.75*grid_size[0]), int(0.75*grid_size[1]))
