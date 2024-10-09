@@ -36,8 +36,6 @@ def get_sampling_fn_inverse_lbm_ns(
             #         1
 
             for i in range(n_denoising_steps, 0, -1):
-                # vec_fwd_steps = vec_fwd_steps * (float(max_noise_level) * float(i)/float(n_denoising_steps))
-                
                 # we assume max_noise_level=n_denoising_steps
                 vec_fwd_steps = torch.ones(initial_sample.shape[0], device=device, dtype=torch.long) * i
                 # Predict less blurry img
@@ -48,7 +46,7 @@ def get_sampling_fn_inverse_lbm_ns(
                     noise = noises[i-1]
                 else:
                     noise = torch.randn_like(u)
-                u = u_pred + noise*delta #TODO: do we need Gaussian noise here? Or shall do a kind of destruction-step with numerical solver
+                u = u_pred + noise*delta
 
                 # Save trajectory
                 if intermediate_sample_indices != None and i-1 in intermediate_sample_indices:
@@ -162,18 +160,19 @@ def get_initial_sample(config, forward_heat_module, delta, batch_size=None):
     return initial_sample, original_images
 
 
-def get_initial_corrupted_sample(dataset_config, corruption_amount, solver: BaseCorruptor, batch_size=None):
+def get_initial_corrupted_sample(trainloader, corruption_amount, solver: BaseCorruptor, batch_size=None):
     """Take a draw from the prior p(u_K)"""
-    trainloader, _ = datasets.get_dataset(
-        dataset_config, 
-        uniform_dequantization=dataset_config.data.uniform_dequantization,
-        train_batch_size=batch_size)
+    # trainloader, _ = datasets.get_dataset(
+    #     dataset_config, 
+    #     uniform_dequantization=dataset_config.data.uniform_dequantization,
+    #     train_batch_size=batch_size)
 
-    initial_sample, _ = datasets.prepare_batch(iter(trainloader), 'cpu')
-    noisy_sample = torch.empty_like(initial_sample)
+    original_images, _ = datasets.prepare_batch(iter(trainloader), 'cpu')
+
+    noisy_initial_images = torch.empty_like(original_images)
   
-    for index in range(initial_sample.shape[0]):
-        tmp, _ = solver._corrupt(initial_sample[index], corruption_amount)
-        noisy_sample[index] = tmp
+    for index in range(original_images.shape[0]):
+        tmp, _ = solver._corrupt(original_images[index], corruption_amount)
+        noisy_initial_images[index] = tmp
         
-    return noisy_sample
+    return noisy_initial_images, original_images

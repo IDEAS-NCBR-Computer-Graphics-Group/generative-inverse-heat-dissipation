@@ -17,12 +17,12 @@ class LBM_ADE_Corruptor(LBM_Base_Corruptor):
         
         grid_size = (config.data.image_size, config.data.image_size)
         spectralTurbulenceGenerator = SpectralTurbulenceGenerator(
-            config.solver.domain_size, grid_size, 
-            config.solver.turb_intensity, config.solver.noise_limiter,
-            energy_spectrum=config.solver.energy_spectrum, 
-            frequency_range={'k_min': config.solver.k_min, 'k_max': config.solver.k_max}, 
-            dt_turb=config.solver.dt_turb, 
-            is_div_free=config.solver.is_divergence_free
+            config.turbulence.domain_size, grid_size, 
+            config.turbulence.turb_intensity, config.turbulence.noise_limiter,
+            energy_spectrum=config.turbulence.energy_spectrum, 
+            frequency_range={'k_min': config.turbulence.k_min, 'k_max': config.turbulence.k_max}, 
+            dt_turb=config.turbulence.dt_turb, 
+            is_div_free=config.turbulence.is_divergence_free
         )
         
         # LBM NS Solver setup        

@@ -97,7 +97,7 @@ class GaussianBlurringCorruptor(BaseCorruptor):
 
         dataset_length = len(initial_dataset)
         if not process_all:
-            dataset_length = 500  # Process just a bit 
+            dataset_length = 256  # Process just a bit 
         
         for index in range(dataset_length):
             if index % 100 == 0:

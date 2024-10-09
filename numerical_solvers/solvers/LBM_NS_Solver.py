@@ -45,9 +45,10 @@ class LBM_NS_Solver(LBM_SolverBase):
             self.iterations_counter = self.iterations_counter +1
             # print(f"iterations: {iteration}")
             
-            if self.iterations_counter % 10 == 0:
-                print(f"iterations: {self.iterations_counter}")
-                            
+            # if self.iterations_counter % 10 == 0:
+            #     print(f"iterations: {self.iterations_counter}")
+            
+        print(f"Solver run for iterations: {self.iterations_counter}")                    
 
                
         # periodic wip

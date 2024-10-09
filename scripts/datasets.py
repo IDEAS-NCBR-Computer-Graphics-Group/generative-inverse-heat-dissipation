@@ -46,8 +46,8 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         output_data_dir = os.path.join(input_data_dir, dataset_name)
         save_dir = os.path.join(output_data_dir, f'{config.data.processed_filename}_{solver_hash}')
         corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
-        config=config,                                
-        transform=config.data.transform
+            config=config,
+            transform=config.data.transform
         )
     
     transform = [transforms.Resize(config.data.image_size),
@@ -71,10 +71,6 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
             root="data", train=False, download=True, transform=transform)
         if getattr(config, 'solver'):
             start = timer()
-            corruptor = AVAILABLE_CORRUPTORS[config.solver.type](
-                config=config,                                
-                transform=config.data.transform
-            )
             logging.info("Corruption on train split")
             corruptor._preprocess_and_save_data(
                 initial_dataset=training_data,
@@ -136,20 +132,13 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         corruptor._preprocess_and_save_data(
             initial_dataset=trainloader.dataset,
             save_dir=save_dir,
-            process_all=False,
+            process_all=config.data.process_all,
             is_train_dataset=True,
             process_pairs=config.data.process_pairs,
             process_images=True
             )
         logging.info("Fluid corruption on test split")
-        corruptor._preprocess_and_save_data(
-            initial_dataset=testloader.dataset,
-            save_dir=save_dir,
-            is_train_dataset=False,
-            process_all=False,
-            process_pairs=config.data.process_pairs,
-            process_images=True
-            )    
+        corruptor.copy_train_dataset_as_test_dataset(save_dir)
         end = timer()
         logging.info(f"Fluid corruption took {end - start:.2f} seconds")
         transform = [

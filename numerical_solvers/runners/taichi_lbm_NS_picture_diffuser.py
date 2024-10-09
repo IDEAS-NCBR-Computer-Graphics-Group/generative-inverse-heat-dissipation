@@ -34,10 +34,11 @@ from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
 
 # img_path = './numerical_solvers/runners/mnist-2.png'
 img_path = './numerical_solvers/runners/cat_256x256.jpg'
-
+# img_path = './numerical_solvers/runners/cat_768x768.jpg'
 target_size=None
 # target_size=(512, 512)
-target_size = (256, 256)
+# target_size = (256, 256)
+target_size = (128, 128)
 # target_size = (64, 64)
 # target_size = (28, 28)
 # target_size = None
@@ -58,15 +59,15 @@ np_gray_image = normalize_grayscale_image_range(np_gray_image, 1. - drho, 1. + d
 # %% run sovler
 
              
-ti.init(arch=ti.gpu)
-# ti.init(arch=ti.cpu)
+# ti.init(arch=ti.gpu)
+ti.init(arch=ti.cpu)
 ti_float_precision = ti.f64
   
 if __name__ == '__main__':    
 
     domain_size = (1.0, 1.0)
     grid_size = np_gray_image.shape
-    turb_intensity = 1E-4
+    turb_intensity = 0* 1E-4
     noise_limiter = (-1E-3, 1E-3)
     dt_turb = 1E-3 
 
@@ -85,7 +86,7 @@ if __name__ == '__main__':
         is_div_free = False)
     
     
-    niu = 1E-0 * 1./6
+    niu = 0.5 * 1./6
     bulk_visc = niu
     
     solver = LBM_NS_Solver(
@@ -105,28 +106,32 @@ if __name__ == '__main__':
     # solver.create_ic_hill(.05, 1E-3, int(0.25*grid_size[0]), int(0.25*grid_size[1]))
     # solver.create_ic_hill(-.05, 1E-3,int(0.75*grid_size[0]), int(0.75*grid_size[1]))
     
-    # for i in range(3):
-    #     subiterations = 100
-    #     solver.solve(subiterations)
-    #     rho_cpu = solver.rho.to_numpy()
+    
+    os.makedirs("output", exist_ok=True)
+    matplotlib.use('TkAgg')
+    for i in range(20):
+        subiterations = 10
+        solver.solve(subiterations)
+        rho_cpu = solver.rho.to_numpy()
 
-    #     os.makedirs("output", exist_ok=True)
-    #     matplotlib.use('TkAgg')
-    #     plt.imshow(rho_cpu, vmin=np_gray_image.min(), vmax=np_gray_image.max(), cmap="gist_gray", interpolation='none') 
-    #     plt.colorbar()
-    #     ax = plt.gca()
-    #     ax.set_xlim([0, nx])
-    #     ax.set_ylim([0, ny])
-    #     plt.grid()
-    #     plt.title(f'After {(i+1)*subiterations} iterations')
-    #     plt.show()
-    #     cv2.imwrite(f'output/{case_name}_at_{i*subiterations}.jpg', rho_cpu)
+        plt.imshow(rho_cpu, vmin=np_gray_image.min(), vmax=np_gray_image.max(), cmap="gist_gray", interpolation='none') 
+        plt.colorbar()
+        ax = plt.gca()
+        ax.set_xlim([0, grid_size[0]])
+        ax.set_ylim([0, grid_size[1]])
+        plt.grid()
+        plt.title(f'After {(i+1)*subiterations} iterations')
+        plt.savefig(f'output/rho_at_{i*subiterations}.jpg')  # Save with Matplotlib
+        plt.close()
+        # plt.show()
+        
+        # cv2.imwrite(f'output/rho_at_{i*subiterations}.jpg', rho_cpu)
 
     
     #########################33 TODO back standard renderer with multiple subwindows
 
 
-    run_with_gui(solver, np_gray_image, iter_per_frame = 10)
+    # run_with_gui(solver, np_gray_image, iter_per_frame = 1)
 
 
 
