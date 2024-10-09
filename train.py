@@ -13,8 +13,9 @@ from absl import app
 from absl import flags
 from ml_collections.config_flags import config_flags
 
-FLAGS = flags.FLAGS
+from scripts.utils import setup_logging
 
+FLAGS = flags.FLAGS
 config_flags.DEFINE_config_file(
     "config", None, "Training configuration.", lock_config=True)
 flags.DEFINE_string("workdir", None, "Work directory.")
@@ -36,8 +37,14 @@ def train(config, workdir):
                     contains checkpoint training will be resumed from the latest checkpoint.
     """
 
+    # Initial logging setup
+    logging.basicConfig(level=logging.DEBUG)
+    
+    # Setup logging once the workdir is known
+    setup_logging(workdir)
+    
     if config.device == torch.device('cpu'):
-        logging.info("RUNNING ON CPU")
+        logging.warning("RUNNING ON CPU")
 
     # Create directory for saving intermediate samples
     sample_dir = os.path.join(workdir, "samples")
@@ -49,6 +56,9 @@ def train(config, workdir):
 
     # Initialize model
     model = mutils.create_model(config)
+    logging.info(f"No of network parameters: {sum([p.numel() for p in model.parameters()])}")
+    # logging.info(f"NN architecture:\n{model}")
+    
     optimizer = losses.get_optimizer(config, model.parameters())
     ema = ExponentialMovingAverage(
         model.parameters(), decay=config.model.ema_rate)
@@ -89,7 +99,10 @@ def train(config, workdir):
 
     # Building sampling functions
     delta = config.model.sigma*1.25 # std deviation of the sampling noise
-    initial_sample, _ = sampling.get_initial_sample(config, heat_forward_module, delta)
+    initial_sample, original_images = sampling.get_initial_sample(config, heat_forward_module, delta)
+    
+    utils.save_png(workdir, original_images, "clean_init.png")
+    
     sampling_fn = sampling.get_sampling_fn_inverse_heat(
         config, initial_sample, 
         intermediate_sample_indices=list(range(config.model.K+1)),
@@ -107,7 +120,7 @@ def train(config, workdir):
         try:
             batch = next(train_iter)[0].to(config.device).float()
         except StopIteration:  # Start new epoch if run out of data
-            print(f"new epoch {step}")
+            logging.info(f"New epoch at step={step}.")
             train_iter = iter(trainloader)
             batch = next(train_iter)[0].to(config.device).float()
         loss, losses_batch, fwd_steps_batch = train_step_fn(state, batch)
@@ -116,12 +129,12 @@ def train(config, workdir):
 
         # Save a temporary checkpoint to resume training if training is stopped
         if step != 0 and step % config.training.snapshot_freq_for_preemption == 0:
-            logging.info("Saving temporary checkpoint")
+            logging.info(f"Saving temporary checkpoint at step={step}.")
             utils.save_checkpoint(checkpoint_meta_dir, state)
 
         # Report the loss on an evaluation dataset periodically
         if step % config.training.eval_freq == 0:
-            logging.info("Starting evaluation")
+            logging.info(f"Starting evaluation on test dataset at step={step}.")
             # Use 25 batches for test-set evaluation, arbitrary choice
             N_evals = 25
             for i in range(N_evals):
@@ -136,7 +149,7 @@ def train(config, workdir):
 
         # Save a checkpoint periodically
         if step != 0 and step % config.training.snapshot_freq == 0 or step == num_train_steps:
-            logging.info("Saving a checkpoint")
+            logging.info(f"Saving a checkpoint at step={step}")
             # Save the checkpoint.
             save_step = step // config.training.snapshot_freq
             utils.save_checkpoint(os.path.join(
@@ -144,7 +157,7 @@ def train(config, workdir):
 
         # Generate samples periodically
         if step != 0 and step % config.training.sampling_freq == 0 or step == num_train_steps:
-            logging.info("Sampling...")
+            logging.info(f"Sampling at step={step}...")
             ema.store(model.parameters())
             ema.copy_to(model.parameters())
             sample, n, intermediate_samples = sampling_fn(model_evaluation_fn)

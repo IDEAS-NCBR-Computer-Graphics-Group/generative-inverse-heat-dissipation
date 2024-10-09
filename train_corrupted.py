@@ -19,7 +19,7 @@ from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
 from numerical_solvers.data_holders.LBM_ADE_Corruptor import LBM_ADE_Corruptor
 from numerical_solvers.data_holders.GaussianBlurringCorruptor import GaussianBlurringCorruptor
 from numerical_solvers.data_holders.DCTBlurringCorruptor import DCTBlurringCorruptor
-
+from numerical_solvers.data_holders.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
 
 from torchvision import transforms
 from scripts.git_utils import get_git_branch, get_git_revision_hash, get_git_revision_short_hash
@@ -109,36 +109,24 @@ def train(config_path, workdir):
 
     # Building sampling functions
     # Get the forward process definition
-    if config.solver.type == 'ns':
-        corruptor = LBM_NS_Corruptor(
-            config,                                
-            transform=transforms.Compose([transforms.ToTensor()]))
-    elif config.solver.type == 'ade':
-        corruptor = LBM_ADE_Corruptor(
-            config, 
-            transform=transforms.Compose([transforms.ToTensor()]))        
-    elif config.solver.type == 'gaussian_blurr':
-        corruptor = GaussianBlurringCorruptor(
-            config, 
-            transform=transforms.Compose([transforms.ToTensor()]))    
-    elif config.solver.type == 'dct':
-        corruptor = DCTBlurringCorruptor(
-            config, 
-            transform=transforms.Compose([transforms.ToTensor()]))
-    else:
-        raise ValueError(f"Invalid solver type in config'")
-    
-    # draw a sample by destroying some rand images
-    delta = config.model.sigma*1.25
+    corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
+        config=config,
+        transform=config.data.transform
+    )
+
+    # draw a sample by destroying some rand images 
     n_denoising_steps = config.solver.n_denoising_steps   
-    initial_sample = sampling.get_initial_corrupted_sample(
-        config, n_denoising_steps, corruptor)
+    initial_corrupted_sample, clean_initial_sample = sampling.get_initial_corrupted_sample(
+        trainloader, n_denoising_steps, corruptor)
+    
+    utils.save_png(workdir, clean_initial_sample, "clean_init.png")
     
     sampling_fn = sampling.get_sampling_fn_inverse_lbm_ns(
         n_denoising_steps = n_denoising_steps,
-        initial_sample = initial_sample, 
+        initial_sample = initial_corrupted_sample, 
         intermediate_sample_indices=list(range(n_denoising_steps+1)), # assuming n_denoising_steps=3, then intermediate_sample_indices = [0, 1, 2, 3]
-        delta=delta, device=config.device)
+        delta=config.model.sigma*1.25, 
+        device=config.device)
 
     num_train_steps = config.training.n_iters
     logging.info("Starting training loop at step %d." % (initial_step,))
@@ -150,14 +138,11 @@ def train(config_path, workdir):
     for step in range(initial_step, num_train_steps + 1):
         # Train step
         try:
-            # batch = next(train_iter)[0].to(config.device).float()
-            # _, batch = next(train_iter).to(config.device).float() # not that easy if batch has mutltiple elements
-            # x, (y, pre_y, corruption_amount, labels) = next(train_iter)
             _, batch = datasets.prepare_batch(train_iter, config.device)
             
         except StopIteration:  # Start new epoch if run out of data
+            logging.info(f"New epoch at step={step}.")
             train_iter = iter(trainloader)
-            # batch = next(train_iter)[0].to(config.device).float()
             _, batch = datasets.prepare_batch(train_iter, config.device)
         loss, _, _ = train_step_fn(state, batch)
 
@@ -165,15 +150,14 @@ def train(config_path, workdir):
 
         # Save a temporary checkpoint to resume training if training is stopped
         if step != 0 and step % config.training.snapshot_freq_for_preemption == 0:
-            logging.info("Saving temporary checkpoint")
+            logging.info(f"Saving temporary checkpoint at step={step}.")
             utils.save_checkpoint(checkpoint_meta_dir, state)
 
         # Report the loss on an evaluation dataset periodically
         if step % config.training.eval_freq == 0:
-            logging.info("Starting evaluation")
-            # Use 25 batches for test-set evaluation, arbitrary choice
-            N_evals = 25
-            for i in range(N_evals):
+            logging.info(f"Starting evaluation on test dataset at step={step}.")
+            # Use training.n_evals of batches for test-set evaluation, arbitrary choice
+            for i in range(config.training.n_evals):
                 try:
                     # eval_batch = next(eval_iter)[0].to(config.device).float()
                     _, eval_batch = datasets.prepare_batch(eval_iter, config.device)
@@ -186,7 +170,7 @@ def train(config_path, workdir):
 
         # Save a checkpoint periodically
         if step != 0 and step % config.training.snapshot_freq == 0 or step == num_train_steps:
-            logging.info("Saving a checkpoint")
+            logging.info(f"Saving a checkpoint at step={step}")
             # Save the checkpoint.
             save_step = step // config.training.snapshot_freq
             utils.save_checkpoint(os.path.join(
@@ -194,7 +178,7 @@ def train(config_path, workdir):
 
         # Generate samples periodically
         if step != 0 and step % config.training.sampling_freq == 0 or step == num_train_steps:
-            logging.info("Sampling...")
+            logging.info(f"Sampling at step={step}...")
             ema.store(model.parameters())
             ema.copy_to(model.parameters())
             sample, n, intermediate_samples = sampling_fn(model_evaluation_fn)
@@ -204,8 +188,8 @@ def train(config_path, workdir):
             utils.save_tensor(this_sample_dir, sample, "final.np")
             utils.save_png(this_sample_dir, sample, "final.png")
 
-            if initial_sample != None:
-                utils.save_png(this_sample_dir, initial_sample, "init.png")
+            if initial_corrupted_sample != None:
+                utils.save_png(this_sample_dir, initial_corrupted_sample, "init.png")
 
             utils.save_gif(this_sample_dir, intermediate_samples)
             utils.save_video(this_sample_dir, intermediate_samples)

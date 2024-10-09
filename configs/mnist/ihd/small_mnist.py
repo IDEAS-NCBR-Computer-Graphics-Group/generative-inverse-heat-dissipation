@@ -1,4 +1,4 @@
-from configs.mnist import default_mnist_configs
+from configs.mnist.ihd import default_mnist_configs
 import numpy as np
 
 
@@ -16,8 +16,8 @@ def get_config():
     model.blur_schedule = np.array([0] + list(model.blur_schedule))  # Add the k=0 timestep
     
     
-    config.training.n_iters = 1001
+    config.training.n_iters = 10001
     config.training.snapshot_freq = 1000
-    config.training.snapshot_freq_for_preemption = 100
-    config.training.sampling_freq = 100
+    config.training.snapshot_freq_for_preemption = 500
+    config.training.sampling_freq = 500
     return config

@@ -17,6 +17,12 @@ import importlib.util
 
 from ml_collections.config_dict import ConfigDict
 
+# def format_logger(formatter):
+#     # Set up console logging
+#     console = logging.StreamHandler()
+#     console.setLevel(logging.INFO)
+#     console.setFormatter(formatter)
+    
 def setup_logging(workdir):
     # Set up file logging after workdir is available
     os.makedirs(workdir, exist_ok=True)

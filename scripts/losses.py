@@ -91,9 +91,8 @@ def get_inverse_heat_loss_fn(config, train, scales, device, heat_forward_module)
     return loss_fn
 
 
-def get_inverse_lbm_ns_loss_fn(train):
-    # sigma = config.model.sigma # TODO: fix variance in STG
-    sigma = 0.01
+def get_inverse_lbm_ns_loss_fn(train, sigma):
+    sigma = sigma
 
     def loss_fn(model, batch):
         model_fn = mutils.get_model_fn(model, train=train)  # get train/eval model
@@ -122,7 +121,7 @@ def get_step_lbm_fn(train, config,
     if device == None:
         device = config.device
 
-    loss_fn = get_inverse_lbm_ns_loss_fn(train)
+    loss_fn = get_inverse_lbm_ns_loss_fn(train, config.model.sigma)
     
     # For automatic mixed precision
     # scaler = torch.cuda.amp.GradScaler()
