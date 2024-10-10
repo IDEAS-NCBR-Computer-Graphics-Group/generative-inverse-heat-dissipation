@@ -36,7 +36,7 @@ def compute_kolmogorov_spectrum(u, Lx):
     u_hat = t.fft.fft(u)
 
     # Compute the energy spectrum as the sum of the squared magnitudes of the Fourier coefficients
-    energy_spectrum = t.abs(u_hat)**2 
+    energy_spectrum = t.abs(u_hat) 
 
     # Average the energy spectrum over one dimension (e.g., the y-dimension)
     # energy_spectrum = t.mean(energy_spectrum, axis=0)
@@ -49,9 +49,9 @@ def compute_kolmogorov_spectrum(u, Lx):
     k_sorted = kx[idx]
     energy_spectrum_sorted = energy_spectrum[idx]
     
-    return kx, energy_spectrum
+    # return kx, energy_spectrum
 
-    # return k_sorted, energy_spectrum_sorted
+    return k_sorted, energy_spectrum_sorted
 
 
 
@@ -84,8 +84,8 @@ class SpectralTurbulenceGenerator1D(t.nn.Module):
         self.frequency_range = frequency_range if frequency_range else {'k_min': 2.0 * t.pi / domain_size, 'k_max': 2.0 * t.pi / (domain_size / 20)}
 
         # Fourier transform wave numbers
-        self.kx = (t.fft.fftfreq(self.Nx, d=self.Lx/self.Nx) * 2 * t.pi).to(device)
-        self.K = t.abs(self.kx).to(device)
+        self.kx = (t.fft.fftfreq(self.Nx, d=self.Lx/self.Nx)).to(device)
+        self.K = t.abs(self.kx).to(device) 
 
         # Initialize the phase once and use it in each run
         self.phase_u = (t.rand(self.Nx) * 2 * t.pi).to(device)
@@ -135,7 +135,9 @@ class SpectralTurbulenceGenerator1D(t.nn.Module):
         - u: 1D array of x-velocity fluctuations (Nx,)
         """
 
-        u_hat = self.turb_intensity * self.amplitude * t.exp(1j * (self.phase_u + self.omega * time))
+        u_hat = self.turb_intensity * self.amplitude * t.exp(1j * (0*self.phase_u   + self.omega * time))
+        # u_hat = self.turb_intensity * self.amplitude * t.exp(1j * (time))
+        
         u = t.real(t.fft.ifft(u_hat))
 
         if self.turb_intensity < 1E-14:
@@ -151,13 +153,11 @@ class SpectralTurbulenceGenerator1D(t.nn.Module):
         
         return u.float()  # equivalent of self.to(torch.float32)
 
-
-
 def plot_v_component_distribution(v_data, title):
     # Ensure the data is a 1D array
     v_data = v_data.reshape(-1).cpu()  # Flatten the data
 
-    num_bins = 32
+    num_bins = 256
     counts, bins = np.histogram(v_data, bins=num_bins, density=True) 
 
     bin_widths = np.diff(bins)
@@ -189,7 +189,7 @@ def plot_v_component_distribution(v_data, title):
     return fig, mu, sigma**2, integral # Return mean, variance along with the plot
 
 
-def generate_linear_increasing_spectrum(k, alpha =  2.0, c = 1.0):
+def generate_linear_increasing_spectrum(k, alpha =  -2.0, c = 1.0):
     """
     Generates a spectrum that increases linearly on a log-log plot.
     
@@ -203,7 +203,7 @@ def generate_linear_increasing_spectrum(k, alpha =  2.0, c = 1.0):
     - spectrum: energy spectrum proportional to k^alpha
     """
     # Generate wavenumbers from 1 to 500
-    spectrum = c*k**alpha  # E(k) = k^alpha for linear increase in log-log plot
+    spectrum = c * k ** alpha  # E(k) = k^alpha for linear increase in log-log plot
     return spectrum
 
 
@@ -214,35 +214,57 @@ M = 1E6
 #     domain_size, grid_size, turb_intensity=0.0001, noise_limiter=(-1E-3, 1E-3), energy_spectrum = lambda k: t.where(t.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0)), frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
 # )
 domain_size = 1.0
-grid_size = 256
+grid_size = 256**2
+slope = -2.
+# my_energy_spectrum = lambda k: t.where(t.isinf(k ** (slope)), 0, k ** (slope))
+# my_frequency_range = {'k_min': 1E-6,'k_max': 1E6}
+    
+# turbulence_generator = SpectralTurbulenceGenerator1D(
+#     domain_size, grid_size, turb_intensity=0.01, 
+#     noise_limiter=(-M, M), 
+#     energy_spectrum = my_energy_spectrum, 
+#     frequency_range= my_frequency_range
+# )
 
+turb_intensity=0.0001
 
 # Initialize the 1D turbulence generator
 turbulence_generator = SpectralTurbulenceGenerator1D(
-    domain_size, grid_size, turb_intensity=0.01, noise_limiter=(-M, M), 
+    domain_size, grid_size, turb_intensity, noise_limiter=(-M, M), 
     energy_spectrum=generate_linear_increasing_spectrum, 
     frequency_range={'k_min': 1E-6, 'k_max': 1E6}
 )
 
 # Generate the turbulent velocity field (1D)
-u = turbulence_generator.generate_turbulence(time=0.5)
+u = turbulence_generator.generate_turbulence(time=t.pi)
 
 # Calculate the Kolmogorov spectrum
-k, energy_spectrum = compute_kolmogorov_spectrum(u, 1.0)  # Removed v from the input
-k_cpu = k.cpu()
-energy_spectrum_cpu = energy_spectrum.cpu()
+k, energy_spectrum = compute_kolmogorov_spectrum(u, 1.0) 
+k_cpu = k.cpu()[::40]
+energy_spectrum_cpu = energy_spectrum.cpu()[::40]
 
-# Plot the energy spectrum
-fig = plt.figure(figsize=(6, 4))
+# Create the plot
+fig = plt.figure(figsize=(6, 6))
 ax = fig.add_axes([0.2, 0.2, 0.7, 0.7])  # [left, bottom, width, height] as fractions of the figure size
 
-ax.loglog(k_cpu, energy_spectrum_cpu, 'b>', label='Energy spectrum')
+# Plot the energy spectrum
+ax.loglog(k_cpu, energy_spectrum_cpu, 'b>', label='Energy Spectrum')
 
-# Add grid and labels
-ax.grid(True, which="both", ls="--")
-ax.set_xlabel(r"Wavenumber $k$")
-ax.set_ylabel(r"Energy Spectrum $E(k)$")
+# Plot the slope line for reference
+k_ref = k_cpu
+E_ref = k_ref ** (slope)
+E_ref *= energy_spectrum_cpu[10] / E_ref[0]  # Normalize reference line
+ax.loglog(k_ref, E_ref, 'r--', label=f'Slope: {slope:.2f}')
+
+# Adding labels and legend
+ax.set_xlabel('Wavenumber (k)')
+ax.set_ylabel('Energy Spectrum (E)')
 ax.legend()
+
+# Show the plot
+plt.title('Energy Spectrum and Reference Slope')
+plt.grid(True)
+plt.show()
 
 # Plot the distribution for the u-component
 u = u.flatten()
@@ -256,4 +278,3 @@ u_fig, u_mean, u_variance, u_integral = plot_v_component_distribution(u, "u-comp
 print("U-component Mean:", u_mean)
 print("U-component Variance:", u_variance)
 print("U-component Integral:", u_integral)
-

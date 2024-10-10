@@ -57,6 +57,47 @@ def compute_kolmogorov_spectrum(u, v, Lx, Ly):
 
     return k_sorted, energy_spectrum_sorted
 
+
+
+def compute_kolmogorov_spectrum_flat(u, v, Lx, Ly):
+    """
+    Compute and plot the Kolmogorov spectrum using the straightforward energy spectrum calculation.
+
+    Args:
+        u: 2D array of x-velocity fluctuations.
+        v: 2D array of y-velocity fluctuations.
+        Lx: Length of the domain in the x-direction.
+        Ly: Length of the domain in the y-direction.
+
+    Returns:
+        k: 1D array of wavenumbers.
+        energy_spectrum: 1D array of energy spectrum values.
+    """
+    # Grid dimensions
+    # Nx, Ny = u.shape
+    Nx = u.shape[0]
+    # Compute the 2D Fourier transforms of the velocity fields
+    u_hat = t.fft.fft(u)
+    # v_hat = t.fft.fft2(v)
+
+    # Compute the energy spectrum as the sum of the squared magnitudes of the Fourier coefficients
+    energy_spectrum = t.abs(u_hat)#+ t.abs(v_hat)**2
+
+    # Average the energy spectrum over one dimension (e.g., the y-dimension)
+    # energy_spectrum = t.mean(energy_spectrum, axis=0)
+
+    # Corresponding wavenumbers
+    kx = t.fft.fftfreq(Nx, d=Lx/Nx) * 2 * t.pi
+    # ky = t.fft.fftfreq(Ny, d=Ly/Ny) * 2 * t.pi
+    k = t.sqrt(kx**2 )
+
+    # Sort the spectrum by wavenumber
+    idx = t.argsort(k)
+    k_sorted = k[idx]
+    energy_spectrum_sorted = energy_spectrum[idx]
+
+    return k_sorted, energy_spectrum_sorted
+
 def plot_v_component_distribution(v_data, title):
     # Ensure the data is a 1D array
     v_data = v_data.reshape(-1).cpu()  # Flatten the data
@@ -118,7 +159,7 @@ def generate_blue_noise_spectrum_torch(wavenumbers, beta = 2):
     
     return blue_noise_spectrum
 
-def generate_linear_increasing_spectrum(k, alpha =  1.0, c = 10000):
+def generate_linear_increasing_spectrum(k, alpha =  -2.0, c = 1.0):
     """
     Generates a spectrum that increases linearly on a log-log plot.
     
@@ -136,7 +177,7 @@ def generate_linear_increasing_spectrum(k, alpha =  1.0, c = 10000):
     return spectrum
 
 
-M = 1E-1
+M = 1E4
 
 # Initialize the SpectralTurbulenceGenerator (assuming it is already defined somewhere)
 # turbulence_generator = SpectralTurbulenceGenerator(
@@ -156,6 +197,9 @@ turbulence_generator = SpectralTurbulenceGenerator(
 #     domain_size, grid_size, turb_intensity=0.01, noise_limiter=(-M, M), energy_spectrum = blue_noise_spectrum2, frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
 # )
 
+
+
+
 # turbulence_generator = SpectralTurbulenceGenerator(
 #     domain_size, grid_size, turb_intensity=0.0001, noise_limiter=(-1E-3, 1E-3), energy_spectrum = generate_blue_noise_spectrum_torch, frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
 # )
@@ -170,7 +214,8 @@ u, v = turbulence_generator.generate_turbulence(time=0.5)
 # u = np.random.normal(mean, std_dev, size=(Ny, Nx))
 # v = np.random.normal(mean, std_dev, size=(Ny, Nx))
 
-k, energy_spectrum = compute_kolmogorov_spectrum(u, v, 1, 1)
+# k, energy_spectrum = compute_kolmogorov_spectrum(u, v, 1, 1)
+k, energy_spectrum = compute_kolmogorov_spectrum_flat(u.flatten(), v, 1, 1)
 
 k_cpu = k.cpu()
 energy_spectrum_cpu = energy_spectrum.cpu()
@@ -181,8 +226,8 @@ fig = plt.figure(figsize=(6, 4))
 ax = fig.add_axes([0.2, 0.2, 0.7, 0.7])  # [left, bottom, width, height] as fractions of the figure size
 # Plot the current energy spectrum
 # ax.set_ylim([1E-7, 1E2])
-ax.loglog(k_cpu[1:len(k_cpu) ], 
-          energy_spectrum_cpu[1:len(k_cpu) ], 
+ax.loglog(k_cpu[1:len(k_cpu)//2 ], 
+          energy_spectrum_cpu[1:len(k_cpu) //2], 
           'b>', label='Energy spectrum')
 
 # Add grid and labels
