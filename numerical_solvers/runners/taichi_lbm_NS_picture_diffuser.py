@@ -33,12 +33,12 @@ from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
 # https://github.com/taichi-dev/image-processing-with-taichi/blob/main/image_transpose.py
 
 # img_path = './numerical_solvers/runners/mnist-2.png'
-img_path = './numerical_solvers/runners/cat_256x256.jpg'
-# img_path = './numerical_solvers/runners/cat_768x768.jpg'
+# img_path = './numerical_solvers/runners/cat_256x256.jpg'
+img_path = './numerical_solvers/runners/cat_768x768.jpg'
 target_size=None
 # target_size=(512, 512)
 # target_size = (256, 256)
-target_size = (128, 128)
+# target_size = (128, 128)
 # target_size = (64, 64)
 # target_size = (28, 28)
 # target_size = None
@@ -59,8 +59,8 @@ np_gray_image = normalize_grayscale_image_range(np_gray_image, 1. - drho, 1. + d
 # %% run sovler
 
              
-# ti.init(arch=ti.gpu)
-ti.init(arch=ti.cpu)
+ti.init(arch=ti.gpu)
+# ti.init(arch=ti.cpu)
 ti_float_precision = ti.f64
   
 if __name__ == '__main__':    
@@ -86,7 +86,8 @@ if __name__ == '__main__':
         is_div_free = False)
     
     
-    niu = 0.5 * 1./6
+    # niu = 0.00001 * 1./6
+    niu = 1./6
     bulk_visc = niu
     
     solver = LBM_NS_Solver(
@@ -101,27 +102,32 @@ if __name__ == '__main__':
     ######################################################################################################### TODO Code with Michal's renderer
 
 
-    # solver.init(1.*np.ones(grid_size, dtype=np.float32))
+    solver.init(1.*np.ones(grid_size, dtype=np.float32))
+    
+    solver.create_ic_hill(.9, 1E-2, int(0.5*grid_size[0]), int(0.*grid_size[1]))
+    
+    
     # solver.create_ic_hill(.5, 1E-2, int(0.5*grid_size[0]), int(0.5*grid_size[1])) 
     # solver.create_ic_hill(.05, 1E-3, int(0.25*grid_size[0]), int(0.25*grid_size[1]))
     # solver.create_ic_hill(-.05, 1E-3,int(0.75*grid_size[0]), int(0.75*grid_size[1]))
     
     
-    os.makedirs("output", exist_ok=True)
+    output_dir = "output_dp09_nu1by6"
+    os.makedirs(output_dir, exist_ok=True)
     matplotlib.use('TkAgg')
-    for i in range(20):
-        subiterations = 10
+    for i in range(48):
+        subiterations = 25
         solver.solve(subiterations)
         rho_cpu = solver.rho.to_numpy()
 
-        plt.imshow(rho_cpu, vmin=np_gray_image.min(), vmax=np_gray_image.max(), cmap="gist_gray", interpolation='none') 
+        plt.imshow(rho_cpu, vmin=0.95, vmax=1.05, cmap="gist_gray", interpolation='none') 
         plt.colorbar()
         ax = plt.gca()
         ax.set_xlim([0, grid_size[0]])
         ax.set_ylim([0, grid_size[1]])
         plt.grid()
         plt.title(f'After {(i+1)*subiterations} iterations')
-        plt.savefig(f'output/rho_at_{i*subiterations}.jpg')  # Save with Matplotlib
+        plt.savefig(f'{output_dir}/rho_at_{i*subiterations}.jpg')  # Save with Matplotlib
         plt.close()
         # plt.show()
         
