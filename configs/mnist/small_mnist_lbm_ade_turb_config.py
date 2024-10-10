@@ -3,7 +3,7 @@ import ml_collections
 import numpy as np
 import torch
 from torchvision import transforms
-from configs.ConfigGridMaker import hash_solver
+from configs.conf_utils import hash_solver
 
 def get_config():
     config = default_mnist_configs.get_default_configs()
@@ -52,6 +52,15 @@ def get_config():
     solver.min_fwd_steps = 1
     solver.max_fwd_steps = solver.n_denoising_steps = 50
     solver.hash = hash_solver(solver)
-    solver.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
+
+    debug = False
+    if debug:
+        data.processed_filename = f'{data.processed_filename}_debug'
+        data.process_all = False
+        config.training.batch_size = 16
+        config.eval.batch_size = 16
+        training.n_iters = 5001
+        training.sampling_freq = 100
+
 
     return config

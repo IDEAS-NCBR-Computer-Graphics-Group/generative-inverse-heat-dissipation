@@ -3,7 +3,7 @@ from configs.ffhq import default_lbm_ffhq_config
 import numpy as np
 import torch
 from torchvision import transforms
-from configs.ConfigGridMaker import hash_solver
+from configs.conf_utils import hash_solver
 
 def get_config():
     return get_default_configs()
@@ -53,9 +53,9 @@ def get_default_configs():
     solver.hash = hash_solver(solver)
 
     
-    debug = False
+    debug = True
     if debug:
-        data.processed_filename = 'lbm_ns_pairs_debug' if data.process_pairs else 'lbm_ns_debug'
+        data.processed_filename = f'{data.processed_filename}_debug'
         data.process_all = False
         config.training.batch_size = 4 # rtx2080
         config.eval.batch_size = 4

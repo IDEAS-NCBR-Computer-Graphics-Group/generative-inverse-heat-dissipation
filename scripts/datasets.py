@@ -75,8 +75,8 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
             corruptor._preprocess_and_save_data(
                 initial_dataset=training_data,
                 save_dir=save_dir,
-                process_all=config.data.process_all,
                 is_train_dataset = True,
+                process_all=config.data.process_all,
                 process_pairs = config.data.process_pairs
                 )
             logging.info("Corruption on test split")
