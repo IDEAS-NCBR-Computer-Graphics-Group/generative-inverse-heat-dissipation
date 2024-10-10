@@ -30,10 +30,10 @@ def get_config():
     training = config.training
     training.n_iters = 10001
     training.snapshot_freq = 1000
-    training.snapshot_freq_for_preemption = 100
-    training.log_freq = 50
-    training.eval_freq = 100
-    training.sampling_freq = 100
+    training.snapshot_freq_for_preemption = 1000
+    training.log_freq = 100
+    training.eval_freq = 200
+    training.sampling_freq = 200
     
     # turbulence
     config.turbulence = turbulence = ml_collections.ConfigDict()
