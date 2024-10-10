@@ -46,8 +46,11 @@ np_gray_image = normalize_grayscale_image_range(np_gray_image, 0.95, 1.05)
 # %% run sovler
 
              
-ti.init(arch=ti.gpu)
-# ti.init(arch=ti.cpu)
+is_gpu_avail = torch.cuda.is_available()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+ti.init(arch=ti.gpu) if torch.cuda.is_available() else ti.init(arch=ti.cpu)
+print(f"device = {device}")
+    
 ti_float_precision = ti.f32
   
 if __name__ == '__main__':    
@@ -66,7 +69,7 @@ if __name__ == '__main__':
     # turb_intensity = 1E-3
     # energy_spectrum = lambda k: torch.where(torch.isinf(k * k), 0, k * k) # 
     
-    turb_intensity =0* 1E-4
+    turb_intensity = 0* 1E-4
     energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-1.)), 0, k ** (-1.0)) # najs
     
     # turb_intensity = 3E-3
@@ -79,7 +82,8 @@ if __name__ == '__main__':
         turb_intensity, noise_limiter,
         energy_spectrum=energy_spectrum, frequency_range=frequency_range, 
         dt_turb=dt_turb, 
-        is_div_free=False)
+        is_div_free=False,
+        device=device)
         
     solver = LBM_ADE_Solver(
         np_gray_image.shape,
@@ -90,8 +94,8 @@ if __name__ == '__main__':
     # 
     solver.init(np_gray_image) 
 
-    # solver.init(1.*np.ones((nx,ny), dtype=np.float32))
-    # solver.create_ic_hill(.1, 1E-3, int(0.5*nx), int(0.5*ny)) 
+    solver.init(1.*np.ones((nx,ny), dtype=np.float32))
+    solver.create_ic_hill(.1, 1E-3, int(0.5*nx), int(0.5*ny)) 
     # solver.create_ic_hill( .05, 1E-3, int(0.25*nx), int(0.25*ny))
     # solver.create_ic_hill(-.05, 1E-3, int(0.75*nx), int(0.75*ny))
     
@@ -111,6 +115,6 @@ if __name__ == '__main__':
     #     plt.title(f'After {(i+1)*subiterations} iterations')
     #     plt.show()
     #     cv2.imwrite(f'output/{case_name}_at_{i*subiterations}.jpg', rho_cpu)
-    run_with_gui(solver, np_gray_image, iter_per_frame=100)
+    run_with_gui(solver, np_gray_image, iter_per_frame=10)
 
 # %%
