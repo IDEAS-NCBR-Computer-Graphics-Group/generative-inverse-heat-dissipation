@@ -29,14 +29,12 @@ FLAGS = flags.FLAGS
 
 # config_flags.DEFINE_config_file("config", None, "NN Training configuration.", lock_config=True) # this return a parsed object - ConfigDict
 flags.DEFINE_string("config", None, "Path to the config file.")
-flags.DEFINE_string("workdir", None, "Work directory.")
-flags.mark_flags_as_required(["workdir", "config"])
-
+flags.mark_flags_as_required(["config"])
 
 def main(argv):
-    train(FLAGS.config, FLAGS.workdir)
+    train(FLAGS.config)
 
-def train(config_path, workdir):
+def train(config_path):
     """Runs the training pipeline. 
     Based on code from https://github.com/yang-song/score_sde_pytorch
 
@@ -48,17 +46,22 @@ def train(config_path, workdir):
 
     # Initial logging setup
     logging.basicConfig(level=logging.DEBUG)
-    
+
+    # Load config
+    config = load_config_from_path(config_path)
+
+    # Setup working directory path 
+    workdir = os.path.join(f'runs/corrupted_{config.data.dataset}', f'{config.data.processed_filename}_{config.solver.hash}')
+
+    # copy config to know what has been run
+    shutil.copy(config_path, workdir) 
+
     # Setup logging once the workdir is known
     setup_logging(workdir)
 
     logging.info(f"Code version\t branch: {get_git_branch()} \t commit hash: {get_git_revision_hash()}")
-    logging.info(f"Execution flags: --config: {config_path} \t --workdir: {workdir}")
-    
-    # copy config to know what has been run
-    shutil.copy(config_path, workdir) 
-
-    config = load_config_from_path(config_path)
+    logging.info(f"Execution flags: --config: {config_path}")
+    logging.info(f"Run directory: {workdir}")
     
     if config.device == torch.device('cpu'):
         logging.warning("RUNNING ON CPU")
