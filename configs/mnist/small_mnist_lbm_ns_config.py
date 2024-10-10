@@ -3,6 +3,7 @@ import ml_collections
 import numpy as np
 import torch
 from torchvision import transforms
+from configs.conf_utils import hash_solver
 
 def get_config():
     config = default_mnist_configs.get_default_configs()
@@ -21,7 +22,7 @@ def get_config():
     data = config.data
     data.showcase_comparison = True
     data.process_pairs = True
-    data.process_all = True 
+    data.process_all = True
     data.processed_filename = 'lbm_ns_pairs' if config.data.process_pairs else 'lbm_ns'
     data.dataset = 'MNIST'
 
@@ -53,5 +54,17 @@ def get_config():
     solver.niu = solver.bulk_visc = 0.5 * 1/6
     solver.min_fwd_steps = 1
     solver.max_fwd_steps = solver.n_denoising_steps = 20
-    
+    solver.hash = hash_solver(solver)
+
+    debug = False
+    if debug:
+        data.processed_filename = f'{data.processed_filename}_debug'
+        data.process_all = False
+        config.training.batch_size = 16
+        config.eval.batch_size = 16
+        training.n_iters = 5001
+        training.sampling_freq = 100
+
+
+
     return config

@@ -4,6 +4,9 @@ from absl import app
 from timeit import default_timer as timer
 import torchvision
 import torch
+from ml_collections.config_flags import config_flags
+
+import os
 
 from scripts import datasets as ihd_datasets
 from scripts.utils import save_png_norm, save_png
@@ -18,7 +21,8 @@ from numerical_solvers.data_holders.CorruptedDatasetCreator import AVAILABLE_COR
 FLAGS = flags.FLAGS
 
 # config_flags.DEFINE_config_file("config", None, "Training configuration.", lock_config=True)
-flags.DEFINE_string("config", None, "Path to the config file.")
+
+config_flags.DEFINE_config_file("config", None, "Training configuration.", lock_config=True)
 flags.mark_flags_as_required(["config"])
 
 def main(argv):
