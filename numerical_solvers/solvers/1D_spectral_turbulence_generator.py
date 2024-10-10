@@ -207,7 +207,7 @@ def generate_linear_increasing_spectrum(k, alpha =  2.0, c = 1.0):
     return spectrum
 
 
-M = 1E0
+M = 1E6
 
 # Initialize the SpectralTurbulenceGenerator (assuming it is already defined somewhere)
 # turbulence_generator = SpectralTurbulenceGenerator(
