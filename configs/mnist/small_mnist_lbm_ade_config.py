@@ -20,7 +20,7 @@ def get_config():
     data = config.data
     data.showcase_comparison = True
     data.process_pairs = True
-    data.processed_filename = 'lbm_ns_turb_pairs' if config.data.process_pairs else 'lbm_ns_turb'
+    data.processed_filename = 'lbm_ade_turb_pairs' if config.data.process_pairs else 'lbm_ade_turb'
     data.dataset = 'CORRUPTED_NS_MNIST'
     
     training = config.training
@@ -42,7 +42,7 @@ def get_config():
     
     # Define the solver configuration
     solver = config.solver = ml_collections.ConfigDict()  # Create solver attribute
-    solver.type = 'fluid'
+    solver.type = 'ade'
     solver.min_init_gray_scale = 0.95
     solver.max_init_gray_scale = 1.05
     solver.niu = solver.bulk_visc =  0.5 * 1/6
