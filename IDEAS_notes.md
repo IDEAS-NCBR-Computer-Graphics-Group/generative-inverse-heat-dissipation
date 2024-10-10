@@ -225,4 +225,8 @@ python train_corrupted.py --config configs/mnist/small_mnist_lbm_ns_config.py  -
 python train_corrupted.py --config configs/mnist/small_mnist_lbm_ns_turb_config.py --workdir runs/mnist/small_lbm_turb_mnist
 
 python train_corrupted.py --config configs/mnist/small_mnist_gaussian_blurring_config.py --workdir runs/mnist/small_gaussian_blurr_mnist
+
+python train_corrupted.py --config=configs/ffhq/128_ffhq_lbm_ns_config.py --workdir runs/ffhq/128_ffhq_lbm_ns
+
+python sample_corruption.py --config=configs/ffhq/128_ffhq_lbm_ns_config.py
 ```

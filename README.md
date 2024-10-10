@@ -33,7 +33,10 @@ You can get started by running an MNIST training script with
 
 ```python train.py --config configs/ffhq/default_ffhq_configs.py --workdir runs/ffhq/default```
 
-```python train.py --config configs/ffhq/img_size_128_maxblur128.py --workdir runs/ffhq/img_size_128_maxblur128```
+```python train.py --config configs/ffhq/small_img_size_128.py --workdir runs/ffhq/small_img_size_128```
+
+
+```python train_corrupted.py --config configs/ffhq/128_ffhq_lbm_ns_config.py --workdir runs/ffhq/128_ffhq_lbm_ns```
 
 This creates a folder "`runs/mnist/default`", which contains the folder "`checkpoint-meta`", where the newest checkpoint is saved periodically. "`samples`" folder contains samples saved during training. You can change the frequency of checkpointing and sampling with the command line flags "`training.snapshot_freq_for_preemption=?`" and "`config.training.sampling_freq=?`". 
 
