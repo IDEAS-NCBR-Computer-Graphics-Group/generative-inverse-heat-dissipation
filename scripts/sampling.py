@@ -166,13 +166,14 @@ def get_initial_corrupted_sample(trainloader, corruption_amount, solver: BaseCor
     #     dataset_config, 
     #     uniform_dequantization=dataset_config.data.uniform_dequantization,
     #     train_batch_size=batch_size)
-
     original_images, _ = datasets.prepare_batch(iter(trainloader), 'cpu')
 
-    noisy_initial_images = torch.empty_like(original_images)
+    noisy_initial_images = original_images.clone()
+    intermediate_samples = [noisy_initial_images.clone()]
   
-    for index in range(original_images.shape[0]):
-        tmp, _ = solver._corrupt(original_images[index], corruption_amount)
-        noisy_initial_images[index] = tmp
-        
-    return noisy_initial_images, original_images
+    for _ in range(corruption_amount):
+        for index in range(original_images.shape[0]):
+            tmp, _ = solver._corrupt(noisy_initial_images[index], 1)
+            noisy_initial_images[index] = tmp
+        intermediate_samples.append(noisy_initial_images.clone())
+    return noisy_initial_images, original_images, intermediate_samples
