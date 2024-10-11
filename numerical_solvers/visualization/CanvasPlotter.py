@@ -388,21 +388,16 @@ def plot_v_component_distribution(v_data, title):
     matplotlib.use('Agg')  # Use the 'Agg' backend for headless environments (no GUI)
     
     m= v_data.shape[0]
-    v_data = v_data.reshape(-1)  # Flatten the data
+    v_data = v_data.reshape(-1)
 
     num_bins = 512
     hist_data, bins = np.histogram(v_data, bins=num_bins, density=True)
-    # bin_centers = (bins[:-1] + bins[1:]) / 2
-
-    # Fit Gaussian distribution to the data
     mu, sigma = norm.fit(v_data)
     
-    # Create an array over the full range specified
     x_range = np.linspace(-max(v_data.max(), -v_data.min())*2, max(v_data.max(), -v_data.min())*2, 256)
     gaussian_fit = norm.pdf(x_range, mu, sigma)
 
-    # Display the histogram and the fit
-    fig, ax = plt.subplots(figsize=(2.56, 2.56), dpi=100)  # This will create a 256x256 pixel figure
+    fig, ax = plt.subplots(figsize=(2.56, 2.56), dpi=100)
 
     # Plot the histogram and Gaussian fit
     ax.hist(v_data, bins=num_bins, density=True, alpha=0.6, color='g')
