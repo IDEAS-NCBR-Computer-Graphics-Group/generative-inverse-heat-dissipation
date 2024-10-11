@@ -16,5 +16,3 @@ def get_config():
     config.training.snapshot_freq = 10000
     config.training.snapshot_freq_for_preemption = 2500
     config.training.sampling_freq = 2000
-    
-    return config

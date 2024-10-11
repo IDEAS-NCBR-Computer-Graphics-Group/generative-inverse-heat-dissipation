@@ -21,6 +21,7 @@ from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbul
 from numerical_solvers.solvers.img_reader import read_img_in_grayscale, normalize_grayscale_image_range, standarize_grayscale_image_range
 from numerical_solvers.visualization.taichi_lbm_gui import run_with_gui
 
+from configs.mnist.small_mnist_lbm_ns_turb_config import get_config
 
 from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
 
@@ -67,33 +68,22 @@ if __name__ == '__main__':
 
     domain_size = (1.0, 1.0)
     grid_size = np_gray_image.shape
-    turb_intensity = 0* 1E-4
-    noise_limiter = (-1E-3, 1E-3)
-    dt_turb = 1E-3 
+    config = get_config()
 
+    grid_size = np_gray_image.shape
 
-    # energy_spectrum = lambda k: np.where(np.isinf(k), 0, k)
-    
-    energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
-    frequency_range = {'k_min': 2.0 * torch.pi / min(domain_size),
-                       'k_max': 2.0 * torch.pi / (min(domain_size) / 1024)}
-    
-    spectralTurbulenceGenerator = SpectralTurbulenceGenerator(
-        domain_size, grid_size, 
-        turb_intensity, noise_limiter,
-        energy_spectrum=energy_spectrum, frequency_range=frequency_range, 
-        dt_turb=dt_turb, 
-        is_div_free = False)
-    
-    
-    niu = 0.5 * 1./6
-    bulk_visc = niu
+    spectralTurbulenceGenerator = SpectralTurbulenceGenerator(config.turbulence.domain_size, grid_size, 
+            config.turbulence.turb_intensity, config.turbulence.noise_limiter,
+            energy_spectrum=config.turbulence.energy_spectrum, 
+            frequency_range={'k_min': config.turbulence.k_min, 'k_max': config.turbulence.k_max}, 
+            dt_turb=config.turbulence.dt_turb, 
+        is_div_free=False)
     
     solver = LBM_NS_Solver(
-        grid_size,
-        niu, bulk_visc,
+        np_gray_image.shape,
+        config.solver.niu, config.solver.bulk_visc,
         spectralTurbulenceGenerator
-        )
+        )    
     
     solver.init(np_gray_image)
 
@@ -107,22 +97,22 @@ if __name__ == '__main__':
     # solver.create_ic_hill(-.05, 1E-3,int(0.75*grid_size[0]), int(0.75*grid_size[1]))
     
     
-    os.makedirs("output", exist_ok=True)
-    matplotlib.use('TkAgg')
-    for i in range(20):
-        subiterations = 10
-        solver.solve(subiterations)
-        rho_cpu = solver.rho.to_numpy()
+    # os.makedirs("output", exist_ok=True)
+    # matplotlib.use('TkAgg')
+    # for i in range(20):
+    #     subiterations = 10
+    #     solver.solve(subiterations)
+    #     rho_cpu = solver.rho.to_numpy()
 
-        plt.imshow(rho_cpu, vmin=np_gray_image.min(), vmax=np_gray_image.max(), cmap="gist_gray", interpolation='none') 
-        plt.colorbar()
-        ax = plt.gca()
-        ax.set_xlim([0, grid_size[0]])
-        ax.set_ylim([0, grid_size[1]])
-        plt.grid()
-        plt.title(f'After {(i+1)*subiterations} iterations')
-        plt.savefig(f'output/rho_at_{i*subiterations}.jpg')  # Save with Matplotlib
-        plt.close()
+    #     plt.imshow(rho_cpu, vmin=np_gray_image.min(), vmax=np_gray_image.max(), cmap="gist_gray", interpolation='none') 
+    #     plt.colorbar()
+    #     ax = plt.gca()
+    #     ax.set_xlim([0, grid_size[0]])
+    #     ax.set_ylim([0, grid_size[1]])
+    #     plt.grid()
+    #     plt.title(f'After {(i+1)*subiterations} iterations')
+    #     plt.savefig(f'output/rho_at_{i*subiterations}.jpg')  # Save with Matplotlib
+    #     plt.close()
         # plt.show()
         
         # cv2.imwrite(f'output/rho_at_{i*subiterations}.jpg', rho_cpu)
@@ -131,7 +121,7 @@ if __name__ == '__main__':
     #########################33 TODO back standard renderer with multiple subwindows
 
 
-    # run_with_gui(solver, np_gray_image, iter_per_frame = 1)
+    run_with_gui(solver, np_gray_image, iter_per_frame = 1)
 
 
 
