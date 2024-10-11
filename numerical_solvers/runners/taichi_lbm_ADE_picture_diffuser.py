@@ -47,8 +47,11 @@ np_gray_image = normalize_grayscale_image_range(np_gray_image, 0.95, 1.05)
 # %% run sovler
 
              
-ti.init(arch=ti.gpu)
-# ti.init(arch=ti.cpu)
+is_gpu_avail = torch.cuda.is_available()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+ti.init(arch=ti.gpu) if torch.cuda.is_available() else ti.init(arch=ti.cpu)
+print(f"device = {device}")
+    
 ti_float_precision = ti.f32
   
 if __name__ == '__main__':    
@@ -58,6 +61,7 @@ if __name__ == '__main__':
 
     grid_size = np_gray_image.shape
 
+
     spectralTurbulenceGenerator = SpectralTurbulenceGenerator(config.turbulence.domain_size, grid_size, 
             config.turbulence.turb_intensity, config.turbulence.noise_limiter,
             energy_spectrum=config.turbulence.energy_spectrum, 
@@ -65,6 +69,7 @@ if __name__ == '__main__':
             dt_turb=config.turbulence.dt_turb, 
         is_div_free=False)
     
+
     solver = LBM_ADE_Solver(
         np_gray_image.shape,
         config.solver.niu, config.solver.bulk_visc,
@@ -72,4 +77,5 @@ if __name__ == '__main__':
         )    
     # 
     solver.init(np_gray_image) 
+
     run_with_gui(solver, np_gray_image, iter_per_frame=100)

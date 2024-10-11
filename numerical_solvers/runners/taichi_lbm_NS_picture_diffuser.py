@@ -34,12 +34,12 @@ from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
 # https://github.com/taichi-dev/image-processing-with-taichi/blob/main/image_transpose.py
 
 # img_path = './numerical_solvers/runners/mnist-2.png'
-img_path = './numerical_solvers/runners/cat_256x256.jpg'
-# img_path = './numerical_solvers/runners/cat_768x768.jpg'
+# img_path = './numerical_solvers/runners/cat_256x256.jpg'
+img_path = './numerical_solvers/runners/cat_768x768.jpg'
 target_size=None
 # target_size=(512, 512)
 # target_size = (256, 256)
-target_size = (128, 128)
+# target_size = (128, 128)
 # target_size = (64, 64)
 # target_size = (28, 28)
 # target_size = None
@@ -60,9 +60,12 @@ np_gray_image = normalize_grayscale_image_range(np_gray_image, 1. - drho, 1. + d
 # %% run sovler
 
              
-# ti.init(arch=ti.gpu)
-ti.init(arch=ti.cpu)
-ti_float_precision = ti.f64
+is_gpu_avail = torch.cuda.is_available()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+ti.init(arch=ti.gpu) if torch.cuda.is_available() else ti.init(arch=ti.cpu)
+print(f"device = {device}")
+ti_float_precision = ti.f32
+
   
 if __name__ == '__main__':    
 
@@ -78,6 +81,7 @@ if __name__ == '__main__':
             frequency_range={'k_min': config.turbulence.k_min, 'k_max': config.turbulence.k_max}, 
             dt_turb=config.turbulence.dt_turb, 
         is_div_free=False)
+
     
     solver = LBM_NS_Solver(
         np_gray_image.shape,
@@ -88,44 +92,5 @@ if __name__ == '__main__':
     solver.init(np_gray_image)
 
 
-    ######################################################################################################### TODO Code with Michal's renderer
-
-
-    # solver.init(1.*np.ones(grid_size, dtype=np.float32))
-    # solver.create_ic_hill(.5, 1E-2, int(0.5*grid_size[0]), int(0.5*grid_size[1])) 
-    # solver.create_ic_hill(.05, 1E-3, int(0.25*grid_size[0]), int(0.25*grid_size[1]))
-    # solver.create_ic_hill(-.05, 1E-3,int(0.75*grid_size[0]), int(0.75*grid_size[1]))
-    
-    
-    # os.makedirs("output", exist_ok=True)
-    # matplotlib.use('TkAgg')
-    # for i in range(20):
-    #     subiterations = 10
-    #     solver.solve(subiterations)
-    #     rho_cpu = solver.rho.to_numpy()
-
-    #     plt.imshow(rho_cpu, vmin=np_gray_image.min(), vmax=np_gray_image.max(), cmap="gist_gray", interpolation='none') 
-    #     plt.colorbar()
-    #     ax = plt.gca()
-    #     ax.set_xlim([0, grid_size[0]])
-    #     ax.set_ylim([0, grid_size[1]])
-    #     plt.grid()
-    #     plt.title(f'After {(i+1)*subiterations} iterations')
-    #     plt.savefig(f'output/rho_at_{i*subiterations}.jpg')  # Save with Matplotlib
-    #     plt.close()
-        # plt.show()
-        
-        # cv2.imwrite(f'output/rho_at_{i*subiterations}.jpg', rho_cpu)
-
-    
-    #########################33 TODO back standard renderer with multiple subwindows
-
 
     run_with_gui(solver, np_gray_image, iter_per_frame = 1)
-
-
-
-    ############################
-
-
-# %%
