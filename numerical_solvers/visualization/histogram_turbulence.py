@@ -102,7 +102,7 @@ def plot_v_component_distribution(v_data, title):
     # Ensure the data is a 1D array
     v_data = v_data.reshape(-1).cpu()  # Flatten the data
 
-    num_bins = 128
+    num_bins = 512
     counts, bins = np.histogram(v_data, bins=num_bins, density=True) 
 
     bin_widths = np.diff(bins)
@@ -159,7 +159,7 @@ def generate_blue_noise_spectrum_torch(wavenumbers, beta = 2):
     
     return blue_noise_spectrum
 
-def generate_linear_increasing_spectrum(k, alpha =  -2.0, c = 1.0):
+def generate_linear_increasing_spectrum(k, alpha =  2.0, c = 1.0):
     """
     Generates a spectrum that increases linearly on a log-log plot.
     

@@ -21,6 +21,7 @@ from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbul
 from numerical_solvers.solvers.img_reader import read_img_in_grayscale, normalize_grayscale_image_range
 from numerical_solvers.visualization.taichi_lbm_gui import run_with_gui
 
+from configs.mnist.small_mnist_lbm_ade_turb_config import get_config
 
 from numerical_solvers.solvers.LBM_ADE_Solver import LBM_ADE_Solver
 
@@ -51,66 +52,24 @@ ti.init(arch=ti.gpu)
 ti_float_precision = ti.f32
   
 if __name__ == '__main__':    
-    nx, ny = np_gray_image.shape
-    niu = 1/6
-    bulk_visc = None
-    
-    domain_size = (1.0, 1.0)
-    grid_size = np_gray_image.shape
-    noise_limiter = (-1E3, 1E3)
-    dt_turb = 3E-4
 
-    # turb_intensity = 3E-3
-    # energy_spectrum = lambda k: torch.where(torch.isinf(k), 0, k)
-    
-    # turb_intensity = 1E-3
-    # energy_spectrum = lambda k: torch.where(torch.isinf(k * k), 0, k * k) # 
-    
-    turb_intensity =0* 1E-4
-    energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-1.)), 0, k ** (-1.0)) # najs
-    
-    # turb_intensity = 3E-3
-    # energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
-    frequency_range = {'k_min': 2.0 * torch.pi / min(domain_size), 
-                       'k_max': 2.0 * torch.pi / (min(domain_size) / 1024)}
-    
-    spectralTurbulenceGenerator = SpectralTurbulenceGenerator(
-        domain_size, grid_size, 
-        turb_intensity, noise_limiter,
-        energy_spectrum=energy_spectrum, frequency_range=frequency_range, 
-        dt_turb=dt_turb, 
+    case_name="miau"
+    config = get_config()
+
+    grid_size = np_gray_image.shape
+
+    spectralTurbulenceGenerator = SpectralTurbulenceGenerator(config.turbulence.domain_size, grid_size, 
+            config.turbulence.turb_intensity, config.turbulence.noise_limiter,
+            energy_spectrum=config.turbulence.energy_spectrum, 
+            frequency_range={'k_min': config.turbulence.k_min, 'k_max': config.turbulence.k_max}, 
+            dt_turb=config.turbulence.dt_turb, 
         is_div_free=False)
-        
+    
     solver = LBM_ADE_Solver(
         np_gray_image.shape,
-        niu, bulk_visc,
+        config.solver.niu, config.solver.bulk_visc,
         spectralTurbulenceGenerator
-        )
-    
+        )    
     # 
     solver.init(np_gray_image) 
-
-    # solver.init(1.*np.ones((nx,ny), dtype=np.float32))
-    # solver.create_ic_hill(.1, 1E-3, int(0.5*nx), int(0.5*ny)) 
-    # solver.create_ic_hill( .05, 1E-3, int(0.25*nx), int(0.25*ny))
-    # solver.create_ic_hill(-.05, 1E-3, int(0.75*nx), int(0.75*ny))
-    
-    # for i in range(3):
-    #     subiterations = 100
-    #     solver.solve(subiterations)
-    #     rho_cpu = solver.rho.to_numpy()
-
-    #     os.makedirs("output", exist_ok=True)
-    #     matplotlib.use('TkAgg')
-    #     plt.imshow(rho_cpu, vmin=np_gray_image.min(), vmax=np_gray_image.max(), cmap="gist_gray", interpolation='none') 
-    #     plt.colorbar()
-    #     ax = plt.gca()
-    #     ax.set_xlim([0, nx])
-    #     ax.set_ylim([0, ny])
-    #     plt.grid()
-    #     plt.title(f'After {(i+1)*subiterations} iterations')
-    #     plt.show()
-    #     cv2.imwrite(f'output/{case_name}_at_{i*subiterations}.jpg', rho_cpu)
     run_with_gui(solver, np_gray_image, iter_per_frame=100)
-
-# %%

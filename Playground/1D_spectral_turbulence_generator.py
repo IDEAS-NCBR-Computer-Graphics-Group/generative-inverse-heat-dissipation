@@ -135,7 +135,7 @@ class SpectralTurbulenceGenerator1D(t.nn.Module):
         - u: 1D array of x-velocity fluctuations (Nx,)
         """
 
-        u_hat = self.turb_intensity * self.amplitude * t.exp(1j * (0*self.phase_u   + self.omega * time))
+        u_hat = self.turb_intensity * self.amplitude * t.exp(1j * (self.phase_u   + self.omega * time))
         # u_hat = self.turb_intensity * self.amplitude * t.exp(1j * (time))
         
         u = t.real(t.fft.ifft(u_hat))
@@ -189,7 +189,7 @@ def plot_v_component_distribution(v_data, title):
     return fig, mu, sigma**2, integral # Return mean, variance along with the plot
 
 
-def generate_linear_increasing_spectrum(k, alpha =  -2.0, c = 1.0):
+def generate_linear_increasing_spectrum(k, alpha =  2.0, c = 1.0):
     """
     Generates a spectrum that increases linearly on a log-log plot.
     
@@ -215,7 +215,7 @@ M = 1E6
 # )
 domain_size = 1.0
 grid_size = 256**2
-slope = -2.
+slope = 2.
 # my_energy_spectrum = lambda k: t.where(t.isinf(k ** (slope)), 0, k ** (slope))
 # my_frequency_range = {'k_min': 1E-6,'k_max': 1E6}
     
