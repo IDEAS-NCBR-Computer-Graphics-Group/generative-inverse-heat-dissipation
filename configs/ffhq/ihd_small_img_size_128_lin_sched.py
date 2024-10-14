@@ -1,4 +1,4 @@
-from configs.ffhq import small_img_size_128
+from configs.ffhq.ihd import small_img_size_128
 import numpy as np
 
 # Config for the model where image resolution = 128x128, and

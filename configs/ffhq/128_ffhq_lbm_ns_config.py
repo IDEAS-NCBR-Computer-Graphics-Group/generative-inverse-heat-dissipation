@@ -32,7 +32,6 @@ def get_default_configs():
     training.eval_freq = 200
     training.sampling_freq = 2000
 
-
     turbulence = config.turbulence 
     turbulence.turb_intensity = 0 #*1E-4
     turbulence.noise_limiter = (-1E-3, 1E-3)
@@ -40,8 +39,10 @@ def get_default_configs():
     turbulence.dt_turb = 5 * 1E-4
     turbulence.k_min = 2.0 * torch.pi / min(turbulence.domain_size)
     turbulence.k_max = 2.0 * torch.pi / (min(turbulence.domain_size) / 1024)
-    turbulence.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0))
+    turbulence.energy_slope = -5.0 / 3.0
     turbulence.is_divergence_free = False
+    turbulence.hash = hash_solver(turbulence)
+    turbulence.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (turbulence.energy_slope)), 0, k ** (turbulence.energy_slope))
     
     solver = config.solver
     solver.type = 'ns'
