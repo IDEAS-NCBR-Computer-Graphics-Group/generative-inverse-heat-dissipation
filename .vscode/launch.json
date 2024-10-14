@@ -28,32 +28,6 @@
             ]
         },
         {
-            "name": "Debugger: blurr-train with Arguments",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/train_corrupted.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--config",
-                "configs/mnist/small_mnist_blurring_config.py",
-                "--workdir",
-                "runs/mnist/small_blurr_mnist"
-            ]
-        },
-        {
-            "name": "Debugger: lbm-ns-train with Arguments",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/train_corrupted.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--config",
-                "configs/mnist/small_mnist_lbm_ns_config.py",
-                "--workdir",
-                "runs/mnist/small_lbm_mnist"
-            ]
-        },
-        {
             "name": "Debugger: large-debug-mnist",
             "type": "debugpy",
             "request": "launch",
@@ -77,19 +51,6 @@
                 "configs/mnist/small_mnist_blurring_config.py",
                 "--workdir",
                 "runs/mnist/corrupt"
-            ]
-        },
-        {
-            "name": "Debugger: 128-ffhq",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/train_corrupted.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--config",
-                "configs/ffhq/img_size_128.py",
-                "--workdir",
-                "runs/ffhq/128_ffhq"
             ]
         },
         {
