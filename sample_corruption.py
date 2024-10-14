@@ -25,6 +25,9 @@ FLAGS = flags.FLAGS
 config_flags.DEFINE_config_file("config", None, "Training configuration.", lock_config=True)
 flags.mark_flags_as_required(["config"])
 
+
+# python sample_corruption.py --config=configs/ffhq/128_ffhq_lbm_ns_config.py
+
 def main(argv):
     produce_sample(FLAGS.config)
   

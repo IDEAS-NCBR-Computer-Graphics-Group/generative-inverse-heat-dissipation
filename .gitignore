@@ -32,3 +32,5 @@ test_configs/
 
 slurm-*
 output_*
+unet_model.pth
+imgui.ini
