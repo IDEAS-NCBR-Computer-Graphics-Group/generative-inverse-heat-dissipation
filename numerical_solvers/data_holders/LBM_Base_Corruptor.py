@@ -12,6 +12,7 @@ from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbul
 from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
 
 from scripts.utils import load_config_from_path, setup_logging
+import copy
 
 class LBM_Base_Corruptor(BaseCorruptor):
     def __init__(self, config, transform=None, target_transform=None):
@@ -24,6 +25,16 @@ class LBM_Base_Corruptor(BaseCorruptor):
         self.min_init_gray_scale = config.solver.min_init_gray_scale
         self.max_init_gray_scale = config.solver.max_init_gray_scale
 
+        self._intermediate_samples = None 
+    
+  
+    @property
+    def intermediate_samples(self):
+        return self._intermediate_samples
+        # return torch.as_tensor(self._intermediate_samples)
+        # return copy.deepcopy(self._intermediate_samples)
+
+     
     def _corrupt(self, x, steps, generate_pair=False):
         """
         Corrupts the input image using LBM solver.
@@ -45,27 +56,52 @@ class LBM_Base_Corruptor(BaseCorruptor):
         self.solver.init(np_gray_img)
         self.solver.iterations_counter = 0  # Reset counter
 
-        if generate_pair:
-            # Solve up to (lbm_steps - step_difference) if generating pairs
-            self.solver.solve(steps - step_difference)
-            rho_cpu = self.solver.rho.to_numpy()
-            rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
-            less_noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
-            
-            # Solve the remaining steps for the pair generation
+
+        # self._intermediate_samples = [] # reset
+        # self._intermediate_samples = [torch.tensor(np_gray_img).unsqueeze(0).clone()]
+
+        self._intermediate_samples = torch.empty((steps + 1, *x.shape))
+        self._intermediate_samples[0] = torch.tensor(np_gray_img).unsqueeze(0).clone()
+
+
+        for i in range(steps):
             self.solver.solve(step_difference)
             rho_cpu = self.solver.rho.to_numpy()
             rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
             noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
+            self._intermediate_samples[i+1] = torch.tensor(rho_cpu).unsqueeze(0)
 
+        
+        if generate_pair:
+            noisy_x = self._intermediate_samples[-1]
+            less_noisy_x = self._intermediate_samples[-2]
             return noisy_x, less_noisy_x
         else:
-            # Solve up to (lbm_steps - step_difference) if generating pairs, else directly to lbm_steps
-            self.solver.solve(steps)
-            rho_cpu = self.solver.rho.to_numpy()
-            rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
-            noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
+            noisy_x = self._intermediate_samples[-1]
             return noisy_x, None
+        
+        
+        # if generate_pair:
+        #     # Solve up to (lbm_steps - step_difference) if generating pairs
+        #     self.solver.solve(steps - step_difference)
+        #     rho_cpu = self.solver.rho.to_numpy()
+        #     rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
+        #     less_noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
+            
+        #     # Solve the remaining steps for the pair generation
+        #     self.solver.solve(step_difference)
+        #     rho_cpu = self.solver.rho.to_numpy()
+        #     rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
+        #     noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
+
+        #     return noisy_x, less_noisy_x
+        # else:
+        #     # Solve up to (lbm_steps - step_difference) if generating pairs, else directly to lbm_steps
+        #     self.solver.solve(steps)
+        #     rho_cpu = self.solver.rho.to_numpy()
+        #     rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
+        #     noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
+        #     return noisy_x, None
 
     def _preprocess_and_save_data(self, initial_dataset, save_dir, is_train_dataset: bool, process_pairs=False, process_all=True,  process_images=False):
         """
@@ -104,7 +140,7 @@ class LBM_Base_Corruptor(BaseCorruptor):
             if index % 100 == 0:
                 logging.info(f"Preprocessing (lbm) {index}")
             
-            corruption_amount = np.random.randint(self.min_steps, self.max_steps) # TODO: add +1 as max_steps is excluded from tossing, or modify no of denoising steps
+            corruption_amount = np.random.randint(self.min_steps, self.max_steps) # TODO: GG: max_steps is excluded from tossing, thus max_steps = denoising steps + 1
             original_pil_image, label = initial_dataset[index]
             if process_images:
                 original_pil_image = np.transpose(original_pil_image, [1, 2, 0])

@@ -14,6 +14,7 @@ from numerical_solvers.solvers.GaussianTurbulenceGenerator import get_gaussian_n
 class LBM_NS_Solver(LBM_SolverBase):
     def __init__(self, domain_size, kin_visc, bulk_visc, turbulenceGenerator: SpectralTurbulenceGenerator):
         self.omega_bulk = 1.0 / (3.0 * bulk_visc + 0.5) 
+        print(f"LBM_NS_Solver constructor called.")
         super().__init__(domain_size, kin_visc, turbulenceGenerator)
             
             

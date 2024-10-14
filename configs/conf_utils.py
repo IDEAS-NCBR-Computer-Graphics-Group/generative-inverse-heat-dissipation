@@ -3,6 +3,13 @@ import ml_collections
 from sklearn.model_selection import ParameterGrid
 import json
 import hashlib
+import numpy as np
+
+def exp_schedule(min_value, max_value, n):
+    return np.exp(np.linspace(np.log(min_value), np.log(max_value), n))
+
+def lin_schedule(min_value, max_value, n):
+    return np.linspace(min_value ,max_value, n)
 
 # Function to compute hash of the solver config
 def hash_solver(config):

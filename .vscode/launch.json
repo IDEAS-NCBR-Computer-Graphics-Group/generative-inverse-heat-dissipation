@@ -28,32 +28,6 @@
             ]
         },
         {
-            "name": "Debugger: large-debug-mnist",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/train.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--config",
-                "configs/mnist/default_mnist_configs.py",
-                "--workdir",
-                "runs/mnist/default_mnist"
-            ]
-        },
-        {
-            "name": "Debugger: small-debug-mnist-corrupt-blurr",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/train_corrupted.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--config",
-                "configs/mnist/small_mnist_blurring_config.py",
-                "--workdir",
-                "runs/mnist/corrupt"
-            ]
-        },
-        {
             "name": "Debugger: ffhq-128-ns",
             "type": "debugpy",
             "request": "launch",
@@ -62,8 +36,7 @@
             "args": [
                 "--config",
                 "configs/ffhq/128_ffhq_lbm_ns_config.py",
-                "--workdir",
-                "runs/ffhq/128_ffhq_lbm_ns"
+
             ]
         },
         {

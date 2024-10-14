@@ -24,7 +24,7 @@ from numerical_solvers.visualization.taichi_lbm_gui import run_with_gui
 from configs.mnist.small_mnist_lbm_ns_turb_config import get_config
 
 from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
-from numerical_solvers.solvers.utils import lin_schedule, exp_schedule
+from configs.conf_utils import lin_schedule, exp_schedule
 # from lbm_diffuser.lbm_bckp_with_fields import lbm_solver as lbm_solver_bkcp
 from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
 
@@ -103,7 +103,6 @@ if __name__ == '__main__':
     # solver.create_ic_hill(.05, 1E-3, int(0.25*grid_size[0]), int(0.25*grid_size[1]))
     # solver.create_ic_hill(-.05, 1E-3,int(0.75*grid_size[0]), int(0.75*grid_size[1]))
     
-    
     output_dir = "output/kotek"
     os.makedirs(output_dir, exist_ok=True)
     matplotlib.use('TkAgg')
@@ -125,17 +124,6 @@ if __name__ == '__main__':
         
         solver.solve(subiterations)
         
-        
-
-    
     ############################ standard renderer with multiple subwindows
-
-
     # run_with_gui(solver, np_gray_image, iter_per_frame = 10)
-
-
-
     ############################
-
-
-# %%

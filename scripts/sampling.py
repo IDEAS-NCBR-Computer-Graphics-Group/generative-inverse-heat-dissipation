@@ -162,18 +162,19 @@ def get_initial_sample(config, forward_heat_module, delta, batch_size=None):
 
 def get_initial_corrupted_sample(trainloader, corruption_amount, solver: BaseCorruptor, batch_size=None):
     """Take a draw from the prior p(u_K)"""
-    # trainloader, _ = datasets.get_dataset(
-    #     dataset_config, 
-    #     uniform_dequantization=dataset_config.data.uniform_dequantization,
-    #     train_batch_size=batch_size)
-    original_images, _ = datasets.prepare_batch(iter(trainloader), 'cpu')
 
+    original_images, _ = datasets.prepare_batch(iter(trainloader), 'cpu')
     noisy_initial_images = original_images.clone()
-    intermediate_samples = [noisy_initial_images.clone()]
-  
-    for _ in range(corruption_amount):
-        for index in range(original_images.shape[0]):
-            tmp, _ = solver._corrupt(noisy_initial_images[index], 1)
-            noisy_initial_images[index] = tmp
-        intermediate_samples.append(noisy_initial_images.clone())
+    intermediate_samples = []
+
+    for index in range(original_images.shape[0]):
+        noisy_initial_images[index], _ = solver._corrupt(original_images[index], corruption_amount)
+        intermediate_samples.append(solver.intermediate_samples) # TODO: only LBM corruptor posses .intermediate_samples, to be refactored
+
+    # intermediate_samples # [batchsize, t([timesteps, channels, 128,128])]
+    # reformat to 
+    # intermediate_samples [timesteps, t([batchsize, channels, 128,128])]
+    intermediate_samples = [torch.stack([sample[i] for sample in intermediate_samples]) for i in range(len(intermediate_samples[0]))]
+
     return noisy_initial_images, original_images, intermediate_samples
+        

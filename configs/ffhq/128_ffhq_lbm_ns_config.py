@@ -3,7 +3,8 @@ from configs.ffhq import default_lbm_ffhq_config
 import numpy as np
 import torch
 from torchvision import transforms
-from configs.conf_utils import hash_solver
+from configs.conf_utils import hash_solver, lin_schedule, exp_schedule
+
 
 def get_config():
     return get_default_configs()
@@ -48,11 +49,17 @@ def get_default_configs():
     solver.type = 'ns'
     solver.min_init_gray_scale = 0.95
     solver.max_init_gray_scale = 1.05
-    solver.niu = solver.bulk_visc =  0.5 * 1/6
-    solver.min_fwd_steps = 1
-    solver.n_denoising_steps = solver.max_fwd_steps = 100
-    solver.hash = hash_solver(solver)
 
+    solver.min_fwd_steps = 1
+    solver.n_denoising_steps = 100
+    solver.max_fwd_steps = solver.n_denoising_steps + 1  # TODO: GG - check it --> corruption_amount = np.random.randint(self.min_steps, self.max_steps) we need to add +1 as max_fwd_steps is excluded from tossing
+   
+    # solver.niu = solver.bulk_visc =  0.5 * 1/6
+    solver.hash = hash_solver(solver)
+    # niu_sched  = exp_schedule(1E-4 * 1./6., 1./6., n)
+    
+    niu_sched  = lin_schedule(0.5 * 1/6, 0.5 * 1/6, solver.max_fwd_steps)
+    solver.niu = solver.bulk_visc =  niu_sched
     
     debug = True
     if debug:

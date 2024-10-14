@@ -3,7 +3,7 @@ import ml_collections
 import numpy as np
 import torch
 from torchvision import transforms
-from configs.conf_utils import hash_solver
+from configs.conf_utils import hash_solver, lin_schedule, exp_schedule
 
 def get_config():
     config = default_mnist_configs.get_default_configs()
@@ -51,12 +51,16 @@ def get_config():
     solver.min_init_gray_scale = 0.95
     solver.max_init_gray_scale = 1.05
     solver.type = 'ns'
-    solver.niu = solver.bulk_visc = 0.5 * 1/6
+    # solver.niu = solver.bulk_visc = 0.5 * 1/6
     solver.min_fwd_steps = 1
-    solver.max_fwd_steps = solver.n_denoising_steps = 20
+    solver.n_denoising_steps = 20
+    solver.max_fwd_steps = solver.n_denoising_steps + 1  # TODO: GG - check it --> corruption_amount = np.random.randint(self.min_steps, self.max_steps) we need to add +1 as max_fwd_steps is excluded from tossing
+   
     solver.hash = hash_solver(solver)
+    niu_sched  = lin_schedule(0.5 * 1/6, 0.5 * 1/6, solver.max_fwd_steps)
+    solver.niu = solver.bulk_visc =  niu_sched
 
-    debug = False
+    debug = True
     if debug:
         data.processed_filename = f'{data.processed_filename}_debug'
         data.process_all = False
