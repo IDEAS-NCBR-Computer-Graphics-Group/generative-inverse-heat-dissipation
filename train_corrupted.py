@@ -54,6 +54,7 @@ def train(config_path):
     workdir = os.path.join(f'runs/corrupted_{config.data.dataset}', f'{config.data.processed_filename}_{config.solver.hash}')
 
     # copy config to know what has been run
+    Path(workdir).mkdir(parents=True, exist_ok=True)
     shutil.copy(config_path, workdir) 
 
     # Setup logging once the workdir is known
