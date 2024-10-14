@@ -15,7 +15,7 @@ class LBM_SolverBase:
         # domain size, by convention, dx = dy = dt = 1.0 (lattice units)
 
         self.omega_kin = 1.0 / (3.0* kin_visc + 0.5) 
-        
+        self.max_iter = len(self.omega_kin)
         self.rho = ti.field(float, shape=(self.nx, self.ny))
         self.vel = ti.Vector.field(2, float, shape=(self.nx, self.ny))
 

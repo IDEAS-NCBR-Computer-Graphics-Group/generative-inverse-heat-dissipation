@@ -31,3 +31,4 @@ imgui.ini
 test_configs/
 
 slurm-*
+output_*
