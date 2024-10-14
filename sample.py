@@ -49,7 +49,7 @@ def main(argv):
 def sample(config, workdir, checkpoint, save_sample_freq=1,
            delta=None, batch_size=None, share_noise=False, same_init=False):
     torch.manual_seed(config.seed)
-    np.random.seed(2021)
+    np.random.seed(config.seed)
 
     if batch_size == None:
         batch_size = config.training.batch_size

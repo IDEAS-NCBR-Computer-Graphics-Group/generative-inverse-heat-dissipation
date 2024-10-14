@@ -80,7 +80,7 @@ def calculate_fid(config, dataset_name, experiment_name, param_name,
     # experiment name: e.g. scores_sweep_training_steps_{model name}
     # param_name: what is the param that is changed around in this run?
     torch.manual_seed(config.seed)
-    np.random.seed(2021)
+    np.random.seed(config.seed)
 
     image_size = config.data.image_size
     K = config.model.K

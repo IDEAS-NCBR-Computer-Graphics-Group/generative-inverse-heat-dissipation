@@ -22,7 +22,7 @@ def main(argv):
   
 def produce_sample(config):
     torch.manual_seed(config.seed)
-    np.random.seed(2021)
+    np.random.seed(config.seed)
 
     trainloader, testloader = ihd_datasets.get_dataset(config, uniform_dequantization=config.data.uniform_dequantization)
 

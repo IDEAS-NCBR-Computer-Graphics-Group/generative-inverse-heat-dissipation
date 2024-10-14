@@ -40,7 +40,7 @@ def train(config, workdir):
 
     # Seeding
     torch.manual_seed(config.seed)
-    np.random.seed(2021)
+    np.random.seed(config.seed)
 
     # Initial logging setup
     logging.basicConfig(level=logging.DEBUG)

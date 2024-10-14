@@ -44,7 +44,7 @@ def train(config_path):
 
     # Seeding
     torch.manual_seed(config.seed)
-    np.random.seed(2021)
+    np.random.seed(config.seed)
 
     # Setup working directory path 
     workdir = os.path.join(f'runs/corrupted_{config.data.dataset}', f'{config.data.processed_filename}_{config.solver.hash}')
