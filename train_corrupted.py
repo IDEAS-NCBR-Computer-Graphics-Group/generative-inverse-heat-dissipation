@@ -121,9 +121,11 @@ def train(config_path):
 
     # draw a sample by destroying some rand images 
     n_denoising_steps = config.solver.n_denoising_steps   
-    initial_corrupted_sample, clean_initial_sample = sampling.get_initial_corrupted_sample(
+    initial_corrupted_sample, clean_initial_sample, intermediate_corruption_samples = sampling.get_initial_corrupted_sample(
         trainloader, n_denoising_steps, corruptor)
     
+    utils.save_gif(workdir, intermediate_corruption_samples, "corruption_init.gif")
+    utils.save_video(workdir, intermediate_corruption_samples, filename="corruption_init.mp4")
     utils.save_png(workdir, clean_initial_sample, "clean_init.png")
     
     sampling_fn = sampling.get_sampling_fn_inverse_lbm_ns(
