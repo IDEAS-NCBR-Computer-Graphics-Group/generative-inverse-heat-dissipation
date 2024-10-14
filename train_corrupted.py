@@ -8,6 +8,7 @@ from model_code import utils as mutils
 from model_code.ema import ExponentialMovingAverage
 from scripts import datasets
 import torch
+import numpy as np
 from torch.utils import tensorboard
 from scripts import utils
 from absl import app
@@ -35,12 +36,15 @@ def train(config_path):
             workdir: Working directory for checkpoints and TF summaries. If this
                     contains checkpoint training will be resumed from the latest checkpoint.
     """
-
     # Initial logging setup
     logging.basicConfig(level=logging.DEBUG)
 
     # Load config
     config = load_config_from_path(config_path)
+
+    # Seeding
+    torch.manual_seed(config.seed)
+    np.random.seed(2021)
 
     # Setup working directory path 
     workdir = os.path.join(f'runs/corrupted_{config.data.dataset}', f'{config.data.processed_filename}_{config.solver.hash}')

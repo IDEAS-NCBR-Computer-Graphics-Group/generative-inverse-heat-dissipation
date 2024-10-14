@@ -3,6 +3,7 @@ from absl import app
 from ml_collections.config_flags import config_flags
 import torchvision
 import torch
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 import os
@@ -20,6 +21,9 @@ def main(argv):
   
   
 def produce_sample(config):
+    torch.manual_seed(config.seed)
+    np.random.seed(2021)
+
     trainloader, testloader = ihd_datasets.get_dataset(config, uniform_dequantization=config.data.uniform_dequantization)
 
     storage_dir = 'runs'

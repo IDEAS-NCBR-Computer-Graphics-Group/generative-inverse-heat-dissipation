@@ -3,6 +3,7 @@ from absl import app
 from scripts import cleanfid_alternatives
 from scripts import utils
 import torch
+import numpy as np
 from absl import flags
 from scripts import datasets
 from model_code import utils as mutils
@@ -78,6 +79,8 @@ def calculate_fid(config, dataset_name, experiment_name, param_name,
     # dataset_name: e.g. cifar10, mnist
     # experiment name: e.g. scores_sweep_training_steps_{model name}
     # param_name: what is the param that is changed around in this run?
+    torch.manual_seed(config.seed)
+    np.random.seed(2021)
 
     image_size = config.data.image_size
     K = config.model.K

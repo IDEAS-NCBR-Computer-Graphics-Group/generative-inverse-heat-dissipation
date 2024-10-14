@@ -23,6 +23,7 @@ class SpectralTurbulenceGenerator(t.nn.Module):
         - num_modes: int, number of random Fourier modes to generate (used in RFM method)
         - energy_spectrum: function, energy spectrum function (optional)
         """
+        self.device = device
         self.Lx, self.Ly = domain_size
         self.Nx, self.Ny = grid_size
         self.desired_std = 1. # desired standard deviation of the output 
@@ -50,6 +51,10 @@ class SpectralTurbulenceGenerator(t.nn.Module):
         self.noise_limiter = noise_limiter
         self.is_div_free = is_div_free
         
+    def randomize(self):
+        # Initialize the phases once and use them in each run
+        self.phase_u = (t.rand(self.Nx, self.Ny) * 2 * t.pi).to(self.device)
+        self.phase_v = (t.rand(self.Nx, self.Ny) * 2 * t.pi).to(self.device)
 
     def default_energy_spectrum(self, k):
         """

@@ -4,6 +4,7 @@ import logging
 from scripts import sampling
 from model_code import utils as mutils
 import torch
+import numpy as np
 from scripts import utils
 from absl import app
 from absl import flags
@@ -47,6 +48,8 @@ def main(argv):
 
 def sample(config, workdir, checkpoint, save_sample_freq=1,
            delta=None, batch_size=None, share_noise=False, same_init=False):
+    torch.manual_seed(config.seed)
+    np.random.seed(2021)
 
     if batch_size == None:
         batch_size = config.training.batch_size
