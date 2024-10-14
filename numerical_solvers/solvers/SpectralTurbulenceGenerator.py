@@ -123,8 +123,8 @@ class SpectralTurbulenceGenerator(t.nn.Module):
         - v: 2D array of y-velocity fluctuations (Ny, Nx)
         """
 
-        u_hat = self.std_dev * self.amplitude * t.exp(1j * (self.phase_u + self.omega * time))
-        v_hat = self.std_dev * self.amplitude * t.exp(1j * (self.phase_v + self.omega * time))
+        u_hat = self.amplitude * t.exp(1j * (self.phase_u + self.omega * time))
+        v_hat = self.amplitude * t.exp(1j * (self.phase_v + self.omega * time))
 
 
         if self.is_div_free:
