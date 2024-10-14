@@ -1,27 +1,17 @@
-import os
 from absl import flags
 from absl import app
-from timeit import default_timer as timer
+from ml_collections.config_flags import config_flags
 import torchvision
 import torch
-from ml_collections.config_flags import config_flags
-
+import matplotlib.pyplot as plt
+import matplotlib
 import os
 
 from scripts import datasets as ihd_datasets
-from scripts.utils import save_png_norm, save_png
-from numerical_solvers.data_holders.CorruptedDatasetCreator import preprocess_dataset
-import torchvision
-import matplotlib.pyplot as plt
-import matplotlib
-from scripts.utils import load_config_from_path
-from scripts import sampling
-
+from scripts import sampling, utils
 from numerical_solvers.data_holders.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
+
 FLAGS = flags.FLAGS
-
-# config_flags.DEFINE_config_file("config", None, "Training configuration.", lock_config=True)
-
 config_flags.DEFINE_config_file("config", None, "Training configuration.", lock_config=True)
 flags.mark_flags_as_required(["config"])
 
@@ -29,9 +19,7 @@ def main(argv):
     produce_sample(FLAGS.config)
   
   
-def produce_sample(config_path):
-    config = load_config_from_path(config_path)
-    
+def produce_sample(config):
     trainloader, testloader = ihd_datasets.get_dataset(config, uniform_dequantization=config.data.uniform_dequantization)
 
     storage_dir = 'runs'
@@ -56,8 +44,8 @@ def produce_sample(config_path):
     axs[0].imshow(torchvision.utils.make_grid(clean_image)[0], cmap='Greys')
     axs[1].imshow(torchvision.utils.make_grid(corrupted_image)[0], cmap='Greys')
     axs[2].imshow(torchvision.utils.make_grid(less_corrupted_image)[0], cmap='Greys')
-    plt.savefig('Corruption_pairs_sample.png', bbox_inches='tight')
-    plt.show()
+    plt.savefig(os.path.join(save_dir, 'Corruption_pairs_sample.png'), bbox_inches='tight')
+    # plt.show()
     plt.close()
     
     
@@ -82,9 +70,17 @@ def produce_sample(config_path):
     axs[1].imshow(torchvision.utils.make_grid(noisy_sample)[0], cmap='Greys')
 
     plt.tight_layout()
-    plt.savefig('Fully_corrupted_sample.png', bbox_inches='tight')
-    plt.show()
+    plt.savefig(os.path.join(save_dir, 'Fully_corrupted_sample.png'), bbox_inches='tight')
+    # plt.show()
     plt.close()
+
+    n_denoising_steps = 200
+    initial_corrupted_sample, clean_initial_sample, intermediate_corruption_samples = sampling.get_initial_corrupted_sample(
+        trainloader, n_denoising_steps, corruptor)
+    
+    utils.save_gif(save_dir, intermediate_corruption_samples, "corruption_init.gif")
+    utils.save_video(save_dir, intermediate_corruption_samples, filename="corruption_init.mp4")
+    utils.save_png(save_dir, clean_initial_sample, "clean_init.png")
     
 if __name__ == '__main__':
     app.run(main)
