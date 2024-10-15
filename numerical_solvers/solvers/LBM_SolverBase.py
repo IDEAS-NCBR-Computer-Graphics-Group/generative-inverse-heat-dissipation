@@ -15,7 +15,7 @@ class LBM_SolverBase:
         # domain size, by convention, dx = dy = dt = 1.0 (lattice units)
 
         self.omega_kin = 1.0 / (3.0* kin_visc + 0.5) 
-        
+        self.max_iter = len(self.omega_kin)
         self.rho = ti.field(float, shape=(self.nx, self.ny))
         self.vel = ti.Vector.field(2, float, shape=(self.nx, self.ny))
 
@@ -124,3 +124,15 @@ class LBM_SolverBase:
                 ip = i - self.e[k, 0]
                 jp = j - self.e[k, 1]
                 self.f[i, j][k] = self.f_new[ip, jp][k] 
+                
+                
+    # periodic wip
+    # for j in range(0, self.ny):
+    # # right bc to left bc
+    #     self.f_new[0, j][1] = self.f_new[self.nx-1, j][1] # east
+    #     self.f_new[0, j][5] = self.f_new[self.nx-1, j][5] # north-east
+    #     self.f_new[0, j][8] = self.f_new[self.nx-1, j][8] # south-east
+    # # left bc to right bc
+    #     self.f_new[self.nx-1, j][3] = self.f_new[0, j][3] # west
+    #     self.f_new[self.nx-1, j][6] = self.f_new[0, j][6] # north-west
+    #     self.f_new[self.nx-1, j][7] = self.f_new[0, j][7] # south-west            

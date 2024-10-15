@@ -55,6 +55,8 @@ def optimization_manager(config):
 
 
 def get_label_sampling_function(K):
+    # Returns a tensor filled with random integers 
+    # generated uniformly between low (inclusive) and high (exclusive).
     return lambda batch_size, device: torch.randint(1, K, (batch_size,), device=device)
 
 

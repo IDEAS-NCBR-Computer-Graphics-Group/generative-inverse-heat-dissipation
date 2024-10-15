@@ -28,9 +28,10 @@ def get_sampling_fn_inverse_lbm_ns(
             if intermediate_sample_indices != None and n_denoising_steps in intermediate_sample_indices:
                 intermediate_samples_out.append((u, u)) # store the initial (fully blurred) sample
                 
-            # assuming n_denoising_steps=3, then
+            # assuming n_denoising_steps=4, then
             # for i in range(n_denoising_steps, 0, -1):
             #     print(i):
+            #         4
             #         3
             #         2
             #         1
@@ -150,9 +151,10 @@ def get_sampling_fn_inverse_heat_interpolate(config, initial_sample,
 
 def get_initial_sample(config, forward_heat_module, delta, batch_size=None):
     """Take a draw from the prior p(u_K)"""
-    trainloader, _ = datasets.get_dataset(config,
-                                          uniform_dequantization=config.data.uniform_dequantization,
-                                          train_batch_size=batch_size)
+    trainloader, _ = datasets.get_dataset(
+                        config,
+                        uniform_dequantization=config.data.uniform_dequantization,
+                        train_batch_size=batch_size)
 
     initial_sample = next(iter(trainloader))[0].to(config.device)
     original_images = initial_sample.clone()
@@ -162,17 +164,19 @@ def get_initial_sample(config, forward_heat_module, delta, batch_size=None):
 
 def get_initial_corrupted_sample(trainloader, corruption_amount, solver: BaseCorruptor, batch_size=None):
     """Take a draw from the prior p(u_K)"""
-    # trainloader, _ = datasets.get_dataset(
-    #     dataset_config, 
-    #     uniform_dequantization=dataset_config.data.uniform_dequantization,
-    #     train_batch_size=batch_size)
 
     original_images, _ = datasets.prepare_batch(iter(trainloader), 'cpu')
+    noisy_initial_images = original_images.clone()
+    intermediate_samples = []
 
-    noisy_initial_images = torch.empty_like(original_images)
-  
     for index in range(original_images.shape[0]):
-        tmp, _ = solver._corrupt(original_images[index], corruption_amount)
-        noisy_initial_images[index] = tmp
+        noisy_initial_images[index], _ = solver._corrupt(original_images[index], corruption_amount)
+        intermediate_samples.append(solver.intermediate_samples) # TODO: only LBM corruptor posses .intermediate_samples, to be refactored
+
+    # intermediate_samples # [batchsize, t([timesteps, channels, 128,128])]
+    # reformat to 
+    # intermediate_samples [timesteps, t([batchsize, channels, 128,128])]
+    intermediate_samples = [torch.stack([sample[i] for sample in intermediate_samples]) for i in range(len(intermediate_samples[0]))]
+
+    return noisy_initial_images, original_images, intermediate_samples
         
-    return noisy_initial_images, original_images

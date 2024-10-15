@@ -1,6 +1,7 @@
 
 import taichi as ti
 import numpy as np
+import time
 from pathlib import Path
 
 from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
@@ -48,6 +49,11 @@ def run_with_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show
         
         window.show()
         
+        # time.sleep(4)
+        # window.running = False
+    
+    # window.show()
+    # gui.show()
         # if solver.iterations_counter % 500 ==0:
         #     window.save_image(f'output/iteration_{solver.iterations_counter}.jpg')
         

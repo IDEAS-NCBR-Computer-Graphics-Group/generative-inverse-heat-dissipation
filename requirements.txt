@@ -34,6 +34,11 @@ diffusers
 jupyter
 ipykernel
 scikit-image
+scikit-learn
+
+# datasets
+kaggle
+
 
 # taichi
 torch
