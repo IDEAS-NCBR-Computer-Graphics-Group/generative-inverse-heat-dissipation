@@ -49,19 +49,25 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu113
 
 ```.sh
 srun -N1 -n8 --account=plgclb2024-gpu-a100 --partition=plgrid-gpu-a100 --gres=gpu:1 --time=08:00:00 --pty /bin/bash -l
-srun -N1 -n8 --account=plgclb2024-gpu-a100 --partition=plgrid-gpu-a100 --gres=gpu:1 --time=01:00:00 --pty /bin/bash -l
 
-module load GCC/12.3.0
-module load GCCcore/12.3.0
-module load CUDA/12.4.0
-module load gompi/2023a
 module load Python/3.10.4
-
 
 python -m venv py-ihd-env
 source $SCRATCH/py-ihd-env/bin/activate
 $SCRATCH/py-ihd-env/bin/python -m pip install --upgrade pip
 
+pip install -r generative-inverse-heat-dissipation/requirements.txt
+
+
+
+
+
+
+# if you want to try luck with compilation
+module load GCC/12.3.0
+module load GCCcore/12.3.0
+module load CUDA/12.4.0
+module load gompi/2023a
 
 ## skip the mpi4py part , we dont use it
 #export MPICC=mpicc
@@ -74,6 +80,7 @@ pip install -r pi-inr/requirements.txt
 
 
 cd /net/tscratch/people/plgmuaddieb/generative-inverse-heat-dissipation
+# dont forget that mpi requires srun/mpiexec at launch
 python train.py --config configs/mnist/default_mnist_configs.py --workdir runs/mnist/default
 ```
 
@@ -210,6 +217,13 @@ ncdu $HOME
 hpc-fs # athena util
 ```
 
+# check TRES (GPU) usage
+
+sacct -X --user $USER -S 2024-01-01 --format=jobid,jobname,account,partition,alloccpus,Submit,Start,End,Elapsed,QOS,Timelimit,state,exitcode,Priority 
+
+sacct -X --user $USER -S 2024-01-01 --format=jobid,jobname,AllocTRES%50,Submit,Start,End,Elapsed,QOS,Timelimit,state,exitcode,Priority 
+
+
 # runs
 
 ```.sh
@@ -226,7 +240,10 @@ python train_corrupted.py --config configs/mnist/small_mnist_lbm_ns_turb_config.
 
 python train_corrupted.py --config configs/mnist/small_mnist_gaussian_blurring_config.py --workdir runs/mnist/small_gaussian_blurr_mnist
 
-python train_corrupted.py --config=configs/ffhq/128_ffhq_lbm_ns_config.py            # --workdir runs/ffhq/128_ffhq_lbm_ns
+
+
+
+python train_corrupted.py --config=configs/ffhq/128_ffhq_lbm_ns_config.py
 
 python sample_corruption.py --config=configs/ffhq/128_ffhq_lbm_ns_config.py
 ```

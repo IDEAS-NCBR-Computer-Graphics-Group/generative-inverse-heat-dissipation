@@ -63,7 +63,7 @@ def get_default_configs():
     stamp = config.stamp
     stamp.hash = conf_utils.hash_joiner([solver.hash, turbulence.hash])
     
-    debug = True
+    debug = False
     if debug:
         data.processed_filename = f'{data.processed_filename}_debug'
         data.process_all = False
@@ -76,8 +76,8 @@ def get_default_configs():
         config.eval.batch_size = 4
         # config.training.batch_size = 16 # rtx4080
 
-        training.n_iters = 5001
-        training.sampling_freq = 100
+        training.n_iters = 1001
+        training.sampling_freq = 200
         
     return config
     
