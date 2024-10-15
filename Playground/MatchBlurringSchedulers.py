@@ -150,8 +150,8 @@ class GaussianBlurLayerNaive(nn.Module):
 blurred_by_fft = fft_ade(initial_condition, tc, diffusivity0, advection_coeff_0)
 sigma = calc_sigma(tc, diffusivity0)
 print(f"Blurring sigma = {sigma}")
-# blurred_by_gaussian = gaussian_filter(initial_condition, sigma=sigma)
-blurred_by_gaussian = gaussian_filter(initial_condition, sigma=sigma, mode='wrap')
+blurred_by_gaussian = gaussian_filter(initial_condition, sigma=sigma)
+# blurred_by_gaussian = gaussian_filter(initial_condition, sigma=sigma, mode='wrap')
 
 
 plot_matrix(blurred_by_fft, title="FFT Blurr")
@@ -205,10 +205,12 @@ solver = LBM_ADE_Solver(
     )    
 # 
 solver.init(np_init_gray_image) 
-solver.solve(iterations=2360)
+solver.solve(iterations=2430)
 
 img = solver.rho
 rho_np = np.rot90(img.to_numpy().copy(), k=1)
 
-plot_matrix(rho_np, title="IC")
+plot_matrix(rho_np, title="LBM BLURR")
 plot_matrix(blurred_by_dct-rho_np, title="diff")
+print(f'Maximal value of DCT blurr: {blurred_by_dct.max()}')
+print(f'Maximal value of LBM blurr: {rho_np.max()}')
