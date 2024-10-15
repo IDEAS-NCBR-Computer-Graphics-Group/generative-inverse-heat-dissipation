@@ -37,7 +37,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
     https://github.com/fyu/lsun
     """
 
-    if getattr(config, 'solver'):
+    if getattr(config, 'solver', None):
         solver_hash = config.solver.hash      
         current_file_path = Path(__file__).resolve()
         base_folder = current_file_path.parents[1]
@@ -69,7 +69,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
             root="data", train=True, download=True, transform=transform)
         test_data = datasets.MNIST(
             root="data", train=False, download=True, transform=transform)
-        if getattr(config, 'solver'):
+        if getattr(config, 'solver', None):
             start = timer()
             logging.info("Corruption on train split")
             corruptor._preprocess_and_save_data(
@@ -116,7 +116,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         testloader = load_data(data_dir="data/ffhq-dataset/images1024x1024",
                                batch_size=eval_batch_size, image_size=config.data.image_size,
                                random_flip=False)
-        if not getattr(config, 'solver'):
+        if not getattr(config, 'solver', None):
             return trainloader, testloader
         start = timer()
         logging.info("Fluid corruption on train split")
@@ -158,7 +158,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         testloader = load_data(data_dir="data/ffhq-128-70k",
                                batch_size=eval_batch_size, image_size=config.data.image_size,
                                random_flip=False)
-        if not getattr(config, 'solver'):
+        if not getattr(config, 'solver', None):
             return trainloader, testloader
         start = timer()
         logging.info("Fluid corruption on train split")
@@ -200,7 +200,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         testloader = load_data(data_dir="data/afhq/val",
                                batch_size=eval_batch_size, image_size=config.data.image_size,
                                random_flip=False)
-        if not getattr(config, 'solver'):
+        if not getattr(config, 'solver', None):
             return trainloader, testloader
     else:
         raise ValueError
