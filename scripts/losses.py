@@ -101,6 +101,7 @@ def get_inverse_lbm_ns_loss_fn(train, sigma):
         blurred_batch, less_blurred_batch, fwd_steps, labels = batch
                 
         # although the corruptor is nondeterministic, so we add noise here
+        # randn_like: random numbers from a normal distribution with mean 0 and variance 1.
         noise = torch.randn_like(blurred_batch) * sigma
         perturbed_data = blurred_batch + noise
         diff = model_fn(perturbed_data, fwd_steps)
