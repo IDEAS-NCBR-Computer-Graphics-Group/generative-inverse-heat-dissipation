@@ -69,7 +69,7 @@ def get_default_configs():
         data.process_all = False
         
         model = config.model
-        model.channel_mult = (1, 2, 3, 3, 3)
+        model.channel_mult = (1, 2, 2, 2, 2)
         # model.attention_levels = (2, 3, 4)
     
         config.training.batch_size = 4 # rtx2080

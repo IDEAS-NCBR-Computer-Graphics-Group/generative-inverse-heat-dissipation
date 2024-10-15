@@ -68,11 +68,11 @@ class LBM_Base_Corruptor(BaseCorruptor):
 
         
         if generate_pair:
-            noisy_x = self._intermediate_samples[-1]
-            less_noisy_x = self._intermediate_samples[-2]
+            noisy_x = self._intermediate_samples[-1].clone()
+            less_noisy_x = self._intermediate_samples[-2].clone()
             return noisy_x, less_noisy_x
         else:
-            noisy_x = self._intermediate_samples[-1]
+            noisy_x = self._intermediate_samples[-1].clone()
             return noisy_x, None
         
         
