@@ -18,20 +18,16 @@ class LBM_ADE_Solver(LBM_SolverBase):
     def init(self, np_gray_image): 
         self.rho.from_numpy(np_gray_image)
         self.vel.fill(0)
-
-        # u_spec, v_spec = self.turbulenceGenerator.generate_turbulence(0)     
-        # force_numpy = torch.stack((u_spec, v_spec), axis=-1)  # Shape becomes (128, 128, 2)
-        # self.Force.from_torch(force_numpy)
-        
-        # self.init_gaussian_force_field(0*1E-3, 0, 1)
         self.init_fields()
                    
     def solve(self, iterations):
         for iteration in range(iterations):                
             self.stream()
             self.update_macro_var()
-            # self.collide_srt()
-            self.collide_cm()
+            omega_kin = self.omega_kin[self.iterations_counter]
+            
+            # self.collide_srt(omega_kin)
+            self.collide_cm(omega_kin)
              
             u_turb, v_turb = self.turbulenceGenerator.generate_turbulence(self.iterations_counter)     
             turb_numpy = torch.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
@@ -45,34 +41,21 @@ class LBM_ADE_Solver(LBM_SolverBase):
             self.apply_nee_bc()
             self.iterations_counter = self.iterations_counter + 1
         
-        
             # if self.iterations_counter % 10 == 0:
             #     print(f"iterations: {self.iterations_counter}")
             
         print(f"Solver run for iterations: {self.iterations_counter}")                    
                 
 
-               
-        # periodic wip
-        # for j in range(0, self.ny):
-        # # right bc to left bc
-        #     self.f_new[0, j][1] = self.f_new[self.nx-1, j][1] # east
-        #     self.f_new[0, j][5] = self.f_new[self.nx-1, j][5] # north-east
-        #     self.f_new[0, j][8] = self.f_new[self.nx-1, j][8] # south-east
-        # # left bc to right bc
-        #     self.f_new[self.nx-1, j][3] = self.f_new[0, j][3] # west
-        #     self.f_new[self.nx-1, j][6] = self.f_new[0, j][6] # north-west
-        #     self.f_new[self.nx-1, j][7] = self.f_new[0, j][7] # south-west
-
     @ti.kernel
-    def collide_srt(self):
+    def collide_srt(self, omega_kin: float):
         for i, j in ti.ndrange((1, self.nx - 1), (1, self.ny - 1)):
             for k in ti.static(range(9)):
                 feq = self.f_eq(i, j)
-                self.f_new[i, j][k] = (1 - self.omega_kin) * self.f[i, j][k] + feq[k] * self.omega_kin
+                self.f_new[i, j][k] = (1. - omega_kin) * self.f[i, j][k] + feq[k] * omega_kin
         
     @ti.kernel
-    def collide_cm(self):
+    def collide_cm(self, omega_kin: float):
         for i, j in ti.ndrange((1, self.nx - 1), (1, self.ny - 1)): 
             #=== THIS IS AUTOMATICALLY GENERATED CODE ===
             ux = self.vel[i, j][0]
@@ -109,25 +92,25 @@ class LBM_ADE_Solver(LBM_SolverBase):
             
             #SRT
             # self.f_new[i,j][0] = m000
-            # self.f_new[i,j][1] = self.f[i,j][1]*(1.- self.omega_kin) 
-            # self.f_new[i,j][2] = self.f[i,j][2]*(1.- self.omega_kin) 
-            # self.f_new[i,j][3] = self.f[i,j][3]*(1.- self.omega_kin) + self.omega_kin*m000/3.
-            # self.f_new[i,j][4] = self.f[i,j][4]*(1.- self.omega_kin) + self.omega_kin*m000/3.
-            # self.f_new[i,j][5] = self.f[i,j][5]*(1.- self.omega_kin)
-            # self.f_new[i,j][6] = self.f[i,j][6]*(1.- self.omega_kin) 
-            # self.f_new[i,j][7] = self.f[i,j][7]*(1.- self.omega_kin) 
-            # self.f_new[i,j][8] = self.f[i,j][8]*(1.- self.omega_kin) +  self.omega_kin*m000/9.
+            # self.f_new[i,j][1] = self.f[i,j][1]*(1.- omega_kin) 
+            # self.f_new[i,j][2] = self.f[i,j][2]*(1.- omega_kin) 
+            # self.f_new[i,j][3] = self.f[i,j][3]*(1.- omega_kin) + omega_kin*m000/3.
+            # self.f_new[i,j][4] = self.f[i,j][4]*(1.- omega_kin) + omega_kin*m000/3.
+            # self.f_new[i,j][5] = self.f[i,j][5]*(1.- omega_kin)
+            # self.f_new[i,j][6] = self.f[i,j][6]*(1.- omega_kin) 
+            # self.f_new[i,j][7] = self.f[i,j][7]*(1.- omega_kin) 
+            # self.f_new[i,j][8] = self.f[i,j][8]*(1.- omega_kin) +  omega_kin*m000/9.
             
             #TRT
             self.f_new[i,j][0] = m000
-            self.f_new[i,j][1] = self.f[i,j][1]*(1.- self.omega_kin) 
-            self.f_new[i,j][2] = self.f[i,j][2]*(1.- self.omega_kin) 
+            self.f_new[i,j][1] = self.f[i,j][1]*(1.- omega_kin) 
+            self.f_new[i,j][2] = self.f[i,j][2]*(1.- omega_kin) 
             self.f_new[i,j][3] = m000/3.
             self.f_new[i,j][4] = m000/3.
             self.f_new[i,j][5] = 0
-            self.f_new[i,j][6] = self.f[i,j][6]*(1.- self.omega_kin) 
-            self.f_new[i,j][7] = self.f[i,j][7]*(1.- self.omega_kin) 
-            self.f_new[i,j][8] = self.omega_kin*m000/9.
+            self.f_new[i,j][6] = self.f[i,j][6]*(1.- omega_kin) 
+            self.f_new[i,j][7] = self.f[i,j][7]*(1.- omega_kin) 
+            self.f_new[i,j][8] = omega_kin*m000/9.
             
             #back to raw moments
             self.f[i,j][0] = self.f_new[i,j][0]

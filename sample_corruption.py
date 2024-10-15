@@ -5,6 +5,7 @@ from timeit import default_timer as timer
 import torchvision
 import torch
 import os
+import shutil
 from pathlib import Path
 
 from scripts import datasets as ihd_datasets
@@ -27,20 +28,22 @@ flags.mark_flags_as_required(["config"])
 
 def main(argv):
     # Example
-    # python sample_corruption.py --config=configs/ffhq/128_ffhq_lbm_ns_config.py
+    # python sample_corruption.py --config=configs/ffhq/ffhq_128_lbm_ns_config.py
+    # python sample_corruption.py --config=configs/ffhq/ffhq_128_lbm_ns_config_low_visc.py
     # python sample_corruption.py --config=configs/mnist/small_mnist_lbm_ns_config.py
     produce_sample(FLAGS.config)
   
   
 def produce_sample(config_path):
     config = load_config_from_path(config_path)
-
+    
     trainloader, testloader = ihd_datasets.get_dataset(config, uniform_dequantization=config.data.uniform_dequantization)
 
     storage_dir = 'runs'
-    save_scriptname = 'sample_corruption'
+    save_scriptname = 'sample_corruption_' + config.stamp.hash
     save_dir = os.path.join(storage_dir, save_scriptname)
     os.makedirs(save_dir, exist_ok=True)
+    shutil.copy(config_path, save_dir)
     
     clean_image, batch = ihd_datasets.prepare_batch(iter(trainloader),'cpu')
     corrupted_image, less_corrupted_image, corruption_amount, label = batch
@@ -63,7 +66,6 @@ def produce_sample(config_path):
     plt.show()
     plt.close()
     
-    
     corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
         config=config,
         transform=config.data.transform)
@@ -77,25 +79,13 @@ def produce_sample(config_path):
     utils.save_gif(save_dir, intermediate_corruption_samples, "corruption_init.gif")
     utils.save_video(save_dir, intermediate_corruption_samples, filename="corruption_init.mp4")
     utils.save_png(save_dir, clean_initial_sample, "clean_init.png")
-    
-        
-    # clean_image, batch = ihd_datasets.prepare_batch(iter(trainloader),'cpu')
-    # noisy_sample = torch.empty_like(clean_image)    
-    # for index in range(clean_image.shape[0]):
-    #     tmp, _ = corruptor._corrupt(clean_image[index], config.solver.n_denoising_steps)
-    #     noisy_sample[index] = tmp
-        
-    
+      
     fig, axs = plt.subplots(2, 1, figsize=(20, 20), sharex=True)
     axs[0].set_title('clean x', fontsize=24)
     axs[1].set_title('noisy x', fontsize=24)
 
-    
     axs[0].imshow(torchvision.utils.make_grid(clean_initial_sample)[0], cmap='Greys')
     axs[1].imshow(torchvision.utils.make_grid(initial_corrupted_sample)[0], cmap='Greys')
-
-    # axs[0].imshow(torchvision.utils.make_grid(clean_image)[0], cmap='Greys')
-    # axs[1].imshow(torchvision.utils.make_grid(noisy_sample)[0], cmap='Greys')
 
     plt.tight_layout()
     plt.savefig(os.path.join(save_dir,'Fully_corrupted_sample.png'), bbox_inches='tight')

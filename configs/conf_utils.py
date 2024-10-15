@@ -16,11 +16,37 @@ def hash_solver(config):
     # Convert ConfigDict to a regular dictionary
     config_dict = config.to_dict()
     
+    # Convert NumPy arrays to lists recursively with precision control
+    def convert_numpy_to_list(obj, precision=6):  # Added precision parameter
+        if isinstance(obj, dict):
+            return {k: convert_numpy_to_list(v, precision) for k, v in obj.items()}
+        elif isinstance(obj, (np.ndarray, np.generic)):
+            return np.round(obj, decimals=precision).tolist()  # Round before converting to list
+        else:
+            return obj
+
+    config_dict = convert_numpy_to_list(config_dict)
+    
     # Serialize the dictionary to a string with sorted keys
     config_str = json.dumps(config_dict, sort_keys=True)
     
     # Compute the MD5 hash of the string
     return hashlib.md5(config_str.encode()).hexdigest()
+
+def hash_joiner(hash_list):
+    """
+    Joins a list of hashes into a single, short hash.
+
+    Args:
+        hash_list (list): A list of hash strings.
+
+    Returns:
+        str: The combined hash string.
+    """
+    combined_hash = hashlib.md5()
+    for hash_str in hash_list:
+        combined_hash.update(hash_str.encode())
+    return combined_hash.hexdigest()
 
 # Function to assign a value to a nested ConfigDict
 def set_nested_value(config, keys, value):

@@ -21,12 +21,7 @@ class LBM_NS_Solver(LBM_SolverBase):
     def init(self, np_gray_image): 
         self.rho.from_numpy(np_gray_image)
         self.vel.fill(0)
-
-        # u_spec, v_spec = self.turbulenceGenerator.generate_turbulence(0)     
-        # force_numpy = torch.stack((u_spec, v_spec), axis=-1)  # Shape becomes (128, 128, 2)
-        # self.Force.from_torch(force_numpy)
-        
-        self.init_gaussian_force_field(0*1E-2, 0, 1)
+        self.init_gaussian_force_field(0, 0, 1)
         self.init_fields()
                    
     def solve(self, iterations):
@@ -64,23 +59,14 @@ class LBM_NS_Solver(LBM_SolverBase):
         if self.iterations_counter == self.max_iter:
              print(f"Solver run for max iterations {self.max_iter}... doing nothing.")
                
-        # periodic wip
-        # for j in range(0, self.ny):
-        # # right bc to left bc
-        #     self.f_new[0, j][1] = self.f_new[self.nx-1, j][1] # east
-        #     self.f_new[0, j][5] = self.f_new[self.nx-1, j][5] # north-east
-        #     self.f_new[0, j][8] = self.f_new[self.nx-1, j][8] # south-east
-        # # left bc to right bc
-        #     self.f_new[self.nx-1, j][3] = self.f_new[0, j][3] # west
-        #     self.f_new[self.nx-1, j][6] = self.f_new[0, j][6] # north-west
-        #     self.f_new[self.nx-1, j][7] = self.f_new[0, j][7] # south-west
+
 
     @ti.kernel
-    def collide_srt(self):
+    def collide_srt(self, omega_kin: float):
         for i, j in ti.ndrange((1, self.nx - 1), (1, self.ny - 1)):
             for k in ti.static(range(9)):
                 feq = self.f_eq(i, j)
-                self.f_new[i, j][k] = (1 - self.omega_kin) * self.f[i, j][k] + feq[k] * self.omega_kin
+                self.f_new[i, j][k] = (1. - omega_kin) * self.f[i, j][k] + feq[k] * omega_kin
     
 
     @ti.kernel

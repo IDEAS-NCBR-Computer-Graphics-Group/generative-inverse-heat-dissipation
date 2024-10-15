@@ -122,7 +122,7 @@ def train(config_path):
     )
 
     # draw a sample by destroying some rand images 
-    n_denoising_steps = config.solver.n_denoising_steps   
+    n_denoising_steps = config.solver.n_denoising_steps
     initial_corrupted_sample, clean_initial_sample, intermediate_corruption_samples = sampling.get_initial_corrupted_sample(
         trainloader, n_denoising_steps, corruptor)
     

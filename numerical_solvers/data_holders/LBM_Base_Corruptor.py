@@ -56,13 +56,8 @@ class LBM_Base_Corruptor(BaseCorruptor):
         self.solver.init(np_gray_img)
         self.solver.iterations_counter = 0  # Reset counter
 
-
-        # self._intermediate_samples = [] # reset
-        # self._intermediate_samples = [torch.tensor(np_gray_img).unsqueeze(0).clone()]
-
         self._intermediate_samples = torch.empty((steps + 1, *x.shape))
         self._intermediate_samples[0] = torch.tensor(np_gray_img).unsqueeze(0).clone()
-
 
         for i in range(steps):
             self.solver.solve(step_difference)
@@ -140,7 +135,8 @@ class LBM_Base_Corruptor(BaseCorruptor):
             if index % 100 == 0:
                 logging.info(f"Preprocessing (lbm) {index}")
             
-            corruption_amount = np.random.randint(self.min_steps, self.max_steps) # TODO: GG: max_steps is excluded from tossing, thus max_steps = denoising steps + 1
+            # max_steps is excluded from tossing, thus max_steps = denoising steps + 1
+            corruption_amount = np.random.randint(self.min_steps, self.max_steps) 
             original_pil_image, label = initial_dataset[index]
             if process_images:
                 original_pil_image = np.transpose(original_pil_image, [1, 2, 0])

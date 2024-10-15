@@ -28,9 +28,10 @@ def get_sampling_fn_inverse_lbm_ns(
             if intermediate_sample_indices != None and n_denoising_steps in intermediate_sample_indices:
                 intermediate_samples_out.append((u, u)) # store the initial (fully blurred) sample
                 
-            # assuming n_denoising_steps=3, then
+            # assuming n_denoising_steps=4, then
             # for i in range(n_denoising_steps, 0, -1):
             #     print(i):
+            #         4
             #         3
             #         2
             #         1
@@ -150,9 +151,10 @@ def get_sampling_fn_inverse_heat_interpolate(config, initial_sample,
 
 def get_initial_sample(config, forward_heat_module, delta, batch_size=None):
     """Take a draw from the prior p(u_K)"""
-    trainloader, _ = datasets.get_dataset(config,
-                                          uniform_dequantization=config.data.uniform_dequantization,
-                                          train_batch_size=batch_size)
+    trainloader, _ = datasets.get_dataset(
+                        config,
+                        uniform_dequantization=config.data.uniform_dequantization,
+                        train_batch_size=batch_size)
 
     initial_sample = next(iter(trainloader))[0].to(config.device)
     original_images = initial_sample.clone()

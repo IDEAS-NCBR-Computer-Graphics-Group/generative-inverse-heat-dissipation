@@ -34,3 +34,4 @@ slurm-*
 output_*
 unet_model.pth
 imgui.ini
+.idea/misc.xml

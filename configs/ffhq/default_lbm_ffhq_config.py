@@ -45,8 +45,8 @@ def get_default_configs():
 
     # solver
     config.solver = solver = ml_collections.ConfigDict()
-
     config.turbulence = turbulence = ml_collections.ConfigDict()
+    config.stamp = stamp = ml_collections.ConfigDict()
     
     # model
     config.model = model = ml_collections.ConfigDict()
