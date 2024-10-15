@@ -60,7 +60,8 @@ for CONFIG_FILE in $CONFIG_DIRNAME/*.py; do
         echo "#SBATCH --account=plgclb2024-gpu-a100"
         echo "#SBATCH --partition=plgrid-gpu-a100"
         echo "#SBATCH --nodes=1"
-        echo "#SBATCH --cpus-per-task=8"
+        echo "#SBATCH --cpus-per-task=12"
+        echo "#SBATCH --mem=192"
         echo "#SBATCH --gres=gpu:1"
         echo "#SBATCH --time=$TIME"                  # Use the specified or default time
         
