@@ -91,6 +91,10 @@ for r0, x0, y0, intensity0 in cirles:
 
 plot_matrix(initial_condition, title="IC")
 
+np_init_gray_image = np.rot90(initial_condition.copy(), k=-1)
+
+
+
 #%% ################ Solvers ################
 def fft_ade(image, time, diff_coeff, advect_coeff):
   n = image.shape[0]
@@ -183,17 +187,13 @@ plot_matrix(blurred_by_dct-blurred_by_gaussian_schedule, title="Final Difference
 
 print(f"Blurring sigma = {calc_sigma(tc, diffusivity0)}")
 print(f"model.blur_schedule[fwd_steps] = {model.blur_schedule[fwd_steps]}")
-
-
-
-
-
+#%% ################ ADE_LBM VS DCT ################
 
 
 config = get_config()
 grid_size = initial_condition.shape
 spectralTurbulenceGenerator = SpectralTurbulenceGenerator(config.turbulence.domain_size, grid_size, 
-        config.turbulence.turb_intensity, config.turbulence.noise_limiter,
+        0*config.turbulence.turb_intensity, config.turbulence.noise_limiter,
         energy_spectrum=config.turbulence.energy_spectrum, 
         frequency_range={'k_min': config.turbulence.k_min, 'k_max': config.turbulence.k_max}, 
         dt_turb=config.turbulence.dt_turb, 
@@ -204,34 +204,11 @@ solver = LBM_ADE_Solver(
     spectralTurbulenceGenerator
     )    
 # 
-solver.init(initial_condition) 
+solver.init(np_init_gray_image) 
+solver.solve(iterations=2360)
 
+img = solver.rho
+rho_np = np.rot90(img.to_numpy().copy(), k=1)
 
-##### TODO Code with Michal's renderer
-window = ti.ui.Window('CG - Renderer', res=(5*solver.nx, 3 * solver.ny))
-gui = window.get_gui()
-canvas = window.get_canvas()
-
-canvasPlotter = CanvasPlotter(solver, (1.0*initial_condition.min(), 1.0*initial_condition.max()))
-# warm up
-solver.solve(iterations=1)
-solver.iterations_counter=0 # reset counter
-img = canvasPlotter.make_frame()
-
-# os.Path("output/").mkdir(parents=True, exist_ok=True)
-# canvasPlotter.write_canvas_to_file(img, f'output/iteration_{solver.iterations_counter}.jpg')
-    
-iter_per_frame = 1
-i = 0
-while window.running:
-    with gui.sub_window('MAIN MENU', x=0, y=0, width=1.0, height=0.3):
-        iter_per_frame = gui.slider_int('steps', iter_per_frame, 1, 20)
-        gui.text(f'iteration: {solver.iterations_counter}')
-        if gui.button('solve'):
-            solver.solve(iter_per_frame)      
-            img = canvasPlotter.make_frame()
-            # save_png(save_dir, torch_image, "s.png")
-            i += iter_per_frame
-
-    canvas.set_image(img.astype(np.float32))
-    window.show()
+plot_matrix(rho_np, title="IC")
+plot_matrix(blurred_by_dct-rho_np, title="diff")
