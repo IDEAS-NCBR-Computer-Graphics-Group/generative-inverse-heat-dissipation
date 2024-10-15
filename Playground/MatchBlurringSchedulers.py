@@ -5,6 +5,7 @@ import numpy as np
 from numba import jit, njit
 from numpy.testing import assert_almost_equal
 from numpy.fft import fft2, fftshift, ifft2 # Python DFT
+import matplotlib
 import matplotlib.pyplot as plt
 import time
 import torch
@@ -13,7 +14,20 @@ from torchvision.transforms import GaussianBlur
 import torch.nn as nn
 import math
 
+import taichi as ti
+import taichi.math as tm
+
+
 from model_code.utils import DCTBlur
+
+from numerical_solvers.solvers.LBM_ADE_Solver import LBM_ADE_Solver
+from configs.mnist.small_mnist_lbm_ade_turb_config import get_config
+from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
+from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
+
+
+ti.init(arch=ti.gpu) if torch.cuda.is_available() else ti.init(arch=ti.cpu)
+
 
 #%% ################ helper functions ################
 
@@ -132,7 +146,8 @@ class GaussianBlurLayerNaive(nn.Module):
 blurred_by_fft = fft_ade(initial_condition, tc, diffusivity0, advection_coeff_0)
 sigma = calc_sigma(tc, diffusivity0)
 print(f"Blurring sigma = {sigma}")
-blurred_by_gaussian = gaussian_filter(initial_condition, sigma=sigma)
+# blurred_by_gaussian = gaussian_filter(initial_condition, sigma=sigma)
+blurred_by_gaussian = gaussian_filter(initial_condition, sigma=sigma, mode='wrap')
 
 
 plot_matrix(blurred_by_fft, title="FFT Blurr")
@@ -140,17 +155,9 @@ plot_matrix(blurred_by_gaussian, title="Gaussian Blurr")
 plot_matrix(blurred_by_fft-blurred_by_gaussian, title="Difference")
 
 #%% ################ Import DCT ################
-from configs.mnist.small_mnist import get_config
+from configs.mnist.small_mnist_lbm_ns_turb_config import get_config
 config = get_config()
 model = config.model
-
-# model.K = 50 
-# model.blur_sigma_max = 20
-# model.blur_sigma_min = 0.5
-# model.blur_schedule = np.exp(np.linspace(np.log(model.blur_sigma_min),
-#                                             np.log(model.blur_sigma_max), model.K))
-# model.blur_schedule = np.array([0] + list(model.blur_schedule))  # Add the k=0 timestep
-# sigmas = model.blur_schedule
 dctBlur = DCTBlur(model.blur_schedule, image_size=n, device="cpu")
 
 # %% ################ RUN DCT ################
@@ -171,9 +178,60 @@ blurred_by_gaussian_schedule_v0 = gaussian_filter(initial_condition, sigma=model
 blurred_by_gaussian_schedule = gaussianBlur(t_initial_condition, fwd_steps).float()
 blurred_by_gaussian_schedule = blurred_by_gaussian_schedule.squeeze().numpy()
 
-plot_matrix(blurred_by_gaussian_schedule, title="Sigma Blurr")
+# plot_matrix(blurred_by_gaussian_schedule, title="Sigma Blurr")
 plot_matrix(blurred_by_dct-blurred_by_gaussian_schedule, title="Final Difference")
 
 print(f"Blurring sigma = {calc_sigma(tc, diffusivity0)}")
 print(f"model.blur_schedule[fwd_steps] = {model.blur_schedule[fwd_steps]}")
 
+
+
+
+
+
+
+config = get_config()
+grid_size = initial_condition.shape
+spectralTurbulenceGenerator = SpectralTurbulenceGenerator(config.turbulence.domain_size, grid_size, 
+        config.turbulence.turb_intensity, config.turbulence.noise_limiter,
+        energy_spectrum=config.turbulence.energy_spectrum, 
+        frequency_range={'k_min': config.turbulence.k_min, 'k_max': config.turbulence.k_max}, 
+        dt_turb=config.turbulence.dt_turb, 
+    is_div_free=False)
+solver = LBM_ADE_Solver(
+    grid_size,
+    config.solver.niu, config.solver.bulk_visc,
+    spectralTurbulenceGenerator
+    )    
+# 
+solver.init(initial_condition) 
+
+
+##### TODO Code with Michal's renderer
+window = ti.ui.Window('CG - Renderer', res=(5*solver.nx, 3 * solver.ny))
+gui = window.get_gui()
+canvas = window.get_canvas()
+
+canvasPlotter = CanvasPlotter(solver, (1.0*initial_condition.min(), 1.0*initial_condition.max()))
+# warm up
+solver.solve(iterations=1)
+solver.iterations_counter=0 # reset counter
+img = canvasPlotter.make_frame()
+
+# os.Path("output/").mkdir(parents=True, exist_ok=True)
+# canvasPlotter.write_canvas_to_file(img, f'output/iteration_{solver.iterations_counter}.jpg')
+    
+iter_per_frame = 1
+i = 0
+while window.running:
+    with gui.sub_window('MAIN MENU', x=0, y=0, width=1.0, height=0.3):
+        iter_per_frame = gui.slider_int('steps', iter_per_frame, 1, 20)
+        gui.text(f'iteration: {solver.iterations_counter}')
+        if gui.button('solve'):
+            solver.solve(iter_per_frame)      
+            img = canvasPlotter.make_frame()
+            # save_png(save_dir, torch_image, "s.png")
+            i += iter_per_frame
+
+    canvas.set_image(img.astype(np.float32))
+    window.show()
