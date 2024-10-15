@@ -60,7 +60,7 @@ class SpectralTurbulenceGenerator1D(t.nn.Module):
             self,
             domain_size,
             grid_size, 
-            turb_intensity, 
+            std_dev, 
             noise_limiter=(-1E-3,1E-3),
             energy_spectrum=None, 
             frequency_range=None, 
@@ -79,7 +79,7 @@ class SpectralTurbulenceGenerator1D(t.nn.Module):
         self.Lx = domain_size
         self.Nx = grid_size
         self.desired_std = 1.0  # desired standard deviation of the output 
-        self.turb_intensity = turb_intensity
+        self.std_dev = std_dev
         self.energy_spectrum = energy_spectrum if energy_spectrum else self.default_energy_spectrum.to(device)
         self.frequency_range = frequency_range if frequency_range else {'k_min': 2.0 * t.pi / domain_size, 'k_max': 2.0 * t.pi / (domain_size / 20)}
 
@@ -135,17 +135,17 @@ class SpectralTurbulenceGenerator1D(t.nn.Module):
         - u: 1D array of x-velocity fluctuations (Nx,)
         """
 
-        u_hat = self.turb_intensity * self.amplitude * t.exp(1j * (self.phase_u   + self.omega * time))
-        # u_hat = self.turb_intensity * self.amplitude * t.exp(1j * (time))
+        u_hat = self.std_dev * self.amplitude * t.exp(1j * (self.phase_u   + self.omega * time))
+        # u_hat = self.std_dev * self.amplitude * t.exp(1j * (time))
         
         u = t.real(t.fft.ifft(u_hat))
 
-        if self.turb_intensity < 1E-14:
+        if self.std_dev < 1E-14:
             u = 0 * self.K  # Avoid division by 0 in t.std(u)
         else:
             # Normalize u to have a standard deviation of 1
             u /= t.std(u)
-            u *= self.turb_intensity
+            u *= self.std_dev
 
         # Apply limiter
         min_noise, max_noise = self.noise_limiter
@@ -213,9 +213,11 @@ M = 1E6
 # turbulence_generator = SpectralTurbulenceGenerator(
 #     domain_size, grid_size, turb_intensity=0.0001, noise_limiter=(-1E-3, 1E-3), energy_spectrum = lambda k: t.where(t.isinf(k ** (-5.0 / 3.0)), 0, k ** (-5.0 / 3.0)), frequency_range= {'k_min': 2.0 * np.pi / min(domain_size), 'k_max': 2.0 * np.pi / (min(domain_size) / 1024)}
 # )
+
 domain_size = 1.0
 grid_size = 256**2
 slope = 2.
+
 # my_energy_spectrum = lambda k: t.where(t.isinf(k ** (slope)), 0, k ** (slope))
 # my_frequency_range = {'k_min': 1E-6,'k_max': 1E6}
     
@@ -226,11 +228,11 @@ slope = 2.
 #     frequency_range= my_frequency_range
 # )
 
-turb_intensity=0.0001
+std_dev=0.0001
 
 # Initialize the 1D turbulence generator
 turbulence_generator = SpectralTurbulenceGenerator1D(
-    domain_size, grid_size, turb_intensity, noise_limiter=(-M, M), 
+    domain_size, grid_size, std_dev, noise_limiter=(-M, M), 
     energy_spectrum=generate_linear_increasing_spectrum, 
     frequency_range={'k_min': 1E-6, 'k_max': 1E6}
 )
