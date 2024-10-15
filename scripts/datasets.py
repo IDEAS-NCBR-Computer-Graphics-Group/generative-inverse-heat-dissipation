@@ -116,8 +116,41 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         testloader = load_data(data_dir="data/ffhq-dataset/images1024x1024",
                                batch_size=eval_batch_size, image_size=config.data.image_size,
                                random_flip=False)
-        if not getattr(config, 'solver', None):
+        if not getattr(config, 'solver'):
             return trainloader, testloader
+        start = timer()
+        logging.info("Fluid corruption on train split")
+        corruptor._preprocess_and_save_data(
+            initial_dataset=trainloader.dataset,
+            save_dir=save_dir,
+            process_all=config.data.process_all,
+            is_train_dataset=True,
+            process_pairs=config.data.process_pairs,
+            process_images=True
+            )
+        logging.info("Fluid corruption on test split")
+        if not config.data.random_flip:
+            corruptor.copy_train_dataset_as_test_dataset(save_dir)
+        else:
+            corruptor._preprocess_and_save_data(
+            initial_dataset=trainloader.dataset,
+            save_dir=save_dir,
+            process_all=config.data.process_all,
+            is_train_dataset=False,
+            process_pairs=config.data.process_pairs,
+            process_images=True
+            )
+        end = timer()
+        logging.info(f"Fluid corruption took {end - start:.2f} seconds")
+        transform = [
+            transforms.ToPILImage(), 
+            transforms.Resize(config.data.image_size),
+            transforms.CenterCrop(config.data.image_size),
+            transforms.ToTensor()
+            ]
+        transform = transforms.Compose(transform)
+        training_data = CorruptedDataset(load_dir=save_dir, train=True, transform=transform)
+        test_data = CorruptedDataset(load_dir=save_dir, train=False, transform=transform)
     elif config.data.dataset == 'FFHQ_128':
         trainloader = load_data(data_dir="data/ffhq-128-70k",
                                 batch_size=train_batch_size, image_size=config.data.image_size,
@@ -138,7 +171,17 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
             process_images=True
             )
         logging.info("Fluid corruption on test split")
-        corruptor.copy_train_dataset_as_test_dataset(save_dir)
+        if not config.data.random_flip:
+            corruptor.copy_train_dataset_as_test_dataset(save_dir)
+        else:
+            corruptor._preprocess_and_save_data(
+            initial_dataset=trainloader.dataset,
+            save_dir=save_dir,
+            process_all=config.data.process_all,
+            is_train_dataset=False,
+            process_pairs=config.data.process_pairs,
+            process_images=True
+            )
         end = timer()
         logging.info(f"Fluid corruption took {end - start:.2f} seconds")
         transform = [
@@ -157,7 +200,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         testloader = load_data(data_dir="data/afhq/val",
                                batch_size=eval_batch_size, image_size=config.data.image_size,
                                random_flip=False)
-        if not getattr(config, 'solver', None):
+        if not getattr(config, 'solver'):
             return trainloader, testloader
     else:
         raise ValueError

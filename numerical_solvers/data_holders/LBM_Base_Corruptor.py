@@ -16,6 +16,7 @@ from scripts.utils import load_config_from_path, setup_logging
 class LBM_Base_Corruptor(BaseCorruptor):
     def __init__(self, config, transform=None, target_transform=None):
         super(LBM_Base_Corruptor, self).__init__(transform, target_transform)
+        ti.init(arch=ti.gpu, random_seed=config.seed)
 
         # Set LBM steps (can be made configurable too)
         self.min_steps = config.solver.min_fwd_steps
@@ -112,7 +113,7 @@ class LBM_Base_Corruptor(BaseCorruptor):
 
             # Use the unified corrupt function and ignore the second value if not needed
             modified_image, pre_modified_image = self._corrupt(original_image, corruption_amount, generate_pair=process_pairs)
-
+            self.solver.turbulenceGenerator.randomize()
             data.append(original_image)
             modified_images.append(modified_image)
             corruption_amounts.append(corruption_amount)

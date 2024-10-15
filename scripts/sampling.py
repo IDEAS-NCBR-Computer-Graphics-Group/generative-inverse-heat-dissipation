@@ -162,18 +162,16 @@ def get_initial_sample(config, forward_heat_module, delta, batch_size=None):
 
 def get_initial_corrupted_sample(trainloader, corruption_amount, solver: BaseCorruptor, batch_size=None):
     """Take a draw from the prior p(u_K)"""
-    # trainloader, _ = datasets.get_dataset(
-    #     dataset_config, 
-    #     uniform_dequantization=dataset_config.data.uniform_dequantization,
-    #     train_batch_size=batch_size)
+
     original_images, _ = datasets.prepare_batch(iter(trainloader), 'cpu')
 
     noisy_initial_images = original_images.clone()
-    intermediate_samples = [noisy_initial_images.clone()]
+    intermediate_samples = [noisy_initial_images.clone() for _ in range(corruption_amount + 1)]
   
-    for _ in range(corruption_amount):
-        for index in range(original_images.shape[0]):
-            tmp, _ = solver._corrupt(noisy_initial_images[index], 1)
-            noisy_initial_images[index] = tmp
-        intermediate_samples.append(noisy_initial_images.clone())
+    for index in range(original_images.shape[0]):
+        for k in range(1, corruption_amount+1):
+            tmp, _ = solver._corrupt(intermediate_samples[k-1][index], 1)
+            intermediate_samples[k][index] = tmp
+        if getattr(solver.solver, 'turbulenceGenerator'):
+            solver.solver.turbulenceGenerator.randomize()
     return noisy_initial_images, original_images, intermediate_samples
