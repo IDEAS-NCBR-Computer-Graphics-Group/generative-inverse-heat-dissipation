@@ -54,7 +54,7 @@ class LBM_NS_Solver(LBM_SolverBase):
             # if self.iterations_counter % 10 == 0:
             #     print(f"iterations: {self.iterations_counter}")
             
-            print(f"Solver run for iterations: {self.iterations_counter}")                    
+        print(f"Solver run for iterations: {self.iterations_counter}")                    
 
         if self.iterations_counter == self.max_iter:
              print(f"Solver run for max iterations {self.max_iter}... doing nothing.")
