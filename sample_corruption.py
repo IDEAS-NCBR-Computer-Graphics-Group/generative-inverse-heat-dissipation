@@ -8,16 +8,17 @@ import os
 import shutil
 from pathlib import Path
 
-from scripts import datasets as ihd_datasets
-from scripts.utils import save_png_norm, save_png
-from numerical_solvers.data_holders.CorruptedDatasetCreator import preprocess_dataset
 import torchvision
+import torch
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 from scripts import utils
 from scripts.utils import load_config_from_path
 from scripts import sampling
 
+from scripts import datasets as ihd_datasets
+from scripts import sampling, utils
 from numerical_solvers.data_holders.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
 FLAGS = flags.FLAGS
 
@@ -28,7 +29,6 @@ flags.mark_flags_as_required(["config"])
 
 def main(argv):
     # Example
-    # python sample_corruption.py --config=configs/ffhq/ffhq_128_lbm_ns_config.py
     # python sample_corruption.py --config=configs/ffhq/ffhq_128_lbm_ns_config_high_visc.py
     # python sample_corruption.py --config=configs/mnist/small_mnist_lbm_ns_config.py
     produce_sample(FLAGS.config)
@@ -36,7 +36,9 @@ def main(argv):
   
 def produce_sample(config_path):
     config = load_config_from_path(config_path)
-    
+    torch.manual_seed(config.seed)
+    np.random.seed(config.seed)
+
     trainloader, testloader = ihd_datasets.get_dataset(config, uniform_dequantization=config.data.uniform_dequantization)
 
     storage_dir = 'runs'
@@ -44,7 +46,7 @@ def produce_sample(config_path):
     save_dir = os.path.join(storage_dir, save_scriptname)
     os.makedirs(save_dir, exist_ok=True)
     shutil.copy(config_path, save_dir)
-    
+
     clean_image, batch = ihd_datasets.prepare_batch(iter(trainloader),'cpu')
     corrupted_image, less_corrupted_image, corruption_amount, label = batch
 
@@ -65,21 +67,21 @@ def produce_sample(config_path):
     plt.savefig(os.path.join(save_dir,'Corruption_pairs_sample.png'), bbox_inches='tight')
     plt.show()
     plt.close()
-    
+
     corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
         config=config,
         transform=config.data.transform)
 
     # get_initial_corrupted_sample
-    n_denoising_steps = config.solver.n_denoising_steps   
+    n_denoising_steps = config.solver.n_denoising_steps
     initial_corrupted_sample, clean_initial_sample, intermediate_corruption_samples = sampling.get_initial_corrupted_sample(
         trainloader, n_denoising_steps, corruptor)
-    
+
 
     utils.save_gif(save_dir, intermediate_corruption_samples, "corruption_init.gif")
     utils.save_video(save_dir, intermediate_corruption_samples, filename="corruption_init.mp4")
     utils.save_png(save_dir, clean_initial_sample, "clean_init.png")
-      
+
     fig, axs = plt.subplots(2, 1, figsize=(20, 20), sharex=True)
     axs[0].set_title('clean x', fontsize=24)
     axs[1].set_title('noisy x', fontsize=24)

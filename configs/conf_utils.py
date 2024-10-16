@@ -28,7 +28,7 @@ def cosine_beta_schedule(n, min_value, max_value, s=0.008):
     
     return betas_scaled, alphas_scaled 
 
-def inv_cosine_aplha_schedule(n, min_value, max_value, s=100):
+def inv_cosine_aplha_schedule(n, min_value, max_value, s=1):
     """
     Insipredd by schedule proposed in https://arxiv.org/abs/2102.09672
     """

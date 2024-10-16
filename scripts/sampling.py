@@ -162,7 +162,7 @@ def get_initial_sample(config, forward_heat_module, delta, batch_size=None):
     return initial_sample, original_images
 
 
-def get_initial_corrupted_sample(trainloader, corruption_amount, solver: BaseCorruptor, batch_size=None):
+def get_initial_corrupted_sample(trainloader, corruption_amount, corruptor: BaseCorruptor, batch_size=None):
     """Take a draw from the prior p(u_K)"""
 
     original_images, _ = datasets.prepare_batch(iter(trainloader), 'cpu')
@@ -170,11 +170,14 @@ def get_initial_corrupted_sample(trainloader, corruption_amount, solver: BaseCor
     intermediate_samples = []
 
     for index in range(original_images.shape[0]):
-        noisy_initial_images[index], _ = solver._corrupt(original_images[index], corruption_amount)
-        intermediate_samples.append(solver.intermediate_samples) # TODO: only LBM corruptor posses .intermediate_samples, to be refactored
+        noisy_initial_images[index], _ = corruptor._corrupt(original_images[index], corruption_amount)
+        intermediate_samples.append(corruptor.intermediate_samples) # TODO: only LBM corruptor posses .intermediate_samples
+
+        # if getattr(solver.solver, 'turbulenceGenerator'):
+        corruptor.solver.turbulenceGenerator.randomize()
 
     # intermediate_samples # [batchsize, t([timesteps, channels, 128,128])]
-    # reformat to 
+    # reformat to
     # intermediate_samples [timesteps, t([batchsize, channels, 128,128])]
     intermediate_samples = [torch.stack([sample[i] for sample in intermediate_samples]) for i in range(len(intermediate_samples[0]))]
 

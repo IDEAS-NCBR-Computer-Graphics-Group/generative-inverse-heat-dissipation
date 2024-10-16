@@ -1,5 +1,5 @@
 import ml_collections
-from configs.ffhq import default_lbm_ffhq_config
+from configs.ffhq import default_lbm_ffhq_128_config
 import numpy as np
 import torch
 from torchvision import transforms

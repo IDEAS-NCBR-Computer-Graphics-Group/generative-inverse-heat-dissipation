@@ -7,6 +7,7 @@ from model_code import utils as mutils
 from model_code.ema import ExponentialMovingAverage
 from scripts import datasets
 import torch
+import numpy as np
 from torch.utils import tensorboard
 from scripts import utils
 from absl import app
@@ -36,6 +37,10 @@ def train(config, workdir):
             workdir: Working directory for checkpoints and TF summaries. If this
                     contains checkpoint training will be resumed from the latest checkpoint.
     """
+
+    # Seeding
+    torch.manual_seed(config.seed)
+    np.random.seed(config.seed)
 
     # Initial logging setup
     logging.basicConfig(level=logging.DEBUG)

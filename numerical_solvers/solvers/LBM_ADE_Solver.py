@@ -51,7 +51,7 @@ class LBM_ADE_Solver(LBM_SolverBase):
         # print(f"Solver run for iterations: {self.iterations_counter}")
                             
         if self.iterations_counter == self.max_iter:
-            print(f"Solver run for max iterations {self.max_iter}... doing nothing.")
+            print(f"Solver run for max iterations {self.max_iter}.")
                     
 
     @ti.kernel

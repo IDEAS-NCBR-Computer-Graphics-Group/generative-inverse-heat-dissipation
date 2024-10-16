@@ -38,11 +38,9 @@ def get_default_configs():
 
     # data
     config.data = data = ml_collections.ConfigDict()
-    data.image_size = 256
     data.random_flip = False
     data.centered = False
     data.uniform_dequantization = False
-    data.num_channels = 3
 
     # data - cd
     data = config.data
@@ -132,6 +130,7 @@ def get_default_configs():
         data.process_all = False
         
         model = config.model
+        model.model_channels = 32
         model.channel_mult = (1, 2, 2, 2, 2)
         # model.attention_levels = (2, 3, 4)
     

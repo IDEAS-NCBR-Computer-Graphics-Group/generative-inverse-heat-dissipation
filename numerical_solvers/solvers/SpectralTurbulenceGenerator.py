@@ -5,7 +5,7 @@ class SpectralTurbulenceGenerator(t.nn.Module):
             self,
             domain_size,
             grid_size, 
-            turb_intensity, 
+            std_dev, 
             noise_limiter = (-1E-3,1E-3),
             energy_spectrum=None, 
             frequency_range=None, 
@@ -19,14 +19,15 @@ class SpectralTurbulenceGenerator(t.nn.Module):
         Parameters:
         - domain_size: tuple (Lx, Ly) representing the size of the domain
         - grid_size: tuple (Nx, Ny) representing the number of grid points in each direction
-        - turb_intensity: float, turbulence intensity scaling factor
+        - std_dev: float, turbulence intensity scaling factor - standard deviation scaling factor
         - num_modes: int, number of random Fourier modes to generate (used in RFM method)
         - energy_spectrum: function, energy spectrum function (optional)
         """
+        self.device = device
         self.Lx, self.Ly = domain_size
         self.Nx, self.Ny = grid_size
         self.desired_std = 1. # desired standard deviation of the output 
-        self.turb_intensity = turb_intensity
+        self.std_dev = std_dev
         self.energy_spectrum = energy_spectrum if energy_spectrum else self.default_energy_spectrum.to(device)
         self.frequency_range = frequency_range if frequency_range else {'k_min': 2.0 * t.pi / min(domain_size), 'k_max': 2.0 * t.pi / (min(domain_size) / 20)}
 
@@ -50,6 +51,10 @@ class SpectralTurbulenceGenerator(t.nn.Module):
         self.noise_limiter = noise_limiter
         self.is_div_free = is_div_free
         
+    def randomize(self):
+        # Initialize the phases once and use them in each run
+        self.phase_u = (t.rand(self.Nx, self.Ny) * 2 * t.pi).to(self.device)
+        self.phase_v = (t.rand(self.Nx, self.Ny) * 2 * t.pi).to(self.device)
 
     def default_energy_spectrum(self, k):
         """
@@ -123,8 +128,8 @@ class SpectralTurbulenceGenerator(t.nn.Module):
         - v: 2D array of y-velocity fluctuations (Ny, Nx)
         """
 
-        u_hat = self.turb_intensity * self.amplitude * t.exp(1j * (self.phase_u + self.omega * time))
-        v_hat = self.turb_intensity * self.amplitude * t.exp(1j * (self.phase_v + self.omega * time))
+        u_hat = self.amplitude * t.exp(1j * (self.phase_u + self.omega * time))
+        v_hat = self.amplitude * t.exp(1j * (self.phase_v + self.omega * time))
 
 
         if self.is_div_free:
@@ -150,21 +155,21 @@ class SpectralTurbulenceGenerator(t.nn.Module):
         v = t.real(t.fft.ifft2(v_hat))
 
        
-        if self.turb_intensity < 1E-14:
+        if self.std_dev < 1E-14:
             u,v = 0*self.K, 0*self.K #avoid division by 0 in t.std(u)
         else:
             # u *= (self.desired_std/t.std(u))
             # v *= (self.desired_std/t.std(v))
             
-            # Normalize u and v to have a standard deviation of 1
-            u /= t.std(u)
-            v /= t.std(v)
+            # # Normalize u and v to have a standard deviation of 1
+            # u /= t.std(u)
+            # v /= t.std(v)
             
-            # todo: would the followin chagne the std deviation?
-            u *= self.turb_intensity 
-            v *= self.turb_intensity 
-            # u *= self.turb_intensity / t.std(u)
-            # v *= self.turb_intensity / t.std(v)
+            # # todo: would the followin chagne the std deviation?
+            # u *= self.std_dev 
+            # v *= self.std_dev 
+            u *= self.std_dev / t.std(u)
+            v *= self.std_dev / t.std(v)
             
 
         # Apply limiter

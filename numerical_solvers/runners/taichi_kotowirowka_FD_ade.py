@@ -136,7 +136,7 @@ def main():
     phi_min = np.min(np_phi)
     phi_max = np.max(np_phi)
     
-    os.makedirs("output", exist_ok=True)
+    os.makedirs("local_outputs", exist_ok=True)
     
     for i in range(10001):
         update(phi_pair.cur, phi_pair.nxt)
@@ -152,8 +152,8 @@ def main():
             plt.show()
             
             
-            # cv2.imwrite(f'output/rotated_cat_768x768_at_{i}.jpg', np_phi)
-            cv2.imwrite(f'output/rotated_cat_256x256_at_{i}.jpg', np_phi)
+            # cv2.imwrite(f'local_outputs/rotated_cat_768x768_at_{i}.jpg', np_phi)
+            cv2.imwrite(f'local_outputs/rotated_cat_256x256_at_{i}.jpg', np_phi)
             
 
 
