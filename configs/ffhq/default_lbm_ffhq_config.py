@@ -1,11 +1,11 @@
 import ml_collections
 import torch
 import numpy as np
-
+from configs import conf_utils
+from torchvision import transforms
 
 def get_config():
     return get_default_configs()
-
 
 def get_default_configs():
     config = ml_collections.ConfigDict()
@@ -13,15 +13,16 @@ def get_default_configs():
     # training
     config.training = training = ml_collections.ConfigDict()
     config.training.batch_size = 32
-    training.n_iters = 1000001 # 1300001
-    training.snapshot_freq = 10000 #50000
-    training.log_freq = 50
-    training.eval_freq = 100
-    training.sampling_freq = 5000 #10000
-    training.n_evals = 25 # batches for test-set evaluation, arbitrary choice
 
+    training.n_evals = 25 # batches for test-set evaluation, arbitrary choice
+    training.n_iters = 100001  # 1300001
+    training.log_freq = 100
+    training.eval_freq = 200
+    training.sampling_freq = 2000 #10000
+    
     # store additional checkpoints for preemption in cloud computing environments
-    training.snapshot_freq_for_preemption = 2500 # 10000
+    training.snapshot_freq = 5000 # 50000
+    training.snapshot_freq_for_preemption = 5000
 
     # sampling
     config.sampling = sampling = ml_collections.ConfigDict()
@@ -36,16 +37,47 @@ def get_default_configs():
 
     # data
     config.data = data = ml_collections.ConfigDict()
-    data.dataset = 'FFHQ'
     data.image_size = 256
     data.random_flip = False
     data.centered = False
     data.uniform_dequantization = False
     data.num_channels = 3
 
+    # data - cd
+    data = config.data
+    data.showcase_comparison = True
+    data.process_all = True
+    data.process_pairs = True
+    data.processed_filename = 'lbm_ns_pairs' if data.process_pairs else 'lbm_ns'
+    data.dataset = 'FFHQ_128'
+    data.image_size = 128
+    data.transform = transforms.Compose(
+        [transforms.ToTensor(),transforms.Grayscale()])
+    data.num_channels = 1
+    
+    
     # solver
-    config.solver = solver = ml_collections.ConfigDict()
     config.turbulence = turbulence = ml_collections.ConfigDict()
+    turbulence.turb_intensity = 0 #*1E-4
+    turbulence.noise_limiter = (-1E-3, 1E-3)
+    turbulence.domain_size = (1.0, 1.0)
+    turbulence.dt_turb = 5 * 1E-4
+    turbulence.k_min = 2.0 * torch.pi / min(turbulence.domain_size)
+    turbulence.k_max = 2.0 * torch.pi / (min(turbulence.domain_size) / 1024)
+    turbulence.is_divergence_free = False
+    turbulence.energy_slope = -5.0 / 3.0
+    turbulence.hash = conf_utils.hash_solver(turbulence)
+    turbulence.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (turbulence.energy_slope)), 0, k ** (turbulence.energy_slope))
+    
+    config.solver = solver = ml_collections.ConfigDict()
+    solver.type = 'ns'
+    solver.min_init_gray_scale = 0.95
+    solver.max_init_gray_scale = 1.05
+
+    solver.min_fwd_steps = 1
+    solver.n_denoising_steps = 100
+    solver.max_fwd_steps = solver.n_denoising_steps # + 1  # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
+    
     config.stamp = stamp = ml_collections.ConfigDict()
     
     # model
@@ -86,4 +118,19 @@ def get_default_configs():
     config.device = torch.device(
         'cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 
+    debug = False
+    if debug:
+        data = config.data
+        data.processed_filename = f'{data.processed_filename}_debug'
+        data.process_all = False
+        
+        model = config.model
+        model.channel_mult = (1, 2, 2, 2, 2)
+        # model.attention_levels = (2, 3, 4)
+    
+        config.training.batch_size = 4 # rtx2080
+        config.eval.batch_size = 4
+        config.training.n_iters = 1001
+        config.training.sampling_freq = 200
+        
     return config

@@ -28,17 +28,14 @@ class LBM_NS_Solver(LBM_SolverBase):
         if self.iterations_counter + iterations > self.max_iter:
             iterations = self.max_iter - self.iterations_counter
 
-            
         for iteration in range(iterations):                
             self.stream()
             self.update_macro_var()
-            # self.collide_srt()
+            
             omega_kin = self.omega_kin[self.iterations_counter]
             omega_bulk = self.omega_bulk[self.iterations_counter]
 
-            # print(f"omega_kin={omega_kin} at {self.iterations_counter} iteration")   
-            # print(f"omega_bulk={omega_bulk} at {self.iterations_counter} iteration")    
- 
+            # self.collide_srt(omega_kin)
             self.collide_cm(omega_kin, omega_bulk)
              
             u_turb, v_turb = self.turbulenceGenerator.generate_turbulence(self.iterations_counter)     
@@ -49,12 +46,11 @@ class LBM_NS_Solver(LBM_SolverBase):
             # self.apply_bb()
             self.apply_nee_bc()
             self.iterations_counter = self.iterations_counter + 1
-            # print(f"iterations: {iteration}")
             
             # if self.iterations_counter % 10 == 0:
             #     print(f"iterations: {self.iterations_counter}")
             
-        print(f"Solver run for iterations: {self.iterations_counter}")                    
+        # print(f"Solver run for iterations: {self.iterations_counter}")                    
 
         if self.iterations_counter == self.max_iter:
              print(f"Solver run for max iterations {self.max_iter}... doing nothing.")

@@ -12,15 +12,19 @@ from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
 @ti.data_oriented
 class LBM_ADE_Solver(LBM_SolverBase):
     def __init__(self, domain_size, kin_visc, bulk_visc, turbulenceGenerator: SpectralTurbulenceGenerator):
-            print(f"LBM_ADE_Solver constructor called.")
-            super().__init__(domain_size, kin_visc, turbulenceGenerator)
-            
+        print(f"LBM_ADE_Solver constructor called.")
+        super().__init__(domain_size, kin_visc, turbulenceGenerator)
+        
+        
     def init(self, np_gray_image): 
         self.rho.from_numpy(np_gray_image)
         self.vel.fill(0)
         self.init_fields()
                    
     def solve(self, iterations):
+        if self.iterations_counter + iterations > self.max_iter:
+            iterations = self.max_iter - self.iterations_counter
+            
         for iteration in range(iterations):                
             self.stream()
             self.update_macro_var()
@@ -44,8 +48,11 @@ class LBM_ADE_Solver(LBM_SolverBase):
             # if self.iterations_counter % 10 == 0:
             #     print(f"iterations: {self.iterations_counter}")
             
-        print(f"Solver run for iterations: {self.iterations_counter}")                    
-                
+        # print(f"Solver run for iterations: {self.iterations_counter}")
+                            
+        if self.iterations_counter == self.max_iter:
+            print(f"Solver run for max iterations {self.max_iter}... doing nothing.")
+                    
 
     @ti.kernel
     def collide_srt(self, omega_kin: float):

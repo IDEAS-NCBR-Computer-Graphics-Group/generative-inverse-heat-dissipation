@@ -1,5 +1,5 @@
 import ml_collections
-from configs.ffhq import ffhq_128_lbm_ns_config
+from configs.ffhq import default_lbm_ffhq_config
 import numpy as np
 import torch
 from torchvision import transforms
@@ -7,7 +7,7 @@ from configs import conf_utils
 
 
 def get_config():
-    config = ffhq_128_lbm_ns_config.get_config()
+    config = default_lbm_ffhq_config.get_config()
     
     turbulence = config.turbulence
     solver = config.solver

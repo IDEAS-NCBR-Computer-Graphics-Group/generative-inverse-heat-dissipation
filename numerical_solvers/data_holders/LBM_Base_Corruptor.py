@@ -50,22 +50,23 @@ class LBM_Base_Corruptor(BaseCorruptor):
         """
         step_difference = 1  # Step difference for generating pairs
         np_gray_img = x.numpy()[0, :, :]
-        np_gray_img = normalize_grayscale_image_range(
+        np_gray_img = normalize_grayscale_image_range( # rescale to fit solver stability range
             np_gray_img, self.min_init_gray_scale, self.max_init_gray_scale)
     
         self.solver.init(np_gray_img)
         self.solver.iterations_counter = 0  # Reset counter
 
         self._intermediate_samples = torch.empty((steps + 1, *x.shape))
-        self._intermediate_samples[0] = torch.tensor(np_gray_img).unsqueeze(0).clone()
+        self._intermediate_samples[0] = torch.tensor( # rescale for preview
+            normalize_grayscale_image_range(np_gray_img, 0., 1.)).unsqueeze(0).clone()
 
         for i in range(steps):
             self.solver.solve(step_difference)
             rho_cpu = self.solver.rho.to_numpy()
             rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
-            noisy_x = torch.tensor(rho_cpu).unsqueeze(0)
             self._intermediate_samples[i+1] = torch.tensor(rho_cpu).unsqueeze(0)
 
+        logging.info(f"Corruptor.solver run for iterations: {self.solver.iterations_counter}")
         
         if generate_pair:
             noisy_x = self._intermediate_samples[-1].clone()
