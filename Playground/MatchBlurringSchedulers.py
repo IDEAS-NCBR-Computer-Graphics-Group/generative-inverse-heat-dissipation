@@ -1,4 +1,4 @@
-#%% ################ imports ################
+# %% ################ imports ################
 
 import os, sys
 import numpy as np
@@ -23,7 +23,7 @@ from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
 
 ti.init(arch=ti.gpu) if torch.cuda.is_available() else ti.init(arch=ti.cpu)
 
-#%% ################ helper functions ################
+# %% ################ helper functions ################
 
 @njit
 def get_r_from_xy(x, y, x0=0., y0=0.):
@@ -48,7 +48,7 @@ def plot_matrix(matrix, title="Temperature Map (Matrix)"):
   plt.ylabel("Y-axis")
   plt.show()
   
-#%% ################ SETUP ################
+# %% ################ SETUP ################
 diffusivity0 = 20. # 8.
 advection_coeff_0 = 0*16./64
 tc = 10. # 4 #  1
@@ -65,7 +65,7 @@ intensity_max = 1.
 num_matrices = 1 # 100
 tensor_size = (num_matrices, n, n)
 
-#%% ################ IC by random circles ################
+# %% ################ IC by random circles ################
 cirles = np.array([np.random.uniform(0,L/10.,N_circles),
                   np.random.uniform(0, L, N_circles),
                   np.random.uniform(0, L, N_circles),
@@ -82,7 +82,7 @@ plot_matrix(initial_condition, title="IC")
 np_init_gray_image = np.rot90(initial_condition.copy(), k=-1)
 t_initial_condition = torch.from_numpy(initial_condition).unsqueeze(0)
 
-#%% ################ Solvers ################
+# %% ################ Solvers ################
 def fft_ade(image, time, diff_coeff, advect_coeff):
     n = image.shape[0]
     L = n  # Assuming square image, and length L = n
@@ -122,7 +122,7 @@ class GaussianBlurLayerNaive(nn.Module):
             x[i] = torch.tensor(blurred_x).to(self.device)
         return x
 
-#%% ################ RUN naive FFT ################
+# %% ################ RUN naive FFT ################
 
 blurred_by_fft = fft_ade(initial_condition, tc, diffusivity0, advection_coeff_0)
 sigma = calc_sigma(tc, diffusivity0)
@@ -130,14 +130,14 @@ print(f"Blurring sigma = {sigma}")
 
 # plot_matrix(blurred_by_fft, title="FFT Blurr")
 
-#%% ################ Blurr by gaussian, show difference to FFT ################
+# %% ################ Blurr by gaussian, show difference to FFT ################
 
 blurred_by_gaussian = gaussian_filter(initial_condition, sigma=sigma, mode='wrap')
 # plot_matrix(blurred_by_gaussian, title="Gaussian Blurr")
 # plot_matrix(blurred_by_fft-blurred_by_gaussian, title="Difference (FFT-Gaussian)")
 
 
-#%% ################ Import DCT ################
+# %% ################ Import DCT ################
 
 config = get_config()
 model = config.model
@@ -149,24 +149,20 @@ dctBlur = DCTBlur(model.blur_schedule, image_size=n, device="cpu")
 fwd_steps = model.K* torch.ones(1, dtype=torch.long) 
 blurred_by_dct = dctBlur(t_initial_condition, fwd_steps).float()
 blurred_by_dct = blurred_by_dct.squeeze().numpy()
-
 plot_matrix(blurred_by_dct, title="DCT Blurr")
-
 
 # %% ################ DCT schedule vs Gaussian Schedule ################
 
 gaussianBlur = GaussianBlurLayerNaive(model.blur_schedule, device="cpu")
-blurred_by_gaussian_schedule = gaussianBlur(t_initial_condition, fwd_steps).float()
-blurred_by_gaussian_schedule = blurred_by_gaussian_schedule.squeeze().numpy()
+blurred_by_gaussian_schedule = gaussianBlur(t_initial_condition, fwd_steps).float().squeeze().numpy()
 
 plot_matrix(blurred_by_gaussian_schedule, title="Sigma Blurr")
 plot_matrix(blurred_by_dct-blurred_by_gaussian_schedule, title="Final Difference")
-
 print(f"Blurring sigma = {calc_sigma(tc, diffusivity0)}")
 print(f"model.blur_schedule[fwd_steps] = {model.blur_schedule[fwd_steps]}")
 
 
-#%% ################ ADE_LBM VS DCT ################
+# %% ################ ADE_LBM VS DCT ################
 
 spectralTurbulenceGenerator = SpectralTurbulenceGenerator(config.turbulence.domain_size, initial_condition.shape, 
         0 * config.turbulence.turb_intensity, config.turbulence.noise_limiter,
@@ -178,13 +174,12 @@ solver = LBM_ADE_Solver(
     initial_condition.shape,
     config.solver.niu, config.solver.bulk_visc,
     spectralTurbulenceGenerator
-    )    
-# 
+    )
 solver.init(np_init_gray_image) 
 solver.solve(iterations=2430)
 
 img = solver.rho
-rho_np = np.rot90(img.to_numpy().copy(), k=1)
+rho_np = np.rot90(img.to_numpy().copy(), k=1) # torch to numpy + rotation
 
 plot_matrix(rho_np, title="LBM BLURR")
 plot_matrix(blurred_by_dct-rho_np, title="diff")
