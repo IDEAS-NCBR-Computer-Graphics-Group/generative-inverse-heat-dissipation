@@ -13,21 +13,15 @@ from scipy.ndimage import gaussian_filter
 from torchvision.transforms import GaussianBlur
 import torch.nn as nn
 import math
-
 import taichi as ti
 import taichi.math as tm
-
-
 from model_code.utils import DCTBlur
-
 from numerical_solvers.solvers.LBM_ADE_Solver import LBM_ADE_Solver
 from configs.mnist.small_mnist_lbm_ade_turb_config import get_config
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
 
-
 ti.init(arch=ti.gpu) if torch.cuda.is_available() else ti.init(arch=ti.cpu)
-
 
 #%% ################ helper functions ################
 
@@ -54,12 +48,10 @@ def plot_matrix(matrix, title="Temperature Map (Matrix)"):
   plt.ylabel("Y-axis")
   plt.show()
   
-  
 #%% ################ SETUP ################
 diffusivity0 = 20. # 8.
 advection_coeff_0 = 0*16./64
 tc = 10. # 4 #  1
-
 L = 256 # 2 # domain size
 n = 256 # discretization
 
@@ -80,49 +72,38 @@ cirles = np.array([np.random.uniform(0,L/10.,N_circles),
                   np.random.uniform(intensity_min, intensity_max, N_circles)]).T
 
 initial_condition = np.zeros((n, n))
-
 x = np.linspace(0, L, n, endpoint=True)
 y = np.linspace(0, L, n, endpoint=True)
 xx, yy = np.meshgrid(x, y)
 
-
 for r0, x0, y0, intensity0 in cirles:
   make_circle(xx, yy, initial_condition, r0, x0, y0, intensity0)
-
 plot_matrix(initial_condition, title="IC")
-
 np_init_gray_image = np.rot90(initial_condition.copy(), k=-1)
-
-
+t_initial_condition = torch.from_numpy(initial_condition).unsqueeze(0)
 
 #%% ################ Solvers ################
 def fft_ade(image, time, diff_coeff, advect_coeff):
-  n = image.shape[0]
-  L = n  # Assuming square image, and length L = n
-  F = fft2(image)
+    n = image.shape[0]
+    L = n  # Assuming square image, and length L = n
+    F = fft2(image)
 
-  # Solve the heat equation in the Fourier space
-  x2 = np.array([float(i) if i < n/2. else float(-(n-i)) for i in range(0,n)])
-  k2, k1 = np.meshgrid(x2, x2)
+    # Solve the heat equation in the Fourier space
+    x2 = np.array([float(i) if i < n/2. else float(-(n-i)) for i in range(0,n)])
+    k2, k1 = np.meshgrid(x2, x2)
 
-  k1 *= 2.*np.pi/L
-  k2 *= 2.*np.pi/L
-  shift = np.exp(-complex(0,1)* advect_coeff* time * (k1 + k2))
-  decay = np.exp(-diff_coeff * time* (k1**2 + k2**2))
+    k1 *= 2.*np.pi/L
+    k2 *= 2.*np.pi/L
+    shift = np.exp(-complex(0,1)* advect_coeff* time * (k1 + k2))
+    decay = np.exp(-diff_coeff * time* (k1**2 + k2**2))
 
-  yinv = ifft2(np.multiply(F,shift*decay))
-  P = np.real(yinv)
-  return P
+    yinv = ifft2(np.multiply(F,shift*decay))
+    P = np.real(yinv)
+    return P
 
 def calc_sigma(time, diff_coeff):
-  sigma = np.sqrt(2 * diff_coeff * time)
-  return sigma
-
-def Gaussian_blur(image, time, diff_coeff):
-  sigma = calc_sigma(time, diff_coeff)
-  blurred_img = gaussian_filter(image, sigma=sigma)
-  return blurred_img
-
+    sigma = np.sqrt(2 * diff_coeff * time)
+    return sigma
 
 class GaussianBlurLayerNaive(nn.Module):
     def __init__(self, blur_sigmas, device):
@@ -130,8 +111,6 @@ class GaussianBlurLayerNaive(nn.Module):
         print(blur_sigmas)
         self.device = device
         self.blur_sigmas = torch.tensor(blur_sigmas).to(device)
-        # self.blur_sigmas = blur_sigmas
-
 
     def forward(self, x, fwd_steps):
         sigmas = self.blur_sigmas[fwd_steps]
@@ -139,67 +118,64 @@ class GaussianBlurLayerNaive(nn.Module):
         for i in range(x.shape[0]):
             npx = x[i].numpy()
             sigma = float(sigmas[i].numpy())
-            blurred_x = gaussian_filter(npx, sigma)
+            blurred_x = gaussian_filter(npx, sigma, mode="wrap")
             x[i] = torch.tensor(blurred_x).to(self.device)
         return x
 
-      
-         
 #%% ################ RUN naive FFT ################
 
 blurred_by_fft = fft_ade(initial_condition, tc, diffusivity0, advection_coeff_0)
 sigma = calc_sigma(tc, diffusivity0)
 print(f"Blurring sigma = {sigma}")
-blurred_by_gaussian = gaussian_filter(initial_condition, sigma=sigma)
-# blurred_by_gaussian = gaussian_filter(initial_condition, sigma=sigma, mode='wrap')
 
+# plot_matrix(blurred_by_fft, title="FFT Blurr")
 
-plot_matrix(blurred_by_fft, title="FFT Blurr")
-plot_matrix(blurred_by_gaussian, title="Gaussian Blurr")
-plot_matrix(blurred_by_fft-blurred_by_gaussian, title="Difference")
+#%% ################ Blurr by gaussian, show difference to FFT ################
+
+blurred_by_gaussian = gaussian_filter(initial_condition, sigma=sigma, mode='wrap')
+# plot_matrix(blurred_by_gaussian, title="Gaussian Blurr")
+# plot_matrix(blurred_by_fft-blurred_by_gaussian, title="Difference (FFT-Gaussian)")
+
 
 #%% ################ Import DCT ################
-from configs.mnist.small_mnist_lbm_ns_turb_config import get_config
+
 config = get_config()
 model = config.model
+diff = np.linspace(2, 5, 50) #TODO check random linspaces
 dctBlur = DCTBlur(model.blur_schedule, image_size=n, device="cpu")
 
-# %% ################ RUN DCT ################
+# %% ################ RUN DCT schedule ################
 
-t_initial_condition = torch.from_numpy(initial_condition)
-t_initial_condition = t_initial_condition.unsqueeze(0)
-fwd_steps = model.K* torch.ones(1, dtype=torch.long)
-
+fwd_steps = model.K* torch.ones(1, dtype=torch.long) 
 blurred_by_dct = dctBlur(t_initial_condition, fwd_steps).float()
 blurred_by_dct = blurred_by_dct.squeeze().numpy()
+
 plot_matrix(blurred_by_dct, title="DCT Blurr")
 
+
+# %% ################ DCT schedule vs Gaussian Schedule ################
+
 gaussianBlur = GaussianBlurLayerNaive(model.blur_schedule, device="cpu")
-
-
-blurred_by_gaussian_schedule_v0 = gaussian_filter(initial_condition, sigma=model.blur_schedule[fwd_steps])
-
 blurred_by_gaussian_schedule = gaussianBlur(t_initial_condition, fwd_steps).float()
 blurred_by_gaussian_schedule = blurred_by_gaussian_schedule.squeeze().numpy()
 
-# plot_matrix(blurred_by_gaussian_schedule, title="Sigma Blurr")
+plot_matrix(blurred_by_gaussian_schedule, title="Sigma Blurr")
 plot_matrix(blurred_by_dct-blurred_by_gaussian_schedule, title="Final Difference")
 
 print(f"Blurring sigma = {calc_sigma(tc, diffusivity0)}")
 print(f"model.blur_schedule[fwd_steps] = {model.blur_schedule[fwd_steps]}")
+
+
 #%% ################ ADE_LBM VS DCT ################
 
-
-config = get_config()
-grid_size = initial_condition.shape
-spectralTurbulenceGenerator = SpectralTurbulenceGenerator(config.turbulence.domain_size, grid_size, 
-        0*config.turbulence.turb_intensity, config.turbulence.noise_limiter,
+spectralTurbulenceGenerator = SpectralTurbulenceGenerator(config.turbulence.domain_size, initial_condition.shape, 
+        0 * config.turbulence.turb_intensity, config.turbulence.noise_limiter,
         energy_spectrum=config.turbulence.energy_spectrum, 
         frequency_range={'k_min': config.turbulence.k_min, 'k_max': config.turbulence.k_max}, 
         dt_turb=config.turbulence.dt_turb, 
     is_div_free=False)
 solver = LBM_ADE_Solver(
-    grid_size,
+    initial_condition.shape,
     config.solver.niu, config.solver.bulk_visc,
     spectralTurbulenceGenerator
     )    
