@@ -29,7 +29,6 @@ flags.mark_flags_as_required(["config"])
 
 def main(argv):
     # Example
-    # python sample_corruption.py --config=configs/ffhq/ffhq_128_lbm_ns_config.py
     # python sample_corruption.py --config=configs/ffhq/ffhq_128_lbm_ns_config_high_visc.py
     # python sample_corruption.py --config=configs/mnist/small_mnist_lbm_ns_config.py
     produce_sample(FLAGS.config)

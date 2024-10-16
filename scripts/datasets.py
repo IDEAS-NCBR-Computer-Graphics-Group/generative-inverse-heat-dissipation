@@ -132,7 +132,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
             corruptor.copy_train_dataset_as_test_dataset(save_dir)
         else:
             corruptor._preprocess_and_save_data(
-            initial_dataset=trainloader.dataset,
+            initial_dataset=testloader.dataset,
             save_dir=save_dir,
             process_all=config.data.process_all,
             is_train_dataset=False,
@@ -174,7 +174,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
             corruptor.copy_train_dataset_as_test_dataset(save_dir)
         else:
             corruptor._preprocess_and_save_data(
-            initial_dataset=trainloader.dataset,
+            initial_dataset=testloader.dataset,
             save_dir=save_dir,
             process_all=config.data.process_all,
             is_train_dataset=False,

@@ -20,7 +20,7 @@ class BaseCorruptor(ABC):
         source_path = os.path.join(save_dir, "train_data.pt")
         destination_path = os.path.join(save_dir, "test_data.pt")
         if not os.path.exists(source_path):
-            raise(FileNotFoundError)
+            raise FileNotFoundError
         
         logging.warning(f"Using train dataset as test dataset.")
         if not os.path.exists(destination_path):   
