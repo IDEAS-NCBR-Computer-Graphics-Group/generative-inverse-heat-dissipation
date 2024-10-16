@@ -3,6 +3,7 @@ import torch
 import numpy as np
 from configs import conf_utils
 from torchvision import transforms
+import os
 
 def get_config():
     return get_default_configs()
@@ -118,7 +119,12 @@ def get_default_configs():
     config.device = torch.device(
         'cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 
-    debug = False
+    
+    if os.uname().nodename in ['pc']:
+        debug = True
+    else:
+        debug = False
+    
     if debug:
         data = config.data
         data.processed_filename = f'{data.processed_filename}_debug'
@@ -131,6 +137,6 @@ def get_default_configs():
         config.training.batch_size = 4 # rtx2080
         config.eval.batch_size = 4
         config.training.n_iters = 1001
-        config.training.sampling_freq = 200
+        config.training.sampling_freq = 100
         
     return config

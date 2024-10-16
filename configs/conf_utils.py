@@ -11,6 +11,41 @@ def exp_schedule(min_value, max_value, n):
 def lin_schedule(min_value, max_value, n):
     return np.linspace(min_value ,max_value, n)
 
+def cosine_beta_schedule(n, min_value, max_value, s=0.008):
+    """
+    Rescaled cosine schedule as proposed in https://arxiv.org/abs/2102.09672
+    """
+    x = np.linspace(0, n, n)
+    alphas_cumprod = np.cos(((x / n) + s) / (1 + s) * np.pi * 0.5) ** 2
+    alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
+    betas = 1-(alphas_cumprod[1:] / alphas_cumprod[:-1])
+    
+    # Rescale betas
+    betas_scaled = betas * (max_value - min_value) + min_value
+    
+    # Rescale 1-alphas_cumprod
+    alphas_scaled =  alphas_cumprod * (max_value - min_value) + min_value
+    
+    return betas_scaled, alphas_scaled 
+
+def inv_cosine_aplha_schedule(n, min_value, max_value, s=100):
+    """
+    Insipredd by schedule proposed in https://arxiv.org/abs/2102.09672
+    """
+    x = np.linspace(n, 0, n)
+    alphas_cumprod = np.cos(((x / n) + s) / (1 + s) * np.pi * 0.5) ** 2
+    alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
+    
+    # Rescale 1-alphas_cumprod
+    alphas_inv_scaled =  (alphas_cumprod) * (max_value - min_value) + min_value
+    return  alphas_inv_scaled 
+
+def tanh_schedule(min_value, max_value, n, steepness = 0.005):
+    x = np.linspace(-500, 500, n)
+    result = (np.tanh(steepness*x) + 1) / 2
+    result_scaled = result * (max_value - min_value) + min_value
+    return result_scaled 
+
 # Function to compute hash of the solver config
 def hash_solver(config):
     # Convert ConfigDict to a regular dictionary
