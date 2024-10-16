@@ -9,7 +9,7 @@ class BaseCorruptor(ABC):
         self.target_transform = target_transform
  
     @abstractmethod
-    def _preprocess_and_save_data(self):
+    def _preprocess_and_save_data(self, initial_dataset, save_dir, is_train_dataset: bool, process_pairs=False, process_all=True,  process_images=False):
         pass
     
     @abstractmethod

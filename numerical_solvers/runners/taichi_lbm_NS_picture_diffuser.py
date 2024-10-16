@@ -103,7 +103,7 @@ if __name__ == '__main__':
     # solver.create_ic_hill(.05, 1E-3, int(0.25*grid_size[0]), int(0.25*grid_size[1]))
     # solver.create_ic_hill(-.05, 1E-3,int(0.75*grid_size[0]), int(0.75*grid_size[1]))
     
-    output_dir = "output/kotek"
+    output_dir = "local_outputs/kotek"
     os.makedirs(output_dir, exist_ok=True)
     matplotlib.use('TkAgg')
     subiterations = 25

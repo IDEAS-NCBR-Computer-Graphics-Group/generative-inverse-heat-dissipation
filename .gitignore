@@ -32,7 +32,7 @@ test_configs/
 
 tmp_*
 slurm-*
-output_*
+local_outputs/
 unet_model.pth
 imgui.ini
 .idea/misc.xml
