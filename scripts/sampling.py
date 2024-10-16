@@ -179,4 +179,3 @@ def get_initial_corrupted_sample(trainloader, corruption_amount, solver: BaseCor
     intermediate_samples = [torch.stack([sample[i] for sample in intermediate_samples]) for i in range(len(intermediate_samples[0]))]
 
     return noisy_initial_images, original_images, intermediate_samples
-        
