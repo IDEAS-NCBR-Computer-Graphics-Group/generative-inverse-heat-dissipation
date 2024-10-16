@@ -108,7 +108,7 @@ def calc_sigma(time, diff_coeff):
 class GaussianBlurLayerNaive(nn.Module):
     def __init__(self, blur_sigmas, device):
         super(GaussianBlurLayerNaive, self).__init__()
-        print(blur_sigmas)
+        # print(blur_sigmas)
         self.device = device
         self.blur_sigmas = torch.tensor(blur_sigmas).to(device)
 
@@ -141,7 +141,6 @@ blurred_by_gaussian = gaussian_filter(initial_condition, sigma=sigma, mode='wrap
 
 config = get_config()
 model = config.model
-diff = np.linspace(2, 5, 50) #TODO check random linspaces
 dctBlur = DCTBlur(model.blur_schedule, image_size=n, device="cpu")
 
 # %% ################ RUN DCT schedule ################
@@ -149,21 +148,21 @@ dctBlur = DCTBlur(model.blur_schedule, image_size=n, device="cpu")
 fwd_steps = model.K* torch.ones(1, dtype=torch.long) 
 blurred_by_dct = dctBlur(t_initial_condition, fwd_steps).float()
 blurred_by_dct = blurred_by_dct.squeeze().numpy()
-plot_matrix(blurred_by_dct, title="DCT Blurr")
+plot_matrix(blurred_by_dct, title="DCT schedule Blurr")
 
 # %% ################ DCT schedule vs Gaussian Schedule ################
 
 gaussianBlur = GaussianBlurLayerNaive(model.blur_schedule, device="cpu")
 blurred_by_gaussian_schedule = gaussianBlur(t_initial_condition, fwd_steps).float().squeeze().numpy()
 
-plot_matrix(blurred_by_gaussian_schedule, title="Sigma Blurr")
-plot_matrix(blurred_by_dct-blurred_by_gaussian_schedule, title="Final Difference")
-print(f"Blurring sigma = {calc_sigma(tc, diffusivity0)}")
-print(f"model.blur_schedule[fwd_steps] = {model.blur_schedule[fwd_steps]}")
+# plot_matrix(blurred_by_gaussian_schedule, title="Gaussian sigmas Blurr")
+# plot_matrix(blurred_by_dct-blurred_by_gaussian_schedule, title="Final Difference")
+# print(f"Blurring sigma = {calc_sigma(tc, diffusivity0)}")
+# print(f"model.blur_schedule[fwd_steps] = {model.blur_schedule[fwd_steps]}")
 
 
 # %% ################ ADE_LBM VS DCT ################
-
+niu = config.solver.niu*24 ### fited niu
 spectralTurbulenceGenerator = SpectralTurbulenceGenerator(config.turbulence.domain_size, initial_condition.shape, 
         0 * config.turbulence.turb_intensity, config.turbulence.noise_limiter,
         energy_spectrum=config.turbulence.energy_spectrum, 
@@ -172,16 +171,16 @@ spectralTurbulenceGenerator = SpectralTurbulenceGenerator(config.turbulence.doma
     is_div_free=False)
 solver = LBM_ADE_Solver(
     initial_condition.shape,
-    config.solver.niu, config.solver.bulk_visc,
+    niu, config.solver.bulk_visc,
     spectralTurbulenceGenerator
     )
 solver.init(np_init_gray_image) 
-solver.solve(iterations=2430)
+solver.solve(iterations=99)
 
 img = solver.rho
 rho_np = np.rot90(img.to_numpy().copy(), k=1) # torch to numpy + rotation
 
 plot_matrix(rho_np, title="LBM BLURR")
-plot_matrix(blurred_by_dct-rho_np, title="diff")
+plot_matrix(blurred_by_dct-rho_np, title="Difference DCT schedule - LBM")
 print(f'Maximal value of DCT blurr: {blurred_by_dct.max()}')
 print(f'Maximal value of LBM blurr: {rho_np.max()}')
