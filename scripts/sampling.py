@@ -173,10 +173,12 @@ def get_initial_corrupted_sample(trainloader, corruption_amount, solver: BaseCor
         noisy_initial_images[index], _ = solver._corrupt(original_images[index], corruption_amount)
         intermediate_samples.append(solver.intermediate_samples) # TODO: only LBM corruptor posses .intermediate_samples, to be refactored
 
+        # if getattr(solver.solver, 'turbulenceGenerator'):
+        solver.turbulenceGenerator.randomize()
+
     # intermediate_samples # [batchsize, t([timesteps, channels, 128,128])]
-    # reformat to 
+    # reformat to
     # intermediate_samples [timesteps, t([batchsize, channels, 128,128])]
     intermediate_samples = [torch.stack([sample[i] for sample in intermediate_samples]) for i in range(len(intermediate_samples[0]))]
 
     return noisy_initial_images, original_images, intermediate_samples
-        

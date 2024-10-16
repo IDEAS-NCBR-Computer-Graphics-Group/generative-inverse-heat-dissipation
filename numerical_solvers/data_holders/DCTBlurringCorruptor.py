@@ -6,8 +6,6 @@ from abc import ABC
 import warnings
 import logging
 
-import taichi as ti
-
 from model_code.utils import DCTBlur
 
 from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor

@@ -4,7 +4,6 @@ import torch
 from abc import ABC
 import warnings
 
-import taichi as ti
 from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range
 from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver    
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
@@ -13,7 +12,6 @@ from numerical_solvers.data_holders.LBM_Base_Corruptor import LBM_Base_Corruptor
 class LBM_NS_Corruptor(LBM_Base_Corruptor):
     def __init__(self, config, transform=None, target_transform=None):
         super(LBM_NS_Corruptor, self).__init__(config, transform, target_transform)
-        ti.init(arch=ti.gpu)
         
         grid_size = (config.data.image_size, config.data.image_size)
         spectralTurbulenceGenerator = SpectralTurbulenceGenerator(

@@ -12,11 +12,12 @@ from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbul
 from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
 
 from scripts.utils import load_config_from_path, setup_logging
-import copy
+
 
 class LBM_Base_Corruptor(BaseCorruptor):
     def __init__(self, config, transform=None, target_transform=None):
         super(LBM_Base_Corruptor, self).__init__(transform, target_transform)
+        ti.init(arch=ti.gpu, random_seed=config.seed)
 
         # Set LBM steps (can be made configurable too)
         self.min_steps = config.solver.min_fwd_steps
@@ -25,9 +26,9 @@ class LBM_Base_Corruptor(BaseCorruptor):
         self.min_init_gray_scale = config.solver.min_init_gray_scale
         self.max_init_gray_scale = config.solver.max_init_gray_scale
 
-        self._intermediate_samples = None 
-    
-  
+        self._intermediate_samples = None
+
+
     @property
     def intermediate_samples(self):
         return self._intermediate_samples
@@ -64,7 +65,7 @@ class LBM_Base_Corruptor(BaseCorruptor):
             self._intermediate_samples[i+1] = torch.tensor(rho_cpu).unsqueeze(0)
 
         logging.info(f"Corruptor.solver run for iterations: {self.solver.iterations_counter}")
-        
+
         if generate_pair:
             noisy_x = self._intermediate_samples[-1].clone()
             less_noisy_x = self._intermediate_samples[-2].clone()
@@ -110,8 +111,8 @@ class LBM_Base_Corruptor(BaseCorruptor):
             if index % 100 == 0:
                 logging.info(f"Preprocessing (lbm) {index}")
             
-            # max_steps is excluded from tossing, thus max_steps = denoising steps + 1
-            corruption_amount = np.random.randint(self.min_steps, self.max_steps) 
+            # max_steps is excluded from tossing
+            corruption_amount = np.random.randint(self.min_steps, self.max_steps)
             original_pil_image, label = initial_dataset[index]
             if process_images:
                 original_pil_image = np.transpose(original_pil_image, [1, 2, 0])
@@ -119,7 +120,7 @@ class LBM_Base_Corruptor(BaseCorruptor):
 
             # Use the unified corrupt function and ignore the second value if not needed
             modified_image, less_modified_image = self._corrupt(original_image, corruption_amount, generate_pair=process_pairs)
-
+            self.solver.turbulenceGenerator.randomize()
             data.append(original_image)
             modified_images.append(modified_image)
             corruption_amounts.append(corruption_amount)
