@@ -130,8 +130,6 @@ def neg_ELBO_corrupted(config, trainloader, testloader, solver, sigma, delta, im
     model_fn = get_model_fn(model, train=False)
     num_dims = image_size**2 * next(iter(trainloader))[0].shape[1]
 
-    # There are K - 1 intermediate scales
-    # TODO: Check if this shouldny be turbulence.k_max
     L_others = torch.zeros(config.solver.n_denoising_steps, device=device)
     mse_losses = torch.zeros(config.solver.n_denoising_steps, device=device)
 
