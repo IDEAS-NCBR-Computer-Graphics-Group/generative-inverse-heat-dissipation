@@ -30,7 +30,7 @@ imgui.ini
 
 test_configs/
 
-tmp_*
+tmp/*
 slurm-*
 local_outputs/
 unet_model.pth
