@@ -9,7 +9,7 @@ class BaseCorruptor(ABC):
         self.target_transform = target_transform
  
     @abstractmethod
-    def _preprocess_and_save_data(self):
+    def _preprocess_and_save_data(self, initial_dataset, save_dir, is_train_dataset: bool, process_pairs=False, process_all=True,  process_images=False):
         pass
     
     @abstractmethod
@@ -20,7 +20,7 @@ class BaseCorruptor(ABC):
         source_path = os.path.join(save_dir, "train_data.pt")
         destination_path = os.path.join(save_dir, "test_data.pt")
         if not os.path.exists(source_path):
-            raise(FileNotFoundError)
+            raise FileNotFoundError
         
         logging.warning(f"Using train dataset as test dataset.")
         if not os.path.exists(destination_path):   

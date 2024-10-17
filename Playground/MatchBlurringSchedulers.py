@@ -140,7 +140,7 @@ plot_matrix(blurred_by_gaussian, title="Gaussian Blurr")
 plot_matrix(blurred_by_fft-blurred_by_gaussian, title="Difference")
 
 #%% ################ Import DCT ################
-from configs.mnist.small_mnist import get_config
+from configs.mnist.ihd.small_mnist import get_config
 config = get_config()
 model = config.model
 
