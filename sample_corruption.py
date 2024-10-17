@@ -31,10 +31,10 @@ def main(argv):
     # Example
     # python sample_corruption.py --config=configs/ffhq/ffhq_128_lbm_ns_config_high_visc.py
     # python sample_corruption.py --config=configs/mnist/small_mnist_lbm_ns_config.py
-    produce_sample(FLAGS.config)
+    produce_fwd_sample(FLAGS.config)
   
   
-def produce_sample(config_path):
+def produce_fwd_sample(config_path):
     config = load_config_from_path(config_path)
     torch.manual_seed(config.seed)
     np.random.seed(config.seed)
@@ -67,6 +67,11 @@ def produce_sample(config_path):
     plt.savefig(os.path.join(save_dir,'Corruption_pairs_sample.png'), bbox_inches='tight')
     plt.show()
     plt.close()
+
+    # TODO: HACK
+    # config.data.image_size = 1024
+    # config.data.corrupted_image_size_write = 512
+    config.data.image_size = config.data.corrupted_image_size_write
 
     corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
         config=config,

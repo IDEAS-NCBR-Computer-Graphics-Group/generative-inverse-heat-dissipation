@@ -143,8 +143,8 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         logging.info(f"Fluid corruption took {end - start:.2f} seconds")
         transform = [
             transforms.ToPILImage(), 
-            transforms.Resize(config.data.image_size),
-            transforms.CenterCrop(config.data.image_size),
+            transforms.Resize(config.data.corrupted_image_size_write),
+            transforms.CenterCrop(config.data.corrupted_image_size_write),
             transforms.ToTensor()
             ]
         transform = transforms.Compose(transform)
@@ -185,8 +185,8 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         logging.info(f"Fluid corruption took {end - start:.2f} seconds")
         transform = [
             transforms.ToPILImage(), 
-            transforms.Resize(config.data.image_size),
-            transforms.CenterCrop(config.data.image_size),
+            transforms.Resize(config.data.corrupted_image_size_write),
+            transforms.CenterCrop(config.data.corrupted_image_size_write),
             transforms.ToTensor()
             ]
         transform = transforms.Compose(transform)
