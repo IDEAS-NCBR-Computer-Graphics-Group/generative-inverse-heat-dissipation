@@ -5,7 +5,7 @@
 
 import sys, os
 import torch
-
+from timeit import default_timer as timer
 import matplotlib
 from matplotlib import cm
 import matplotlib.pyplot as plt
@@ -22,13 +22,9 @@ from numerical_solvers.solvers.img_reader import read_img_in_grayscale, normaliz
 from numerical_solvers.visualization.taichi_lbm_gui import run_with_gui
 
 from configs.mnist.small_mnist_lbm_ns_turb_config import get_config
+from configs import conf_utils
 
-from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
-
-# from lbm_diffuser.lbm_bckp_with_fields import lbm_solver as lbm_solver_bkcp
 from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
-
-# from numerical_solvers.solvers.LBM_NS_Solver_OLD import LBM_NS_Solver_OLD as LBM_NS_Solver
 
 # %% read IC
 # https://github.com/taichi-dev/image-processing-with-taichi/blob/main/image_transpose.py
@@ -36,7 +32,11 @@ from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
 # img_path = './numerical_solvers/runners/mnist-2.png'
 # img_path = './numerical_solvers/runners/cat_256x256.jpg'
 img_path = './numerical_solvers/runners/cat_768x768.jpg'
+img_path = './numerical_solvers/runners/ffhq_1024_00062.png'
+
 target_size=None
+target_size=(1024, 1024)
+# target_size=(768, 768)
 # target_size=(512, 512)
 # target_size = (256, 256)
 # target_size = (128, 128)
@@ -57,18 +57,18 @@ np_gray_image = normalize_grayscale_image_range(np_gray_image, 1. - drho, 1. + d
 # plt.title(f'image')
 # plt.show()
 
-# %% run sovler
+# %% run solver
 
              
-is_gpu_avail = torch.cuda.is_available()
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-ti.init(arch=ti.gpu) if torch.cuda.is_available() else ti.init(arch=ti.cpu)
-print(f"device = {device}")
-ti_float_precision = ti.f32
+# is_gpu_avail = torch.cuda.is_available()
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# ti.init(arch=ti.gpu, default_fp=ti.f32) if torch.cuda.is_available() else ti.init(arch=ti.cpu)
+# print(f"device = {device}")
 
+device = torch.device("cpu")
+ti.init(arch=ti.cpu, default_fp=ti.f32) 
   
 if __name__ == '__main__':    
-
     domain_size = (1.0, 1.0)
     grid_size = np_gray_image.shape
     config = get_config()
@@ -83,14 +83,52 @@ if __name__ == '__main__':
         is_div_free=False)
 
     
+    n = 1000
+    # niu_sched  = conf_utils.exp_schedule(1E-4 * 1./6., 1./6., n)
+    # niu_sched = conf_utils.inv_cosine_aplha_schedule(1E-4 * 1./6., 1./6., n)
+    niu_sched = conf_utils.tanh_schedule(1E-4 * 1. / 6., 1. / 6., n)
+    # niu_sched  = lin_schedule(1E-4 * 1./6., 1./6., n)
+    # niu_sched  = lin_schedule(1E-4 * 1./6., 1E-4 *1./6., n)
+    bulk_visc_sched = niu_sched
+    
     solver = LBM_NS_Solver(
         np_gray_image.shape,
-        config.solver.niu, config.solver.bulk_visc,
+        niu_sched,
+        bulk_visc_sched,
         spectralTurbulenceGenerator
         )    
     
     solver.init(np_gray_image)
 
-
-
-    run_with_gui(solver, np_gray_image, iter_per_frame = 1)
+    # solver.init(1.*np.ones(grid_size, dtype=np.float32))
+    # solver.create_ic_hill(.5, 1E-2, int(0.5*grid_size[0]), int(0.5*grid_size[1])) 
+    # solver.create_ic_hill(.05, 1E-3, int(0.25*grid_size[0]), int(0.25*grid_size[1]))
+    # solver.create_ic_hill(-.05, 1E-3,int(0.75*grid_size[0]), int(0.75*grid_size[1]))
+    
+    output_dir = "local_outputs/kotek"
+    os.makedirs(output_dir, exist_ok=True)
+    matplotlib.use('TkAgg')
+    subiterations = 10
+    start = timer()
+    for i in range(100):
+        # rho_cpu = solver.rho.to_numpy()
+        # rho_cpu = rho_cpu.T
+        # plt.imshow(rho_cpu, vmin=1. - drho, vmax= 1. + drho, cmap="gist_gray", interpolation='none')
+        # plt.colorbar()
+        # ax = plt.gca()
+        # ax.set_xlim([0, grid_size[0]])
+        # ax.set_ylim([0, grid_size[1]])
+        # plt.grid()
+        # total_iter = i*subiterations
+        # plt.title(f'After {total_iter} iterations')
+        # plt.savefig(f'{output_dir}/rho_at_{total_iter}.png')  # Save with Matplotlib
+        # # plt.show()
+        # plt.close()
+        # print(f"Savefig at iteration {total_iter}")
+        solver.solve(subiterations)
+    end = timer()
+    print(f"Corruption took {end - start:.2f} seconds")
+        
+    ############################ standard renderer with multiple subwindows
+    # run_with_gui(solver, np_gray_image, iter_per_frame = 10)
+    ############################

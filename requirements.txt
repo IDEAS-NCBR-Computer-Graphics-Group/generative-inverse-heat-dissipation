@@ -31,9 +31,14 @@ tqdm
 # additional
 matplotlib
 diffusers
-jupyter
+# jupyter
 ipykernel
 scikit-image
+scikit-learn
+
+# datasets
+kaggle
+
 
 # taichi
 torch
@@ -42,7 +47,7 @@ matplotlib
 seaborn
 numba
 taichi
-vtk
+# vtk
 argparse
 opencv-python
 scipy

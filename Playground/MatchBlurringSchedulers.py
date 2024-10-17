@@ -139,6 +139,7 @@ plot_matrix(blurred_by_fft-blurred_by_gaussian, title="Difference (FFT-Gaussian)
 
 # %% ################ Import DCT ################
 
+#%% ################ Import DCT ################
 config = get_config()
 model = config.model
 

@@ -1,6 +1,7 @@
 
 import taichi as ti
 import numpy as np
+import time
 from pathlib import Path
 
 from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
@@ -19,8 +20,8 @@ def run_with_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show
     solver.iterations_counter=0 # reset counter
     img = canvasPlotter.make_frame()
     
-    Path("output/").mkdir(parents=True, exist_ok=True)
-    canvasPlotter.write_canvas_to_file(img, f'output/iteration_{solver.iterations_counter}.jpg')
+    Path("local_outputs/").mkdir(parents=True, exist_ok=True)
+    canvasPlotter.write_canvas_to_file(img, f'local_outputs/iteration_{solver.iterations_counter}.jpg')
        
     while window.running:
         with gui.sub_window('MAIN MENU', x=0, y=0, width=0.2, height=0.25):
@@ -48,6 +49,11 @@ def run_with_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show
         
         window.show()
         
+        # time.sleep(4)
+        # window.running = False
+    
+    # window.show()
+    # gui.show()
         # if solver.iterations_counter % 500 ==0:
-        #     window.save_image(f'output/iteration_{solver.iterations_counter}.jpg')
+        #     window.save_image(f'local_outputs/iteration_{solver.iterations_counter}.jpg')
         
