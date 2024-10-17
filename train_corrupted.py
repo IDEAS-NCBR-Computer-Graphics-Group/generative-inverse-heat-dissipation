@@ -20,11 +20,13 @@ from scripts.utils import load_config_from_path, setup_logging
 
 FLAGS = flags.FLAGS
 
-# config_flags.DEFINE_config_file("config", None, "NN Training configuration.", lock_config=True) # this return a parsed object - ConfigDict
+# config_flags.DEFINE_config_file("config", None, "NN Training configuration.", lock_config=True) # removed in python 3.12 # this return a parsed object - ConfigDict
 flags.DEFINE_string("config", None, "Path to the config file.")
 flags.mark_flags_as_required(["config"])
 
 def main(argv):
+    # Example
+    # python train_corrupted.py --config=configs/ffhq/128_ffhq_lbm_ns_config.py
     train(FLAGS.config)
 
 def train(config_path):
@@ -97,7 +99,9 @@ def train(config_path):
     # Build data iterators
     trainloader, testloader = datasets.get_dataset(
         config, uniform_dequantization=config.data.uniform_dequantization)
-    shutil.copy(config_path, os.path.join(f'data/corrupted_{config.data.dataset}', f'{config.data.processed_filename}_{config.solver.hash}')) 
+    datadir = os.path.join(f'data/corrupted_{config.data.dataset}',
+                           f'{config.data.processed_filename}_{config.stamp.hash}')
+    shutil.copy(config_path,datadir)
     train_iter = iter(trainloader)
     eval_iter = iter(testloader)
 
@@ -116,10 +120,11 @@ def train(config_path):
     )
 
     # draw a sample by destroying some rand images 
-    n_denoising_steps = config.solver.n_denoising_steps   
+    n_denoising_steps = config.solver.n_denoising_steps
     initial_corrupted_sample, clean_initial_sample, intermediate_corruption_samples = sampling.get_initial_corrupted_sample(
         trainloader, n_denoising_steps, corruptor)
     
+    logging.info("Saving forward corruption process.")
     utils.save_gif(workdir, intermediate_corruption_samples, "corruption_init.gif")
     utils.save_video(workdir, intermediate_corruption_samples, filename="corruption_init.mp4")
     utils.save_png(workdir, clean_initial_sample, "clean_init.png")

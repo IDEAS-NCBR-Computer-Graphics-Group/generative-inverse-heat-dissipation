@@ -30,4 +30,9 @@ imgui.ini
 
 test_configs/
 
+tmp_*
 slurm-*
+local_outputs/
+unet_model.pth
+imgui.ini
+.idea/misc.xml

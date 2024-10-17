@@ -37,14 +37,13 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
     https://github.com/fyu/lsun
     """
 
-    if getattr(config, 'solver'):
-        solver_hash = config.solver.hash      
+    if getattr(config, 'solver'):    
         current_file_path = Path(__file__).resolve()
         base_folder = current_file_path.parents[1]
         input_data_dir = os.path.join(base_folder, "data")
         dataset_name = f'corrupted_{config.data.dataset}'
         output_data_dir = os.path.join(input_data_dir, dataset_name)
-        save_dir = os.path.join(output_data_dir, f'{config.data.processed_filename}_{solver_hash}')
+        save_dir = os.path.join(output_data_dir, f'{config.data.processed_filename}_{config.stamp.hash}')
         corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
             config=config,
             transform=config.data.transform
@@ -133,7 +132,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
             corruptor.copy_train_dataset_as_test_dataset(save_dir)
         else:
             corruptor._preprocess_and_save_data(
-            initial_dataset=trainloader.dataset,
+            initial_dataset=testloader.dataset,
             save_dir=save_dir,
             process_all=config.data.process_all,
             is_train_dataset=False,
@@ -175,7 +174,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
             corruptor.copy_train_dataset_as_test_dataset(save_dir)
         else:
             corruptor._preprocess_and_save_data(
-            initial_dataset=trainloader.dataset,
+            initial_dataset=testloader.dataset,
             save_dir=save_dir,
             process_all=config.data.process_all,
             is_train_dataset=False,

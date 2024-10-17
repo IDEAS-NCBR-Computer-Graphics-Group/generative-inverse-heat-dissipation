@@ -5,7 +5,7 @@
 #SBATCH --partition=plgrid-gpu-a100 
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=8
-#SBATCH --gres=gpu:2
+#SBATCH --gres=gpu:1
 
 module load GCC/12.3.0
 module load GCCcore/12.3.0
