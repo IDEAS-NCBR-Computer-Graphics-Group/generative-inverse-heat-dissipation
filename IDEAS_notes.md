@@ -158,7 +158,7 @@ in stargan-v2/download.sh
 
 ### ffhq
 
-Go to the website and "Create New API Token". This will download a kaggle.json
+Go to the kaggle website and "Create New API Token". This will download a kaggle.json
 
 ```.sh
 pip install kaggle

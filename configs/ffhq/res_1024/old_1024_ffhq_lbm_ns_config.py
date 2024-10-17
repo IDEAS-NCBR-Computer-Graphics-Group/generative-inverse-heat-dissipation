@@ -5,7 +5,7 @@ from configs.conf_utils import hash_solver
 from torchvision import transforms
 
 def get_config():
-    config = default_lbm_ffhq_config.get_default_configs()
+    config = default_lbm_ffhq_128_config.get_default_configs()
     training = config.training 
     config.training.batch_size = 1
     training.n_iters = 1001 # 1300001
@@ -31,6 +31,7 @@ def get_config():
     data.dataset = 'FFHQ'
     data.processed_filename = 'lbm_ns_pairs' if data.process_pairs else 'lbm_ns'
     data.image_size = 256
+    data.corrupted_image_size_write = 256
     data.random_flip = False
     data.centered = False
     data.uniform_dequantization = False
