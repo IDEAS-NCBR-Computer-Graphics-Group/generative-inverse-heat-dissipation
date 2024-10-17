@@ -16,7 +16,7 @@ def get_default_configs():
     config.training.batch_size = 32
 
     training.n_evals = 25 # batches for test-set evaluation, arbitrary choice
-    training.n_iters = 100001  # 1300001
+    training.n_iters = 40001  # 1300001
     training.log_freq = 100
     training.eval_freq = 200
     training.sampling_freq = 2000 #10000
