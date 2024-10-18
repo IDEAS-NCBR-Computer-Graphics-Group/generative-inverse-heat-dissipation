@@ -66,6 +66,144 @@ def KL(dists, sigma0, sigma1, dim):
     # with distances dists between their centers, where dists is a matrix
     return 0.5 * ((sigma0**2/sigma1**2)*dim + (dists)**2/sigma1**2 - dim + 2*dim*np.log(sigma1/sigma0))
 
+def L_K_upperbound_corrupted(n_denoising_steps, trainloader, testloader, solver, sigma_inf, sigma_prior, dim,
+                   train_size, test_size, device='cpu'):
+
+    # Calculates the upper bound for the term E_q[KL[q(x_K|x_0)|p(x_K)]]
+    # in a memory-efficient way, that is, calculates the distances between
+    # test and training data points in batches, and uses those distances to calculate
+    # the upper bound
+
+    KL_div_upper_bound = torch.zeros(test_size, device=device)
+    testdata_count = 0
+    count = 0
+
+    for testbatch in testloader:
+        _, testbatch = testbatch
+        blurred_batch, *_ = testbatch
+        logging.info("Batch {}".format(count))
+        count += 1
+        
+        testbatch = blurred_batch.reshape(len(blurred_batch), -1).to(device)
+        dists = torch.zeros(train_size, len(testbatch), device=device)
+        traindata_count = 0
+        
+        # Get distances between the test batch and training data
+        for trainbatch in trainloader:
+            _, trainbatch = trainbatch
+            blurred_batch, *_ = trainbatch
+            trainbatch = blurred_batch.reshape(len(blurred_batch.to(device)), -1).to(device)
+
+            dists[traindata_count:traindata_count +
+                  len(trainbatch), :] = torch.cdist(trainbatch, testbatch)
+            traindata_count += len(trainbatch)
+        # Calculate the upper bounds on the KL divergence for each test batch element
+        kl_divs = KL(dists, sigma_inf, sigma_prior, testbatch.shape[-1])
+        inference_entropy = dim*0.5 * \
+            torch.log(
+                2*np.pi*torch.exp(torch.tensor([1]))*sigma_inf**2).to(device)
+        cross_entropies = kl_divs + inference_entropy
+        # log-sum-exp trick
+        log_phi = -kl_divs - torch.logsumexp(-kl_divs, 0)[None, :]
+        phi = torch.exp(log_phi)
+        KL_div_upper_bound_batch = -inference_entropy + \
+            (phi * (cross_entropies + log_phi + np.log(train_size))).sum(0)
+        KL_div_upper_bound[testdata_count:testdata_count +
+                           len(testbatch)] = KL_div_upper_bound_batch
+        testdata_count += len(testbatch)
+    return KL_div_upper_bound
+
+
+def neg_ELBO_corrupted(config, trainloader, testloader, solver, sigma, delta, image_size,
+             train_size, test_size, model, device='cpu', num_epochs=10):
+    """Estimates the terms in the negative evidence lower bound for the model
+    num_epochs: Used for the estimation of terms L_k: How many epochs through these?"""
+
+    n_denoising_steps = config.solver.n_denoising_steps   
+    
+    logging.info("Calculating the upper bound for L_K...")
+    L_K_upbound = L_K_upperbound_corrupted(n_denoising_steps, trainloader, testloader, solver,
+                                            sigma, delta, image_size**2, train_size, test_size, device)
+    logging.info("... done! Value {}, len {}".format(
+      L_K_upbound, len(L_K_upbound)))
+
+    model_fn = get_model_fn(model, train=False)
+    num_dims = image_size**2 * next(iter(trainloader))[0].shape[1]
+
+    L_others = torch.zeros(config.solver.n_denoising_steps, device=device)
+    mse_losses = torch.zeros(config.solver.n_denoising_steps, device=device)
+
+    logging.info("Calculating the other terms...")
+    with torch.no_grad():
+        # Go through the set a few times for more accuracy, not just once
+        logging.info("Reverse diffusion process ratio calculation...")
+
+        for i in range(num_epochs):
+            count = 0
+            for testbatch in testloader:
+                logging.info("Epoch {}, Batch {}".format(i, count))
+                count += 1
+
+                clear_batch, (blurred_batch, less_blurred_batch, fwd_steps, labels) = testbatch
+                clear_batch = clear_batch.to(device).float()
+                blurred_batch = blurred_batch.to(device).float()
+                less_blurred_batch = less_blurred_batch.to(device).float()
+                fwd_steps = fwd_steps.to(device)
+                labels = labels.to(device).float()
+                batch_size = len(clear_batch)
+
+                noise = torch.randn_like(blurred_batch) * sigma
+                perturbed_data = noise + blurred_batch
+                diff = model_fn(perturbed_data, fwd_steps)
+                prediction = perturbed_data + diff
+                mse_loss = ((less_blurred_batch - prediction)
+                            ** 2).sum((1, 2, 3))
+                loss = mse_loss / delta**2
+                loss += 2*num_dims*np.log(delta/sigma)
+                loss += sigma**2/delta**2*num_dims
+                loss -= num_dims
+                loss /= 2
+                # Normalize so that the significance of these terms matches with L_K and L_0
+                # This way, we only go through once for each data point
+                loss *= (config.solver.n_denoising_steps-1)
+                mse_loss *= (config.solver.n_denoising_steps-1)
+                L_others.scatter_add_(0, fwd_steps, loss)
+                mse_losses.scatter_add_(0, fwd_steps, mse_loss)
+
+        L_others = L_others / (test_size*num_epochs)
+        mse_losses = mse_losses / (test_size*num_epochs)
+
+        # Calculate L_0
+        for testbatch in testloader:
+            testbatch = testbatch[0].float()
+            batch_size = len(testbatch)
+            
+            blurred_batch = testbatch.clone()
+
+            for index in range(testbatch.shape[0]):
+                tmp, _ = solver._corrupt(testbatch[index], 1)
+                blurred_batch[index] = tmp
+
+            blurred_batch.to(device)
+            non_blurred_batch = testbatch
+
+            fwd_steps = torch.ones(batch_size, device=device)
+            noise = torch.randn_like(blurred_batch) * sigma
+            perturbed_data = noise + blurred_batch
+            diff = model_fn(perturbed_data, fwd_steps)
+            prediction = perturbed_data + diff.cpu()
+            mse_loss = ((non_blurred_batch - prediction)**2).sum((1, 2, 3))
+            loss = 0.5*mse_loss/delta**2
+            # Normalization constant
+            loss += num_dims*np.log(delta*np.sqrt(2*np.pi))
+            L_others[0] += loss.sum()
+            mse_losses[0] += mse_loss.sum()
+        L_others[0] = L_others[0] / test_size
+        mse_losses[0] = mse_losses[0] / test_size
+
+    logging.info("... Done! Values {}".format(L_others))
+    return L_K_upbound.detach().cpu(), L_others.detach().cpu(), mse_losses.detach().cpu()
+
 
 def L_K_upperbound(K, trainloader, testloader, blur_module, sigma_inf, sigma_prior, dim,
                    train_size, test_size, device='cpu'):
@@ -82,8 +220,7 @@ def L_K_upperbound(K, trainloader, testloader, blur_module, sigma_inf, sigma_pri
         logging.info("Batch {}".format(count))
         count += 1
         blur_fwd_steps_test = [K] * len(testbatch[0])
-        testbatch = blur_module(testbatch[0].to(
-            device), blur_fwd_steps_test).reshape(len(testbatch[0]), -1)
+        testbatch = blur_module(testbatch[0].to(device), blur_fwd_steps_test).reshape(len(testbatch[0]), -1)
         dists = torch.zeros(train_size, len(testbatch), device=device)
         traindata_count = 0
     # Get distances between the test batch and training data
