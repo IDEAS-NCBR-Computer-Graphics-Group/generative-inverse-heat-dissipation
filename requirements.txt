@@ -51,3 +51,5 @@ taichi
 argparse
 opencv-python
 scipy
+
+wandb

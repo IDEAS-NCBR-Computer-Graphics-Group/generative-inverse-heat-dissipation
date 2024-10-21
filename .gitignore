@@ -16,6 +16,7 @@
 
 runs/
 data/
+wandb/
 6_experiments/
 
 __pycache__

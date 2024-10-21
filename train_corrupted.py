@@ -13,6 +13,7 @@ from torch.utils import tensorboard
 from scripts import utils
 from absl import app
 from absl import flags
+import wandb
 
 from numerical_solvers.data_holders.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
 from scripts.git_utils import get_git_branch, get_git_revision_hash, get_git_revision_short_hash
@@ -23,6 +24,7 @@ FLAGS = flags.FLAGS
 # config_flags.DEFINE_config_file("config", None, "NN Training configuration.", lock_config=True) # removed in python 3.12 # this return a parsed object - ConfigDict
 flags.DEFINE_string("config", None, "Path to the config file.")
 flags.mark_flags_as_required(["config"])
+
 
 def main(argv):
     # Example
@@ -43,6 +45,12 @@ def train(config_path):
 
     # Load config
     config = load_config_from_path(config_path)
+
+    wandb.init(
+        project='fluid-diffusion',
+        config=config,
+        name= f'{config.data.processed_filename}_{config.solver.hash}'
+    )
 
     # Seeding
     torch.manual_seed(config.seed)
@@ -128,7 +136,12 @@ def train(config_path):
     utils.save_gif(workdir, intermediate_corruption_samples, "corruption_init.gif")
     utils.save_video(workdir, intermediate_corruption_samples, filename="corruption_init.mp4")
     utils.save_png(workdir, clean_initial_sample, "clean_init.png")
-    
+    wandb.log({
+        "clean_init": wandb.Image(os.path.join(workdir, "clean_init.png")),
+        "process": wandb.Video(os.path.join(workdir, 'corruption_init.gif'))
+        })
+
+
     sampling_fn = sampling.get_sampling_fn_inverse_lbm_ns(
         n_denoising_steps = n_denoising_steps,
         initial_sample = initial_corrupted_sample, 
@@ -155,6 +168,7 @@ def train(config_path):
         loss, _, _ = train_step_fn(state, batch)
 
         writer.add_scalar("training_loss", loss.item(), step)
+        wandb.log({'training_loss': loss.item()})
 
         # Save a temporary checkpoint to resume training if training is stopped
         if step != 0 and step % config.training.snapshot_freq_for_preemption == 0:
@@ -175,6 +189,7 @@ def train(config_path):
                 eval_loss, _, _ = eval_step_fn(state, eval_batch)
                 eval_loss = eval_loss.detach()
             logging.info("step: %d, eval_loss: %.5e" % (step, eval_loss.item()))
+            wandb.log({'eval_loss': eval_loss.item()})
 
         # Save a checkpoint periodically
         if step != 0 and step % config.training.snapshot_freq == 0 or step == num_train_steps:
@@ -198,9 +213,15 @@ def train(config_path):
 
             if initial_corrupted_sample != None:
                 utils.save_png(this_sample_dir, initial_corrupted_sample, "init.png")
+                wandb.log({'init': wandb.Image(os.path.join(this_sample_dir, 'init.png')),
+                           'final': wandb.Image(os.path.join(this_sample_dir, 'final.png'))})
+            else:
+                wandb.log({'final': wandb.Image(os.path.join(this_sample_dir, 'final.png'))})
+
 
             utils.save_gif(this_sample_dir, intermediate_samples)
             utils.save_video(this_sample_dir, intermediate_samples)
+            wandb.log({"process": wandb.Video(os.path.join(this_sample_dir, 'process.gif'))})
 
     logging.info("Done.")
      
