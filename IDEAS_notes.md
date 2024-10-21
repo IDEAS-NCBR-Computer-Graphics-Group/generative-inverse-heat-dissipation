@@ -84,6 +84,14 @@ cd /net/tscratch/people/plgmuaddieb/generative-inverse-heat-dissipation
 python train.py --config configs/mnist/default_mnist_configs.py --workdir runs/mnist/default
 ```
 
+### athena cluster
+
+```
+# on login node:
+python -m venv py-ihd-env
+source $HOME/py-ihd-env/bin/activate
+pip install -r pi-inr/requirements.txt
+```
 #### some useless experiments
 
 Generally mpi4py doesnt seem to work properly the pytorch code.

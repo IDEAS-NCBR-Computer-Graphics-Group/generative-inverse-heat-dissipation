@@ -1,4 +1,4 @@
-from configs.mnist import default_lbm_mnist_configs as default_mnist_configs
+from configs.mnist import default_lbm_mnist_config as default_mnist_configs
 import ml_collections
 import numpy as np
 import torch
