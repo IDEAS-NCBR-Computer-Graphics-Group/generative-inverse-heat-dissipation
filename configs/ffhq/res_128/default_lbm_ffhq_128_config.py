@@ -72,7 +72,7 @@ def get_default_configs():
     solver.type = 'ns'
     solver.min_init_gray_scale = 0.95
     solver.max_init_gray_scale = 1.05
-
+    solver.cs2 = 1./3.
     solver.min_fwd_steps = 1
     solver.n_denoising_steps = 100
     solver.max_fwd_steps = solver.n_denoising_steps # + 1  # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
@@ -140,8 +140,8 @@ def get_default_configs():
         
         model = config.model
         model.model_channels = 32
-        model.channel_mult = (1, 2, 2, 2, 2)
-        # model.attention_levels = (2, 3, 4)
+        model.channel_mult = (1, 1, 2, 2, 2)
+        model.attention_levels = (3, 4)
     
         config.training.batch_size = 1 # rtx2080
         config.eval.batch_size = 1

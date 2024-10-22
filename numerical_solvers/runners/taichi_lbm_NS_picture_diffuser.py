@@ -18,7 +18,9 @@ import itertools
 import cv2 # conda install conda-forge::opencv || pip install opencv-python
 
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
-from numerical_solvers.solvers.img_reader import read_img_in_grayscale, normalize_grayscale_image_range, standarize_grayscale_image_range
+from numerical_solvers.solvers.img_reader import (read_img_in_grayscale,
+                                                  normalize_grayscale_image_range,
+                                                  standarize_grayscale_image_range)
 from numerical_solvers.visualization.taichi_lbm_gui import run_with_gui, run_simple_gui
 
 from configs.lbm_ns_gui_conf import get_config
@@ -37,9 +39,9 @@ img_path = './numerical_solvers/runners/ffhq_1024_00062.png'
 target_size=None
 # target_size=(1024, 1024)
 # target_size=(768, 768)
-target_size=(512, 512)
+# target_size=(512, 512)
 # target_size = (256, 256)
-# target_size = (128, 128)
+target_size = (128, 128)
 # target_size = (64, 64)
 # target_size = (28, 28)
 # target_size = None
@@ -82,50 +84,47 @@ if __name__ == '__main__':
             dt_turb=config.turbulence.dt_turb, 
         is_div_free=False)
 
-    
-
-
-    
     solver = LBM_NS_Solver(
         np_gray_image.shape,
         config.solver.niu,
         config.solver.bulk_visc,
+        config.solver.cs2,
         spectralTurbulenceGenerator
         )    
     
     solver.init(np_gray_image)
 
-    solver.init(1.*np.ones(grid_size, dtype=np.float32))
-    solver.create_ic_hill(.5, 1E-2, int(0.*grid_size[0]), int(0.5*grid_size[1]))
+    # solver.init(1.*np.ones(grid_size, dtype=np.float32))
+    # solver.create_ic_hill(.5, 1E-2, int(0.*grid_size[0]), int(0.5*grid_size[1]))
     # solver.create_ic_hill(.5, 1E-2, int(0.5*grid_size[0]), int(0.5*grid_size[1]))
     # solver.create_ic_hill(.05, 1E-3, int(0.25*grid_size[0]), int(0.25*grid_size[1]))
     # solver.create_ic_hill(-.05, 1E-3,int(0.75*grid_size[0]), int(0.75*grid_size[1]))
     
-    # output_dir = "local_outputs/kotek"
-    # os.makedirs(output_dir, exist_ok=True)
-    # matplotlib.use('TkAgg')
-    # subiterations = 10
-    # start = timer()
-    # for i in range(100):
-    #     # rho_cpu = solver.rho.to_numpy()
-    #     # rho_cpu = rho_cpu.T
-    #     # plt.imshow(rho_cpu, vmin=1. - drho, vmax= 1. + drho, cmap="gist_gray", interpolation='none')
-    #     # plt.colorbar()
-    #     # ax = plt.gca()
-    #     # ax.set_xlim([0, grid_size[0]])
-    #     # ax.set_ylim([0, grid_size[1]])
-    #     # plt.grid()
-    #     # total_iter = i*subiterations
-    #     # plt.title(f'After {total_iter} iterations')
-    #     # plt.savefig(f'{output_dir}/rho_at_{total_iter}.png')  # Save with Matplotlib
-    #     # # plt.show()
-    #     # plt.close()
-    #     # print(f"Savefig at iteration {total_iter}")
-    #     solver.solve(subiterations)
-    # end = timer()
-    # print(f"Corruption took {end - start:.2f} seconds")
+    output_dir = "local_outputs/test"
+    os.makedirs(output_dir, exist_ok=True)
+    matplotlib.use('TkAgg')
+    subiterations = 1
+    start = timer()
+    for i in range(100):
+        rho_cpu = solver.rho.to_numpy()
+        rho_cpu = rho_cpu.T
+        plt.imshow(rho_cpu, vmin=1. - drho, vmax= 1. + drho, cmap="gist_gray", interpolation='none')
+        plt.colorbar()
+        ax = plt.gca()
+        ax.set_xlim([0, grid_size[0]])
+        ax.set_ylim([0, grid_size[1]])
+        plt.grid()
+        total_iter = i*subiterations
+        plt.title(f'After {total_iter} iterations')
+        plt.savefig(f'{output_dir}/rho_at_{total_iter}.png')  # Save with Matplotlib
+        # plt.show()
+        plt.close()
+        print(f"Savefig at iteration {total_iter}")
+        solver.solve(subiterations)
+    end = timer()
+    print(f"Corruption took {end - start:.2f} seconds")
         
     ############################ standard renderer with multiple subwindows
     # run_with_gui(solver, np_gray_image, iter_per_frame = 1)
-    run_simple_gui(solver, np_gray_image, iter_per_frame=1)
+    # run_simple_gui(solver, np_gray_image, iter_per_frame=1)
     ############################

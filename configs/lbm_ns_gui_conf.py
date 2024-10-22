@@ -32,7 +32,7 @@ def get_config():
     solver.max_init_gray_scale = 1.05
     solver.type = 'ns'
 
-    solver.cs2= 0.2 * 1./3 # TODO: GG
+    solver.cs2= 0.2* 1./3
     solver.max_fwd_steps = 5000
     niu_sched = conf_utils.lin_schedule(0.5 * 1 / 6, 0.5 * 1 / 6, solver.max_fwd_steps)
 

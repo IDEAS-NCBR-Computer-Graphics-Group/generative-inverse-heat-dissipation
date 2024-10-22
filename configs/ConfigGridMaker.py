@@ -12,6 +12,8 @@ def main():
     param_grid = {
         'training.batch_size': [16, 32, 64],
         'optim.lr': [1e-4, 5e-5, 2e-5, 1e-5],
+        'turbulence.turb_intensity' : [0, 1E-4],
+        'solver.cs2' : [0.3/3 , 0.6/3 , 1./3 ],
         'training.n_iters': [10001]
     }
 
@@ -35,9 +37,10 @@ def main():
     default_cfg_str = f"from configs.{save_dir} import {file_name} as default_config"
 
     # Iterate over each configuration in the grid and save it
+
     for i, params in enumerate(grid):
         config_filename = evaluate_config_file_name(save_dir, params)
-
+        print(f"writing case {i}/{len(grid)} to {config_filename}")
         # Save the updated configuration by modifying only the necessary fields
         with open(config_filename, 'w') as f:
             f.write(f"""

@@ -12,10 +12,13 @@ from numerical_solvers.solvers.GaussianTurbulenceGenerator import get_gaussian_n
 
 @ti.data_oriented
 class LBM_NS_Solver(LBM_SolverBase):
-    def __init__(self, domain_size, kin_visc, bulk_visc, turbulenceGenerator: SpectralTurbulenceGenerator):
+    def __init__(self, domain_size, kin_visc, bulk_visc, cs2,
+                 turbulenceGenerator: SpectralTurbulenceGenerator):
         self.omega_bulk = 1.0 / (3.0 * bulk_visc + 0.5) 
+
+
         print(f"LBM_NS_Solver constructor called.")
-        super().__init__(domain_size, kin_visc, turbulenceGenerator)
+        super().__init__(domain_size, kin_visc, cs2, turbulenceGenerator)
             
             
     def init(self, np_gray_image): 
@@ -73,9 +76,8 @@ class LBM_NS_Solver(LBM_SolverBase):
             
             # noise = 0.1*get_gaussian_noise(0,1)
             # self.vel[i, j] = ti.Vector([noise[0], noise[1]]) # run as ade
-            cs2= 1./3. # TODO: GG
-            # cs2 = 0.3* 1. / 3.
-            
+            # cs2= 1./3.
+            cs2 = self.cs2[None]
             #=== THIS IS AUTOMATICALLY GENERATED CODE ===
             ux = self.vel[i, j][0]
             uy = self.vel[i, j][1]
