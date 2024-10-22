@@ -38,3 +38,4 @@ local_outputs/
 unet_model.pth
 imgui.ini
 .idea/misc.xml
+configs/campaign_*

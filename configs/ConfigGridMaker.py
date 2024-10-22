@@ -9,21 +9,21 @@ from configs.conf_utils import evaluate_config_file_name
 
 def main():
     # Define the hyperparameter grid
-    # param_grid = {
-    #     'training.batch_size': [16, 32, 64],
-    #     'training.n_iters': [10001],
-    #     'optim.lr': [1e-4, 5e-5, 2e-5, 1e-5],
-    #     'turbulence.turb_intensity' : [0, 1E-4],
-    #     'solver.cs2' : [0.3*1./3 , 0.6*1./3 , 1./3 ]
-    # }
-    
     param_grid = {
-        'training.batch_size': [64],
-        'training.n_iters': [1001],
-        'optim.lr': [2e-5, 1e-5],
+        'training.batch_size': [16, 32, 64],
+        'training.n_iters': [20001],
+        'optim.lr': [1e-4, 5e-5, 2e-5, 1e-5],
         'turbulence.turb_intensity' : [0, 1E-4],
         'solver.cs2' : [0.3*1./3 , 0.6*1./3 , 1./3 ]
     }
+    
+    # param_grid = {
+    #     'training.batch_size': [64],
+    #     'training.n_iters': [1001],
+    #     'optim.lr': [2e-5, 1e-5],
+    #     'turbulence.turb_intensity' : [0, 1E-4],
+    #     'solver.cs2' : [0.3*1./3 , 0.6*1./3 , 1./3 ]
+    # }
 
     # Create the grid
     grid = ParameterGrid(param_grid)

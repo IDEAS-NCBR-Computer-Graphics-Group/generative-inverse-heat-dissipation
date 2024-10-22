@@ -60,6 +60,8 @@ def hash_solver(config):
             return {k: convert_numpy_to_list(v, precision) for k, v in obj.items()}
         elif isinstance(obj, (np.ndarray, np.generic)):
             return np.round(obj, decimals=precision).tolist()  # Round before converting to list
+        elif callable(obj):  # Check if the object is a function
+            return None  # Or any other placeholder you prefer
         else:
             return obj
 
@@ -132,7 +134,7 @@ def evaluate_config_file_name(savedir, params):
     for param_key, param_value in params.items():
         keys = param_key.split('.')
         set_nested_value(config, keys, param_value)
-    config_hash = hash_joiner([hash_solver(config)])  # .to_dict()
+    config_hash = hash_joiner([hash_solver(config)], num_bits=32)  # .to_dict()
     
     # Define file path
     config_filename = os.path.join(savedir, f'config_{config_hash}.py')
