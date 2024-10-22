@@ -41,6 +41,7 @@ def get_default_configs():
     data.random_flip = False
     data.centered = False
     data.uniform_dequantization = False
+    data.num_channels = 1
 
     # data - cd
     data = config.data
@@ -50,12 +51,10 @@ def get_default_configs():
     data.processed_filename = 'lbm_ns_pairs' if data.process_pairs else 'lbm_ns'
     data.dataset = 'FFHQ_128'
     data.image_size = 128
-    data.corrupted_image_size_write = 128
     data.transform = transforms.Compose(
         [transforms.ToTensor(),transforms.Grayscale()])
-    data.num_channels = 1
-    
-    
+
+
     # solver
     config.turbulence = turbulence = ml_collections.ConfigDict()
     turbulence.turb_intensity = 0 #*1E-4
@@ -77,9 +76,11 @@ def get_default_configs():
     solver.min_fwd_steps = 1
     solver.n_denoising_steps = 100
     solver.max_fwd_steps = solver.n_denoising_steps # + 1  # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
-    
-    config.stamp = stamp = ml_collections.ConfigDict()
-    
+
+    niu_sched = conf_utils.lin_schedule(1E-4 * 1 / 6, 1 / 6, solver.max_fwd_steps)
+    solver.niu = solver.bulk_visc = niu_sched
+    solver.hash = conf_utils.hash_solver(solver)
+
     # model
     config.model = model = ml_collections.ConfigDict()
     
@@ -102,7 +103,8 @@ def get_default_configs():
     model.num_head_channels = -1
     model.num_heads_upsample = -1
     model.skip_rescale = True
-    
+    model.hash = conf_utils.hash_solver(model)
+
     # optimization
     config.optim = optim = ml_collections.ConfigDict()
     optim.weight_decay = 0
@@ -113,6 +115,12 @@ def get_default_configs():
     optim.warmup = 5000
     optim.grad_clip = 1.
     optim.automatic_mp = True
+    optim.hash = conf_utils.hash_solver(optim)
+
+    config.stamp = stamp = ml_collections.ConfigDict()
+    stamp = config.stamp
+    stamp.fwd_solver_hash = conf_utils.hash_joiner([solver.hash, turbulence.hash])
+    stamp.model_optim_hash = conf_utils.hash_joiner([model.hash, optim.hash])
 
     config.seed = 42
     config.device = torch.device(

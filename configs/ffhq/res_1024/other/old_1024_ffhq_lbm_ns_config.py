@@ -1,6 +1,5 @@
 import torch
-import ml_collections
-from configs.ffhq import default_lbm_ffhq_128_config
+from configs.ffhq.res_128 import default_lbm_ffhq_128_config
 from configs.conf_utils import hash_solver
 from torchvision import transforms
 

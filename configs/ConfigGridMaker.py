@@ -1,4 +1,5 @@
-import os
+import os, shutil
+import re
 import ml_collections
 from sklearn.model_selection import ParameterGrid
 import json
@@ -9,19 +10,29 @@ from configs.conf_utils import evaluate_config_file_name
 def main():
     # Define the hyperparameter grid
     param_grid = {
-        'solver.fiuu': [0.001, 0.01, 0.1],
-        'solver.boo': [16, 32, 64],
-        'solver.bzdziu': [1/6, 1/12, 1/24],
-        'training.n_iters': [1001, 10001, 20001]
+        'training.batch_size': [16, 32, 64],
+        'optim.lr': [1e-4, 5e-5, 2e-5, 1e-5],
+        'training.n_iters': [10001]
     }
 
     # Create the grid
     grid = ParameterGrid(param_grid)
-
     # Define the directory to save the config files
-    save_dir = 'test_configs'
+    save_dir = 'campaign_ffhq_ns_128'
     os.makedirs(save_dir, exist_ok=True)
+    # Define the default config
+    default_cfg_dir_list =  ["configs", "ffhq", "res_128"]
+    default_cfg_file = "default_lbm_ffhq_128_config.py"
 
+    shutil.copy(os.path.join(os.path.join(*default_cfg_dir_list[1:]), default_cfg_file),
+                save_dir)
+
+    # Extract the module path and file name without extension
+    module_path = os.path.join(*default_cfg_dir_list).replace(os.sep, '.')
+    file_name = re.match(r"(.*)\.py", default_cfg_file).group(1)
+
+    # Construct the default_cfg_str
+    default_cfg_str = f"from configs.{save_dir} import {file_name} as default_config"
 
     # Iterate over each configuration in the grid and save it
     for i, params in enumerate(grid):
@@ -29,14 +40,14 @@ def main():
 
         # Save the updated configuration by modifying only the necessary fields
         with open(config_filename, 'w') as f:
-            f.write("""
-from configs.mnist import default_mnist_configs
+            f.write(f"""
+{default_cfg_str}
 import ml_collections
 import numpy as np
 import torch
 
 def get_config():
-    config = default_mnist_configs.get_default_configs()
+    config = default_config.get_default_configs()
             """)
                 
             f.write(f"\n") # flush 

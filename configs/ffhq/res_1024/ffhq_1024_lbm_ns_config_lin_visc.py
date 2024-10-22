@@ -19,6 +19,6 @@ def get_config():
     solver.hash = conf_utils.hash_solver(solver)
 
     stamp = config.stamp
-    stamp.hash = conf_utils.hash_joiner([solver.hash, turbulence.hash])
+    stamp.fwd_solver_hash = conf_utils.hash_joiner([solver.hash, turbulence.hash])
 
     return config

@@ -26,7 +26,7 @@ flags.mark_flags_as_required(["config"])
 
 def main(argv):
     # Example
-    # python train_corrupted.py --config=configs/ffhq/128_ffhq_lbm_ns_config.py
+    # python train_corrupted.py --config=configs/ffhq/res_128/ffhq_128_lbm_ns_config_lin_visc.py
     train(FLAGS.config)
 
 def train(config_path):
@@ -49,7 +49,10 @@ def train(config_path):
     np.random.seed(config.seed)
 
     # Setup working directory path 
-    workdir = os.path.join(f'runs/corrupted_{config.data.dataset}', f'{config.data.processed_filename}_{config.solver.hash}')
+    workdir = os.path.join(f'runs/corrupted_{config.data.dataset}',
+                           f'{config.data.processed_filename}'
+                           f'_{config.stamp.fwd_solver_hash}'
+                           f'_{config.stamp.model_optim_hash}')
 
     # copy config to know what has been run
     Path(workdir).mkdir(parents=True, exist_ok=True)
@@ -100,7 +103,7 @@ def train(config_path):
     trainloader, testloader = datasets.get_dataset(
         config, uniform_dequantization=config.data.uniform_dequantization)
     datadir = os.path.join(f'data/corrupted_{config.data.dataset}',
-                           f'{config.data.processed_filename}_{config.stamp.hash}')
+                           f'{config.data.processed_filename}_{config.stamp.fwd_solver_hash}')
     shutil.copy(config_path,datadir)
     train_iter = iter(trainloader)
     eval_iter = iter(testloader)

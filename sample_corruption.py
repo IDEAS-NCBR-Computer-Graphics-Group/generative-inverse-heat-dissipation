@@ -42,7 +42,7 @@ def produce_fwd_sample(config_path):
     trainloader, testloader = ihd_datasets.get_dataset(config, uniform_dequantization=config.data.uniform_dequantization)
 
     storage_dir = 'runs'
-    save_scriptname = 'sample_corruption_' + config.stamp.hash
+    save_scriptname = 'sample_corruption_' + config.stamp.fwd_solver_hash
     save_dir = os.path.join(storage_dir, save_scriptname)
     os.makedirs(save_dir, exist_ok=True)
     shutil.copy(config_path, save_dir)
