@@ -13,7 +13,7 @@ def get_default_configs():
 
     # training
     config.training = training = ml_collections.ConfigDict()
-    config.training.batch_size = 32
+    config.training.batch_size = 4
 
     training.n_evals = 25 # batches for test-set evaluation, arbitrary choice
     training.n_iters = 40001  # 1300001
@@ -143,8 +143,8 @@ def get_default_configs():
         model.channel_mult = (1, 2, 2, 2, 2)
         # model.attention_levels = (2, 3, 4)
     
-        config.training.batch_size = 4 # rtx2080
-        config.eval.batch_size = 4
+        config.training.batch_size = 1 # rtx2080
+        config.eval.batch_size = 1
         config.training.n_iters = 1001
         config.training.sampling_freq = 100
         

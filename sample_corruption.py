@@ -46,6 +46,7 @@ def produce_fwd_sample(config_path):
     save_dir = os.path.join(storage_dir, save_scriptname)
     os.makedirs(save_dir, exist_ok=True)
     shutil.copy(config_path, save_dir)
+    shutil.copy(os.path.join(*config_path.split(os.sep)[0:2], f'default_lbm_{config.data.dataset.lower()}_config.py'), save_dir)
 
     clean_image, batch = ihd_datasets.prepare_batch(iter(trainloader),'cpu')
     corrupted_image, less_corrupted_image, corruption_amount, label = batch
