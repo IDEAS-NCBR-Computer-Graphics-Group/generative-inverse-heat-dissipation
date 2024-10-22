@@ -46,6 +46,9 @@ def tanh_schedule(min_value, max_value, n, steepness = 0.005):
     result_scaled = result * (max_value - min_value) + min_value
     return result_scaled 
 
+def hash_int(int_value):
+    return hashlib.md5(json.dumps(int_value).encode()).hexdigest()
+
 # Function to compute hash of the solver config
 def hash_solver(config):
     # Convert ConfigDict to a regular dictionary
