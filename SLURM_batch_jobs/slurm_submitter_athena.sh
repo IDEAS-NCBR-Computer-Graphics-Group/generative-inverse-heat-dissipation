@@ -5,7 +5,7 @@ set -e
 # ./slurm_submitter --print-only --time 08:00:00 /path/to/configs
 # example
 # SLURM_batch_jobs/slurm_submitter_athena.sh --print-only --time 08:00:00 configs/ffhq
-# SLURM_batch_jobs/slurm_submitter_athena.sh --time 12:00:00 configs/ffhq
+# SLURM_batch_jobs/slurm_submitter_athena.sh --time 01:00:00 configs/ffhq/res_1024
 
 # Default values for variables
 PRINT_ONLY=false

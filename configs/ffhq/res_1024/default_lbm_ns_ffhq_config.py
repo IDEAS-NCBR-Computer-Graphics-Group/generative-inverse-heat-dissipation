@@ -51,8 +51,8 @@ def get_default_configs():
     data.process_pairs = True
     data.processed_filename = 'lbm_ns_pairs' if data.process_pairs else 'lbm_ns'
     data.dataset = 'FFHQ'
-    data.image_size = 1024
-    data.corrupted_image_size_write = 512
+    # data.image_size = 1024
+    # data.corrupted_image_size_write = 512
     data.transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Grayscale()])
     data.num_channels = 1

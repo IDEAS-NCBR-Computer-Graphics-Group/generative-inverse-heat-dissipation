@@ -115,11 +115,6 @@ def train(config_path):
     # Building sampling functions
     # Get the forward process definition
 
-    # TODO: HACK
-    # config.data.image_size = 1024
-    # config.data.corrupted_image_size_write = 512
-    config.data.image_size = config.data.corrupted_image_size_write
-
     corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
         config=config,
         transform=config.data.transform
