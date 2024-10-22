@@ -13,8 +13,7 @@ def get_default_configs():
 
     # training
     config.training = training = ml_collections.ConfigDict()
-    config.training.batch_size = 4
-
+    training.batch_size = 32
     training.n_evals = 25 # batches for test-set evaluation, arbitrary choice
     training.n_iters = 40001  # 1300001
     training.log_freq = 100
@@ -24,6 +23,8 @@ def get_default_configs():
     # store additional checkpoints for preemption in cloud computing environments
     training.snapshot_freq = 5000 # 50000
     training.snapshot_freq_for_preemption = 5000
+
+    training.hash = conf_utils.hash_solver(training.batch_size)
 
     # sampling
     config.sampling = sampling = ml_collections.ConfigDict()
@@ -120,7 +121,7 @@ def get_default_configs():
     config.stamp = stamp = ml_collections.ConfigDict()
     stamp = config.stamp
     stamp.fwd_solver_hash = conf_utils.hash_joiner([solver.hash, turbulence.hash])
-    stamp.model_optim_hash = conf_utils.hash_joiner([model.hash, optim.hash])
+    stamp.model_optim_hash = conf_utils.hash_joiner([model.hash, optim.hash, training.hash])
 
     config.seed = 42
     config.device = torch.device(

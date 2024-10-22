@@ -17,7 +17,7 @@ def get_config():
     turbulence.turb_intensity = 1E-4
     turbulence.noise_limiter = (-1E-3, 1E-3)
     turbulence.domain_size = (1.0, 1.0)
-    turbulence.dt_turb = 5 * 1E-4
+    turbulence.dt_turb = 6 * 1E-4
     turbulence.k_min = 2.0 * torch.pi / min(turbulence.domain_size)
     turbulence.k_max = 2.0 * torch.pi / (min(turbulence.domain_size) / 1024)
     turbulence.is_divergence_free = False
