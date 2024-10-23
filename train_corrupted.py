@@ -46,10 +46,12 @@ def train(config_path):
     # Load config
     config = load_config_from_path(config_path)
 
+    case_name = f"{config.data.processed_filename}_{config.stamp.fwd_solver_hash}_{config.stamp.model_optim_hash}"
+    
     wandb.init(
         project='fluid-diffusion',
         config=config,
-        name= f'{config.data.processed_filename}_{config.solver.hash}'
+        name= case_name
     )
 
     # Seeding
@@ -57,10 +59,7 @@ def train(config_path):
     np.random.seed(config.seed)
 
     # Setup working directory path 
-    workdir = os.path.join(f'runs/corrupted_{config.data.dataset}',
-                           f'{config.data.processed_filename}'
-                           f'_{config.stamp.fwd_solver_hash}'
-                           f'_{config.stamp.model_optim_hash}')
+    workdir = os.path.join(f'runs/corrupted_{config.data.dataset}',case_name)
 
     # copy config to know what has been run
     Path(workdir).mkdir(parents=True, exist_ok=True)
@@ -112,8 +111,7 @@ def train(config_path):
     # Build data iterators
     trainloader, testloader = datasets.get_dataset(
         config, uniform_dequantization=config.data.uniform_dequantization)
-    datadir = os.path.join(f'data/corrupted_{config.data.dataset}',
-                           f'{config.data.processed_filename}_{config.stamp.fwd_solver_hash}')
+    datadir = os.path.join(f'data/corrupted_{config.data.dataset}',f'{config.data.processed_filename}_{config.stamp.fwd_solver_hash}')
     shutil.copy(config_path, datadir)
     shutil.copy(os.path.join(*config_path.split(os.sep)[:-1], f'default_lbm_{config.data.dataset.lower()}_config.py'), datadir)
     train_iter = iter(trainloader)
