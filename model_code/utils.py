@@ -53,7 +53,7 @@ class DCTBlur(nn.Module):
 
 def create_forward_process_from_sigmas(config, sigmas, device):
     forward_process_module = DCTBlur(sigmas, config.data.image_size, device) 
-    # forward_process_module = GaussianBlurNaiveLayer(sigmas, device) # TODO: hack
+    # forward_process_module = GaussianBlurNaiveLayer(sigmas, device) # hack
     
     return forward_process_module
 

@@ -1,7 +1,4 @@
-import ml_collections
-from configs.ffhq import default_lbm_ffhq_128_config as default_lbm_ffhq_config
-import numpy as np
-import torch
+from configs.ffhq.res_128 import default_lbm_ffhq_128_config as default_lbm_ffhq_config
 from configs import conf_utils
 
 def get_config():
@@ -18,7 +15,7 @@ def get_default_configs():
     solver.hash = conf_utils.hash_solver(solver)
     
     stamp = config.stamp
-    stamp.hash = conf_utils.hash_joiner([solver.hash, turbulence.hash])
+    stamp.fwd_solver_hash = conf_utils.hash_joiner([solver.hash, turbulence.hash])
     
     return config
     

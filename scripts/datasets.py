@@ -44,7 +44,7 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         input_data_dir = os.path.join(base_folder, "data")
         dataset_name = f'corrupted_{config.data.dataset}'
         output_data_dir = os.path.join(input_data_dir, dataset_name)
-        save_dir = os.path.join(output_data_dir, f'{config.data.processed_filename}_{config.stamp.hash}')
+        save_dir = os.path.join(output_data_dir, f'{config.data.processed_filename}_{config.stamp.fwd_solver_hash}')
         corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
             config=config,
             transform=config.data.transform

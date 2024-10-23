@@ -12,10 +12,13 @@ from numerical_solvers.solvers.GaussianTurbulenceGenerator import get_gaussian_n
 
 @ti.data_oriented
 class LBM_NS_Solver(LBM_SolverBase):
-    def __init__(self, domain_size, kin_visc, bulk_visc, turbulenceGenerator: SpectralTurbulenceGenerator):
+    def __init__(self, domain_size, kin_visc, bulk_visc, cs2,
+                 turbulenceGenerator: SpectralTurbulenceGenerator):
         self.omega_bulk = 1.0 / (3.0 * bulk_visc + 0.5) 
+
+
         print(f"LBM_NS_Solver constructor called.")
-        super().__init__(domain_size, kin_visc, turbulenceGenerator)
+        super().__init__(domain_size, kin_visc, cs2, turbulenceGenerator)
             
             
     def init(self, np_gray_image): 
@@ -73,8 +76,8 @@ class LBM_NS_Solver(LBM_SolverBase):
             
             # noise = 0.1*get_gaussian_noise(0,1)
             # self.vel[i, j] = ti.Vector([noise[0], noise[1]]) # run as ade
-            
-            
+            # cs2= 1./3.
+            cs2 = self.cs2[None]
             #=== THIS IS AUTOMATICALLY GENERATED CODE ===
             ux = self.vel[i, j][0]
             uy = self.vel[i, j][1]
@@ -112,13 +115,13 @@ class LBM_NS_Solver(LBM_SolverBase):
             self.f_new[i,j][0] = m000
             self.f_new[i,j][1] = 1/2.*self.Force[i,j][0] # self.Force[None][0]
             self.f_new[i,j][2] = 1/2.*self.Force[i,j][1]
-            self.f_new[i,j][3] = 1/6.*m000*(omega_bulk - omega_kin) + 1/6.*m000*(omega_bulk + omega_kin) - 1/2.*self.f[i,j][3]*(omega_bulk + omega_kin - 2.) - 1/2.*self.f[i,j][4]*(omega_bulk - omega_kin)
-            self.f_new[i,j][4] = 1/6.*m000*(omega_bulk - omega_kin) + 1/6.*m000*(omega_bulk + omega_kin) - 1/2.*self.f[i,j][3]*(omega_bulk - omega_kin) - 1/2.*self.f[i,j][4]*(omega_bulk + omega_kin - 2.)
+            self.f_new[i,j][3] = 0.5*cs2*m000*(omega_bulk - omega_kin) + 0.5*cs2*m000*(omega_bulk + omega_kin) - 1/2.*self.f[i,j][3]*(omega_bulk + omega_kin - 2.) - 1/2.*self.f[i,j][4]*(omega_bulk - omega_kin)
+            self.f_new[i,j][4] = 0.5*cs2*m000*(omega_bulk - omega_kin) + 0.5*cs2*m000*(omega_bulk + omega_kin) - 1/2.*self.f[i,j][3]*(omega_bulk - omega_kin) - 1/2.*self.f[i,j][4]*(omega_bulk + omega_kin - 2.)
             self.f_new[i,j][5] = -self.f[i,j][5]*(omega_kin - 1.)
             self.f_new[i,j][6] = 1/6.*self.Force[i,j][1]
             self.f_new[i,j][7] = 1/6.*self.Force[i,j][0]
             # self.f_new[i,j][8] = 1/9.*m000 # this is not nice
-            self.f_new[i,j][8] = self.f[i,j][8]*(1.- omega_kin) +  omega_kin*m000/9.
+            self.f_new[i,j][8] = self.f[i,j][8]*(1.- omega_kin) +  omega_kin*m000*cs2*cs2
             
             #SRT
             # self.f_new[i,j][0] = m000

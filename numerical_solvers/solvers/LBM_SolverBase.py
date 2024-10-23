@@ -7,15 +7,20 @@ from numerical_solvers.solvers.GaussianTurbulenceGenerator import get_gaussian_n
 
 @ti.data_oriented
 class LBM_SolverBase:
-    def __init__(self, domain_size, kin_visc, turbulenceGenerator: SpectralTurbulenceGenerator, name=None):
+    def __init__(self, domain_size, kin_visc, cs2,
+                 turbulenceGenerator: SpectralTurbulenceGenerator, name=None):
         self.name = name # name of the flow case
         self.nx, self.ny = domain_size  
         # nx, ny as np and ti have different convention
         # moreover gui is also different ;p
         # domain size, by convention, dx = dy = dt = 1.0 (lattice units)
 
-        self.omega_kin = 1.0 / (3.0* kin_visc + 0.5) 
+
+        self.omega_kin = 1.0 / (3.0* kin_visc + 0.5)
         self.max_iter = len(self.omega_kin)
+
+        self.cs2 = ti.field(ti.f32, shape=())
+        self.cs2[None] = cs2
         self.rho = ti.field(float, shape=(self.nx, self.ny))
         self.vel = ti.Vector.field(2, float, shape=(self.nx, self.ny))
 

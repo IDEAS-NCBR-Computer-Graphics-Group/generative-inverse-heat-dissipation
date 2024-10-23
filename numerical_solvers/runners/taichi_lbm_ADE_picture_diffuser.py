@@ -72,7 +72,7 @@ if __name__ == '__main__':
 
     solver = LBM_ADE_Solver(
         np_gray_image.shape,
-        config.solver.niu, config.solver.bulk_visc,
+        config.solver.niu, config.solver.bulk_visc, config.solver.cs2,
         spectralTurbulenceGenerator
         )    
     # 
