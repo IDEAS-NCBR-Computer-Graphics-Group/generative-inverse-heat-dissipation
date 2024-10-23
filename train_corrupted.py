@@ -224,7 +224,7 @@ def train(config_path):
 
             utils.save_gif(this_sample_dir, intermediate_samples)
             utils.save_video(this_sample_dir, intermediate_samples)
-            wandb.log({"process": wandb.Video(os.path.join(this_sample_dir, 'process.gif'))})
+            # wandb.log({"process": wandb.Video(os.path.join(this_sample_dir, 'process.gif'))})
 
     logging.info("Done.")
      
