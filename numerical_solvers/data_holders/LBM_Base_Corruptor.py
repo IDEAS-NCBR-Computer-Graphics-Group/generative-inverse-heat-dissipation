@@ -76,7 +76,11 @@ class LBM_Base_Corruptor(BaseCorruptor):
             noisy_x = self._intermediate_samples[-1].clone()
             return noisy_x, None
 
-    def _preprocess_and_save_data(self, initial_dataset, save_dir, is_train_dataset: bool, process_pairs=False, process_all=True,  process_images=False):
+    def _preprocess_and_save_data(self,
+                                  initial_dataset,
+                                  save_dir,
+                                  is_train_dataset: bool,
+                                  process_pairs=False, process_all=True,  process_images=False):
         """
         Preprocesses data and saves it to the specified directory.
 

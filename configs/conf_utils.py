@@ -46,6 +46,9 @@ def tanh_schedule(min_value, max_value, n, steepness = 0.005):
     result_scaled = result * (max_value - min_value) + min_value
     return result_scaled 
 
+def hash_int(int_value):
+    return hashlib.md5(json.dumps(int_value).encode()).hexdigest()
+
 # Function to compute hash of the solver config
 def hash_solver(config):
     # Convert ConfigDict to a regular dictionary
@@ -57,6 +60,8 @@ def hash_solver(config):
             return {k: convert_numpy_to_list(v, precision) for k, v in obj.items()}
         elif isinstance(obj, (np.ndarray, np.generic)):
             return np.round(obj, decimals=precision).tolist()  # Round before converting to list
+        elif callable(obj):  # Check if the object is a function
+            return None  # Or any other placeholder you prefer
         else:
             return obj
 
@@ -68,20 +73,51 @@ def hash_solver(config):
     # Compute the MD5 hash of the string
     return hashlib.md5(config_str.encode()).hexdigest()
 
-def hash_joiner(hash_list):
+
+def hash_joiner(hash_list, num_bits=32):
     """
-    Joins a list of hashes into a single, short hash.
+    Joins a list of hashes into a single hash of variable bit length using hashlib.
 
     Args:
         hash_list (list): A list of hash strings.
+        num_bits (int): The number of bits to use for the hash (must be a multiple of 4).
 
     Returns:
-        str: The combined hash string.
+        str: The combined hash as a hexadecimal string with the length determined by num_bits.
     """
+    if num_bits % 4 != 0:
+        raise ValueError("Number of bits must be a multiple of 4")
+
+    # Use a hashlib hashing function (e.g., MD5 or SHA256)
     combined_hash = hashlib.md5()
     for hash_str in hash_list:
         combined_hash.update(hash_str.encode())
-    return combined_hash.hexdigest()
+
+    # Get the full hash as an integer
+    full_hash_int = int(combined_hash.hexdigest(), 16)
+
+    # Mask the hash to the desired number of bits
+    max_value = (1 << num_bits) - 1
+    shortened_hash = full_hash_int & max_value
+
+    # Calculate the number of hex digits needed to represent the bit length
+    num_hex_digits = num_bits // 4
+    return f"{shortened_hash:0{num_hex_digits}x}"
+
+# def hash_joiner(hash_list):
+#     """
+#     Joins a list of hashes into a single, short hash.
+#
+#     Args:
+#         hash_list (list): A list of hash strings.
+#
+#     Returns:
+#         str: The combined hash string.
+#     """
+#     combined_hash = hashlib.md5()
+#     for hash_str in hash_list:
+#         combined_hash.update(hash_str.encode())
+#     return combined_hash.hexdigest()
 
 # Function to assign a value to a nested ConfigDict
 def set_nested_value(config, keys, value):
@@ -98,7 +134,7 @@ def evaluate_config_file_name(savedir, params):
     for param_key, param_value in params.items():
         keys = param_key.split('.')
         set_nested_value(config, keys, param_value)
-    config_hash = hash_solver(config)  # .to_dict()
+    config_hash = hash_joiner([hash_solver(config)], num_bits=32)  # .to_dict()
     
     # Define file path
     config_filename = os.path.join(savedir, f'config_{config_hash}.py')

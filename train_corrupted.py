@@ -28,7 +28,7 @@ flags.mark_flags_as_required(["config"])
 
 def main(argv):
     # Example
-    # python train_corrupted.py --config=configs/ffhq/128_ffhq_lbm_ns_config.py
+    # python train_corrupted.py --config=configs/ffhq/res_128/ffhq_128_lbm_ns_config_lin_visc.py
     train(FLAGS.config)
 
 def train(config_path):
@@ -46,10 +46,12 @@ def train(config_path):
     # Load config
     config = load_config_from_path(config_path)
 
+    case_name = f"{config.data.processed_filename}_{config.stamp.fwd_solver_hash}_{config.stamp.model_optim_hash}"
+    
     wandb.init(
         project='fluid-diffusion',
         config=config,
-        name= f'{config.data.processed_filename}_{config.solver.hash}'
+        name= case_name
     )
 
     # Seeding
@@ -57,13 +59,13 @@ def train(config_path):
     np.random.seed(config.seed)
 
     # Setup working directory path 
-    workdir = os.path.join(f'runs/corrupted_{config.data.dataset}', f'{config.data.processed_filename}_{config.solver.hash}')
+    workdir = os.path.join(f'runs/corrupted_{config.data.dataset}',case_name)
 
     # copy config to know what has been run
     Path(workdir).mkdir(parents=True, exist_ok=True)
     shutil.copy(config_path, workdir) 
-    print(os.path.join(*config_path.split(os.sep)[0:2], f'default_lbm_{config.data.dataset.lower()}_config.py'))
-    shutil.copy(os.path.join(*config_path.split(os.sep)[0:2], f'default_lbm_{config.data.dataset.lower()}_config.py'), workdir)
+    print(os.path.join(*config_path.split(os.sep)[:-1], f'default_lbm_{config.data.dataset.lower()}_config.py'))
+    shutil.copy(os.path.join(*config_path.split(os.sep)[:-1], f'default_lbm_{config.data.dataset.lower()}_config.py'), workdir)
 
     # Setup logging once the workdir is known
     setup_logging(workdir)
@@ -109,10 +111,9 @@ def train(config_path):
     # Build data iterators
     trainloader, testloader = datasets.get_dataset(
         config, uniform_dequantization=config.data.uniform_dequantization)
-    datadir = os.path.join(f'data/corrupted_{config.data.dataset}',
-                           f'{config.data.processed_filename}_{config.stamp.hash}')
+    datadir = os.path.join(f'data/corrupted_{config.data.dataset}',f'{config.data.processed_filename}_{config.stamp.fwd_solver_hash}')
     shutil.copy(config_path, datadir)
-    shutil.copy(os.path.join(*config_path.split(os.sep)[0:2], f'default_lbm_{config.data.dataset.lower()}_config.py'), datadir)
+    shutil.copy(os.path.join(*config_path.split(os.sep)[:-1], f'default_lbm_{config.data.dataset.lower()}_config.py'), datadir)
     train_iter = iter(trainloader)
     eval_iter = iter(testloader)
 
@@ -125,6 +126,7 @@ def train(config_path):
 
     # Building sampling functions
     # Get the forward process definition
+
     corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
         config=config,
         transform=config.data.transform
