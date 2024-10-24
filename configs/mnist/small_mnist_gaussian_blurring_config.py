@@ -35,7 +35,7 @@ def get_config():
     solver.max_init_gray_scale = 1.
     
     solver.min_fwd_steps = 1
-    solver.n_denoising_steps = 50
+    solver.n_denoising_steps = 200
     solver.max_fwd_steps = solver.n_denoising_steps + 1  # corruption_amount = np.random.randint(self.min_steps, self.max_steps) we need to add +1 as max_fwd_steps is excluded from tossing
    
     solver.blur_sigma_min = 0.5

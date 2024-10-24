@@ -74,7 +74,7 @@ def get_default_configs():
     solver.max_init_gray_scale = 1.05
 
     solver.min_fwd_steps = 1
-    solver.n_denoising_steps = 100
+    solver.n_denoising_steps = 300
     solver.max_fwd_steps = solver.n_denoising_steps # + 1  # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
     
     config.stamp = stamp = ml_collections.ConfigDict()
