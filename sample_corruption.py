@@ -31,10 +31,10 @@ def main(argv):
     # Example
     # python sample_corruption.py --config=configs/ffhq/ffhq_128_lbm_ns_config_high_visc.py
     # python sample_corruption.py --config=configs/mnist/small_mnist_lbm_ns_config.py
-    produce_sample(FLAGS.config)
+    produce_fwd_sample(FLAGS.config)
   
   
-def produce_sample(config_path):
+def produce_fwd_sample(config_path):
     config = load_config_from_path(config_path)
     torch.manual_seed(config.seed)
     np.random.seed(config.seed)
@@ -42,10 +42,11 @@ def produce_sample(config_path):
     trainloader, testloader = ihd_datasets.get_dataset(config, uniform_dequantization=config.data.uniform_dequantization)
 
     storage_dir = 'runs'
-    save_scriptname = 'sample_corruption_' + config.stamp.hash
+    save_scriptname = 'sample_corruption_' + config.stamp.fwd_solver_hash
     save_dir = os.path.join(storage_dir, save_scriptname)
     os.makedirs(save_dir, exist_ok=True)
     shutil.copy(config_path, save_dir)
+    shutil.copy(os.path.join(*config_path.split(os.sep)[0:2], f'default_lbm_{config.data.dataset.lower()}_config.py'), save_dir)
 
     clean_image, batch = ihd_datasets.prepare_batch(iter(trainloader),'cpu')
     corrupted_image, less_corrupted_image, corruption_amount, label = batch
