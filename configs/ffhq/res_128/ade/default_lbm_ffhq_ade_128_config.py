@@ -13,7 +13,7 @@ def get_default_configs():
 
     # training
     config.training = training = ml_collections.ConfigDict()
-    config.training.batch_size = 16
+    config.training.batch_size = 64
 
     training.n_evals = 25 # batches for test-set evaluation, arbitrary choice
     training.n_iters = 100001  # 1300001
@@ -30,7 +30,7 @@ def get_default_configs():
 
     # evaluation
     config.eval = evaluate = ml_collections.ConfigDict()
-    evaluate.batch_size = 16
+    evaluate.batch_size = 64
     evaluate.enable_sampling = False
     evaluate.num_samples = 50000
     evaluate.enable_loss = True
@@ -57,7 +57,7 @@ def get_default_configs():
     
     # solver
     config.turbulence = turbulence = ml_collections.ConfigDict()
-    turbulence.turb_intensity = 0 #*1E-4
+    turbulence.turb_intensity = 1E-4
     turbulence.noise_limiter = (-1E-3, 1E-3)
     turbulence.domain_size = (1.0, 1.0)
     turbulence.dt_turb = 5 * 1E-4
