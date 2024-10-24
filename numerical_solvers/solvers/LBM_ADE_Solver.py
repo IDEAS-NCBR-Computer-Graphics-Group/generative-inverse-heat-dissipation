@@ -11,9 +11,9 @@ from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
 
 @ti.data_oriented
 class LBM_ADE_Solver(LBM_SolverBase):
-    def __init__(self, domain_size, kin_visc, bulk_visc, turbulenceGenerator: SpectralTurbulenceGenerator):
+    def __init__(self, domain_size, kin_visc, bulk_visc, cs2, turbulenceGenerator: SpectralTurbulenceGenerator):
         print(f"LBM_ADE_Solver constructor called.")
-        super().__init__(domain_size, kin_visc, turbulenceGenerator)
+        super().__init__(domain_size, kin_visc, cs2, turbulenceGenerator)
         
         
     def init(self, np_gray_image): 
@@ -112,12 +112,12 @@ class LBM_ADE_Solver(LBM_SolverBase):
             self.f_new[i,j][0] = m000
             self.f_new[i,j][1] = self.f[i,j][1]*(1.- omega_kin) 
             self.f_new[i,j][2] = self.f[i,j][2]*(1.- omega_kin) 
-            self.f_new[i,j][3] = m000/3.
-            self.f_new[i,j][4] = m000/3.
+            self.f_new[i,j][3] = self.cs2[None]*m000
+            self.f_new[i,j][4] = self.cs2[None]*m000
             self.f_new[i,j][5] = 0
             self.f_new[i,j][6] = self.f[i,j][6]*(1.- omega_kin) 
             self.f_new[i,j][7] = self.f[i,j][7]*(1.- omega_kin) 
-            self.f_new[i,j][8] = omega_kin*m000/9.
+            self.f_new[i,j][8] = omega_kin*m000*self.cs2[None]*self.cs2[None]
             
             #back to raw moments
             self.f[i,j][0] = self.f_new[i,j][0]

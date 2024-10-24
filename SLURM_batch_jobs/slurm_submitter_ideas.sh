@@ -4,8 +4,8 @@ set -e
 # USAGE:
 # ./slurm_submitter --print-only --time 08:00:00 /path/to/configs
 # example
-# SLURM_batch_jobs/slurm_submitter_athena.sh --print-only --time 08:00:00 configs/campaign_ffhq_ns_128
-# SLURM_batch_jobs/slurm_submitter_athena.sh --time 01:00:00 configs/ffhq/res_1024
+# SLURM_batch_jobs/slurm_submitter_athena.sh --print-only --time 08:00:00 configs/ffhq
+# SLURM_batch_jobs/slurm_submitter_athena.sh --time 12:00:00 configs/ffhq
 
 # Default values for variables
 PRINT_ONLY=false
@@ -60,8 +60,7 @@ for CONFIG_FILE in $CONFIG_DIRNAME/*.py; do
     (
         echo "#!/bin/bash"
         echo "#SBATCH --job-name=$CONFIG_BASENAME"   # Job name is the config file base name
-        echo "#SBATCH --account=plgclb2024-gpu-a100"
-        echo "#SBATCH --partition=plgrid-gpu-a100"
+        echo "#SBATCH --account=compute-account"
         echo "#SBATCH --nodes=1"
         echo "#SBATCH --cpus-per-task=8"
         echo "#SBATCH --mem=128GB"
@@ -69,14 +68,10 @@ for CONFIG_FILE in $CONFIG_DIRNAME/*.py; do
         echo "#SBATCH --time=$TIME"                  # Use the specified or default time
         
         echo
-        
-        echo "module load Python/3.10.4"
-
-        echo
 
         echo 'echo "Job started on $(date) at $HOSTNAME"'
-        echo "source \$SCRATCH/py-ihd-env/bin/activate"
-        echo "cd \$SCRATCH/generative-inverse-heat-dissipation"
+        echo "source \$HOME/py-ihd-env/bin/activate"
+        echo "cd \$HOME/generative-inverse-heat-dissipation"
         
         # Set the command to run with the specific config file
         CMD="python train_corrupted.py --config $CONFIG_FILE"

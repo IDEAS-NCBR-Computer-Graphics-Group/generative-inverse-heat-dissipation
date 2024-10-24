@@ -6,10 +6,40 @@ from pathlib import Path
 
 from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
 from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
+# from skimage import data, img_as_float
+import matplotlib
+import matplotlib.cm as cm
 
-    
+def run_simple_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show_gui=True):
+    gui_res = (1 * solver.nx, 3 * solver.ny)
+    window = ti.ui.Window('CG - Renderer', res=gui_res)
+    gui = window.get_gui()
+    canvas = window.get_canvas()
+
+    while window.running:
+        rho_cpu = solver.rho.to_numpy()
+        rho_img = cm.ScalarMappable(
+            norm=matplotlib.colors.Normalize(vmin=0.9*np_init_gray_image.min(), vmax=1.1*np_init_gray_image.max()),
+                cmap="gist_gray").to_rgba(rho_cpu)
+
+        vel = solver.vel.to_numpy()
+        vel_mag = np.sqrt((vel[:, :, 0] ** 2 + vel[:, :, 1] ** 2))
+        vel_img = cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=0.0, vmax=0.05), cmap="coolwarm").to_rgba(vel_mag)
+
+        force = solver.Force.to_numpy()
+        force_mag = np.sqrt((force[:, :, 0] ** 2 + force[:, :, 1] ** 2))
+        force_mag = cm.ScalarMappable(cmap="inferno").to_rgba(force_mag)
+
+        img = np.concatenate((rho_img, vel_img, force_mag), axis=1)
+        canvas.set_image(img.astype(np.float32))
+
+        solver.solve(iter_per_frame)
+        window.show()
+
 def run_with_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show_gui=True):
-    window = ti.ui.Window('CG - Renderer', res=(6*solver.nx, 3 * solver.ny))
+    gui_res = (6*solver.nx, 3 * solver.ny)
+
+    window = ti.ui.Window('CG - Renderer', res=gui_res)
     gui = window.get_gui()
     canvas = window.get_canvas()
     
@@ -41,12 +71,10 @@ def run_with_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show
             canvasPlotter.is_heatmap_checked = gui.checkbox('heatmap', canvasPlotter.is_heatmap_checked)
             canvasPlotter.is_vel_mag_distribution_checked = gui.checkbox('plot norm(v) ', canvasPlotter.is_vel_mag_distribution_checked)
             
-        img = canvasPlotter.make_frame()                      
-        solver.solve(iter_per_frame)      
-        
-    
+        img = canvasPlotter.make_frame()
         canvas.set_image(img.astype(np.float32))
-        
+
+        solver.solve(iter_per_frame)
         window.show()
         
         # time.sleep(4)

@@ -16,6 +16,7 @@
 
 runs/
 data/
+wandb/
 6_experiments/
 
 __pycache__
@@ -31,8 +32,10 @@ imgui.ini
 test_configs/
 
 tmp_*
+tmp/*
 slurm-*
 local_outputs/
 unet_model.pth
 imgui.ini
 .idea/misc.xml
+configs/campaign_*
