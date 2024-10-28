@@ -59,6 +59,7 @@ class LBM_Base_Corruptor(BaseCorruptor):
         self._intermediate_samples[0] = torch.tensor( # rescale for preview
             normalize_grayscale_image_range(np_gray_img, 0., 1.)).unsqueeze(0).clone()
 
+        # s = 0
         for i in range(steps-1):
             step_difference = self.corrupt_sched[i] - self.corrupt_sched[i-1]
             if i == 0: step_difference = self.corrupt_sched[0]
@@ -66,10 +67,13 @@ class LBM_Base_Corruptor(BaseCorruptor):
             rho_cpu = self.solver.rho.to_numpy()
             rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
             self._intermediate_samples[i+1] = torch.tensor(rho_cpu).unsqueeze(0)
-            print(i)
+            # print(i)
+            # s += step_difference
+        # print(steps)
 
-        print(steps)
         step_difference = self.corrupt_sched[steps] - self.corrupt_sched[steps-1]
+        # s += step_difference
+        # print(f'solver steps:{s}')
         self.solver.solve(step_difference)
         rho_cpu = self.solver.rho.to_numpy()
         rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
