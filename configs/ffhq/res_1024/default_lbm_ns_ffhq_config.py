@@ -80,7 +80,7 @@ def get_default_configs():
     solver.n_denoising_steps = 100
     solver.max_fwd_steps = solver.n_denoising_steps + 1 # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
     solver.max_corruption_step = 50
-    solver.corrupt_sched = conf_utils.lin_schedule(1, solver.max_corruption_step, solver.max_fwd_steps, dtype=int)
+    solver.corrupt_sched = np.logspace(1, solver.max_corruption_step, solver.max_fwd_steps, base=2.0, dtype=int)
   
     config.stamp = stamp = ml_collections.ConfigDict()
 
