@@ -11,7 +11,8 @@ from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
 
 @ti.data_oriented
 class LBM_ADE_Solver(LBM_SolverBase):
-    def __init__(self, domain_size, kin_visc, bulk_visc, cs2, turbulenceGenerator: SpectralTurbulenceGenerator):
+    def __init__(self, domain_size, kin_visc, bulk_visc, cs2,
+                turbulenceGenerator: SpectralTurbulenceGenerator):
         print(f"LBM_ADE_Solver constructor called.")
         super().__init__(domain_size, kin_visc, cs2, turbulenceGenerator)
         

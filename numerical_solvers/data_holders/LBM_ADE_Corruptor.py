@@ -27,6 +27,6 @@ class LBM_ADE_Corruptor(LBM_Base_Corruptor):
         # Instantiate the LBM NS Solver using the config and spectral turbulence generator
         self.solver = LBM_ADE_Solver(
             grid_size,
-            config.solver.niu, config.solver.bulk_visc,
+            config.solver.niu, config.solver.bulk_visc, config.solver.cs2,
             spectralTurbulenceGenerator
         )

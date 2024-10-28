@@ -7,6 +7,9 @@ set -e
 # SLURM_batch_jobs/slurm_submitter_athena.sh --print-only --time 08:00:00 configs/ffhq
 # SLURM_batch_jobs/slurm_submitter_athena.sh --time 12:00:00 configs/ffhq
 
+# to run interactive job
+# srun --account=compute-account --nodes=1 --cpus-per-task=8 --mem=128GB --gres=gpu:1 --time=08:00:00 --pty /bin/bash    
+
 # Default values for variables
 PRINT_ONLY=false
 TIME="08:00:00"  # Default time value
