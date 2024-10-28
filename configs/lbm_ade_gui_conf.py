@@ -14,10 +14,10 @@ def get_config():
 
     # turbulence
     turbulence = config.turbulence
-    turbulence.turb_intensity = 1* 1E-4
+    turbulence.turb_intensity = 1* 1E-3
     turbulence.noise_limiter = (-1E-3, 1E-3)
     turbulence.domain_size = (1.0, 1.0)
-    turbulence.dt_turb = 6 * 1E-4
+    turbulence.dt_turb = 5 * 1E-4
     turbulence.k_min = 2.0 * torch.pi / min(turbulence.domain_size)
     turbulence.k_max = 2.0 * torch.pi / (min(turbulence.domain_size) / 1024)
     turbulence.is_divergence_free = False
@@ -30,12 +30,11 @@ def get_config():
 
     solver.min_init_gray_scale = 0.95
     solver.max_init_gray_scale = 1.05
-    solver.type = 'ns'
+    solver.type = 'ade'
 
-    solver.cs2 = 0.5*1./3
-    # conf_utils.lin_schedule(0.001 * 1 / 6, 0.5 * 1 / 6, solver.max_fwd_steps)
+    solver.cs2 = 1./3
     solver.max_fwd_steps = 5000
-    niu_sched = conf_utils.lin_schedule(0.05*1 / 6, 0.05 * 1 / 6, solver.max_fwd_steps)
+    niu_sched = conf_utils.lin_schedule(0.001 * 1 / 6, 0.5 * 1 / 6, solver.max_fwd_steps)
 
     # niu_sched  = conf_utils.exp_schedule(1E-4 * 1./6., 1./6., solver.max_fwd_steps)
     # niu_sched = conf_utils.inv_cosine_aplha_schedule(1E-4 * 1./6., 1./6., solver.max_fwd_steps)

@@ -22,18 +22,17 @@ class LBM_ADE_Solver(LBM_SolverBase):
         self.init_fields()
                    
     def solve(self, iterations):
-        if self.iterations_counter + iterations > self.max_iter:
-            iterations = self.max_iter - self.iterations_counter
+        if self.iterations_counter[None] + iterations > self.max_iter[None]:
+            iterations = self.max_iter[None] - self.iterations_counter[None]
             
         for iteration in range(iterations):                
             self.stream()
             self.update_macro_var()
-            omega_kin = self.omega_kin[self.iterations_counter]
-            
-            # self.collide_srt(omega_kin)
-            self.collide_cm(omega_kin)
+
+            # self.collide_srt()
+            self.collide_cm()
              
-            u_turb, v_turb = self.turbulenceGenerator.generate_turbulence(self.iterations_counter)     
+            u_turb, v_turb = self.turbulenceGenerator.generate_turbulence(self.iterations_counter[None])     
             turb_numpy = torch.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
             self.vel.from_torch(turb_numpy)
             self.Force.from_torch(turb_numpy)
@@ -43,26 +42,30 @@ class LBM_ADE_Solver(LBM_SolverBase):
             
             # self.apply_bb()
             self.apply_nee_bc()
-            self.iterations_counter = self.iterations_counter + 1
+            self.update_iteration_counter()
         
             # if self.iterations_counter % 10 == 0:
             #     print(f"iterations: {self.iterations_counter}")
             
-        # print(f"Solver run for iterations: {self.iterations_counter}")
+        # print(f"Solver run for iterations: {self.iterations_counter[None]}")
                             
-        if self.iterations_counter == self.max_iter:
-            print(f"Solver run for max iterations {self.max_iter}.")
+        if self.iterations_counter[None] == self.max_iter[None]:
+             print(f"Solver run for max iterations {self.max_iter}.")
                     
 
     @ti.kernel
-    def collide_srt(self, omega_kin: float):
+    def collide_srt(self):
+        omega_kin = self.omega_kin[self.iterations_counter[None]]
+        
         for i, j in ti.ndrange((1, self.nx - 1), (1, self.ny - 1)):
             for k in ti.static(range(9)):
                 feq = self.f_eq(i, j)
                 self.f_new[i, j][k] = (1. - omega_kin) * self.f[i, j][k] + feq[k] * omega_kin
         
     @ti.kernel
-    def collide_cm(self, omega_kin: float):
+    def collide_cm(self):
+        omega_kin = self.omega_kin[self.iterations_counter[None]]
+        
         for i, j in ti.ndrange((1, self.nx - 1), (1, self.ny - 1)): 
             #=== THIS IS AUTOMATICALLY GENERATED CODE ===
             ux = self.vel[i, j][0]

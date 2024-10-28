@@ -34,12 +34,12 @@ from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
 # img_path = './numerical_solvers/runners/mnist-2.png'
 # img_path = './numerical_solvers/runners/cat_256x256.jpg'
 img_path = './numerical_solvers/runners/cat_768x768.jpg'
-img_path = './numerical_solvers/runners/ffhq_1024_00062.png'
+# img_path = './numerical_solvers/runners/ffhq_1024_00062.png'
 
 target_size=None
 # target_size=(1024, 1024)
-target_size=(768, 768)
-# target_size=(512, 512)
+# target_size=(768, 768)
+target_size=(512, 512)
 # target_size = (256, 256)
 # target_size = (128, 128)
 # target_size = (64, 64)
@@ -49,31 +49,32 @@ target_size=(768, 768)
 
 
 
-drho = 1E-1
-np_gray_image = read_img_in_grayscale(img_path, target_size)
-np_gray_image = normalize_grayscale_image_range(np_gray_image, 1. - drho, 1. + drho)
-
-# print(np_gray_image.shape)
-# plt.imshow(np_gray_image, cmap='gist_gray')
-# plt.colorbar()
-# plt.title(f'image')
-# plt.show()
 
 # %% run solver
 
              
-# is_gpu_avail = torch.cuda.is_available()
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# ti.init(arch=ti.gpu, default_fp=ti.f32) if torch.cuda.is_available() else ti.init(arch=ti.cpu)
-# print(f"device = {device}")
+is_gpu_avail = torch.cuda.is_available()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+ti.init(arch=ti.gpu, default_fp=ti.f32) if torch.cuda.is_available() else ti.init(arch=ti.cpu)
+print(f"device = {device}")
 
-device = torch.device("cpu")
-ti.init(arch=ti.cpu, default_fp=ti.f32) 
+# device = torch.device("cpu")
+# ti.init(arch=ti.cpu, default_fp=ti.f32) 
   
 if __name__ == '__main__':    
     domain_size = (1.0, 1.0)
-    grid_size = np_gray_image.shape
+    
     config = get_config()
+    
+    np_gray_image = read_img_in_grayscale(img_path, target_size)
+    np_gray_image = normalize_grayscale_image_range(np_gray_image, config.solver.min_init_gray_scale, config.solver.max_init_gray_scale)
+    
+    grid_size = np_gray_image.shape
+    # print(np_gray_image.shape)
+    # plt.imshow(np_gray_image, cmap='gist_gray')
+    # plt.colorbar()
+    # plt.title(f'image')
+    # plt.show()
 
     grid_size = np_gray_image.shape
 
@@ -82,7 +83,7 @@ if __name__ == '__main__':
             energy_spectrum=config.turbulence.energy_spectrum, 
             frequency_range={'k_min': config.turbulence.k_min, 'k_max': config.turbulence.k_max}, 
             dt_turb=config.turbulence.dt_turb, 
-        is_div_free=False)
+            is_div_free=False, device=device)
 
     solver = LBM_NS_Solver(
         np_gray_image.shape,

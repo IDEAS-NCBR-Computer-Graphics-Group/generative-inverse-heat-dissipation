@@ -14,12 +14,13 @@ from numerical_solvers.solvers.GaussianTurbulenceGenerator import get_gaussian_n
 class LBM_NS_Solver(LBM_SolverBase):
     def __init__(self, domain_size, kin_visc, bulk_visc, cs2,
                  turbulenceGenerator: SpectralTurbulenceGenerator):
-        self.omega_bulk = 1.0 / (3.0 * bulk_visc + 0.5) 
-
-
+        
         print(f"LBM_NS_Solver constructor called.")
         super().__init__(domain_size, kin_visc, cs2, turbulenceGenerator)
-            
+        
+        self.omega_bulk = ti.field(float, shape=self.max_iter[None])
+        self.omega_bulk.from_numpy(1.0 / (3.0 * bulk_visc + 0.5))
+
             
     def init(self, np_gray_image): 
         self.rho.from_numpy(np_gray_image)
@@ -28,40 +29,40 @@ class LBM_NS_Solver(LBM_SolverBase):
         self.init_fields()
                    
     def solve(self, iterations):
-        if self.iterations_counter + iterations > self.max_iter:
-            iterations = self.max_iter - self.iterations_counter
+        if self.iterations_counter[None] + iterations > self.max_iter[None]:
+            iterations = self.max_iter[None] - self.iterations_counter[None]
 
         for iteration in range(iterations):                
             self.stream()
             self.update_macro_var()
             
-            omega_kin = self.omega_kin[self.iterations_counter]
-            omega_bulk = self.omega_bulk[self.iterations_counter]
 
             # self.collide_srt(omega_kin)
-            self.collide_cm(omega_kin, omega_bulk)
+            self.collide_cm()
              
-            u_turb, v_turb = self.turbulenceGenerator.generate_turbulence(self.iterations_counter)     
+            u_turb, v_turb = self.turbulenceGenerator.generate_turbulence(self.iterations_counter[None])
             turb_numpy = torch.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
             self.Force.from_torch(turb_numpy)
             
             # self.init_gaussian_force_field(1E-3, 0, 1)
             # self.apply_bb()
             self.apply_nee_bc()
-            self.iterations_counter = self.iterations_counter + 1
+            self.update_iteration_counter()
             
             # if self.iterations_counter % 10 == 0:
             #     print(f"iterations: {self.iterations_counter}")
             
-        # print(f"Solver run for iterations: {self.iterations_counter}")                    
+        # print(f"Solver run for iterations: {self.iterations_counter[None]}")                    
 
-        if self.iterations_counter == self.max_iter:
+        if self.iterations_counter[None] == self.max_iter[None]:
              print(f"Solver run for max iterations {self.max_iter}.")
                
 
 
     @ti.kernel
-    def collide_srt(self, omega_kin: float):
+    def collide_srt(self):
+        omega_kin = self.omega_kin[self.iterations_counter[None]]
+        
         for i, j in ti.ndrange((1, self.nx - 1), (1, self.ny - 1)):
             for k in ti.static(range(9)):
                 feq = self.f_eq(i, j)
@@ -69,7 +70,11 @@ class LBM_NS_Solver(LBM_SolverBase):
     
 
     @ti.kernel
-    def collide_cm(self, omega_kin: float,  omega_bulk: float,):
+    def collide_cm(self):
+
+        omega_kin = self.omega_kin[self.iterations_counter[None]]
+        omega_bulk = self.omega_bulk[self.iterations_counter[None]]
+         
         for i, j in ti.ndrange((1, self.nx - 1), (1, self.ny - 1)):
             # magnitude = 1E-12
             # noise =magnitude*get_gaussian_noise(0,1)

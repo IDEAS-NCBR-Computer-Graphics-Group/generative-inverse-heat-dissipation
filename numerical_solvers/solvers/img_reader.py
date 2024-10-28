@@ -3,7 +3,6 @@ import numpy as np
 
 def read_img_in_grayscale(img_path, target_size=None):
     image = cv2.imread(img_path) 
-    # image = cv2.imread('japan_1024x640.png')
     if target_size is not None: 
         image = cv2.resize(image, target_size)
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) # convert to grayscale

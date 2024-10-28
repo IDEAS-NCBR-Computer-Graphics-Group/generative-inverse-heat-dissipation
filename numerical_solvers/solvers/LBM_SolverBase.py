@@ -15,10 +15,14 @@ class LBM_SolverBase:
         # moreover gui is also different ;p
         # domain size, by convention, dx = dy = dt = 1.0 (lattice units)
 
-
-        self.omega_kin = 1.0 / (3.0* kin_visc + 0.5)
-        self.max_iter = len(self.omega_kin)
-
+        self.max_iter = ti.field(ti.int32, shape=())
+        self.max_iter[None] = len(kin_visc)
+        self.iterations_counter = ti.field(ti.int32, shape=())
+        self.iterations_counter[None] = 0
+        
+        self.omega_kin = ti.field(float, shape=self.max_iter[None])
+        self.omega_kin.from_numpy(1.0 / (3.0* kin_visc + 0.5))
+                
         self.cs2 = ti.field(ti.f32, shape=())
         self.cs2[None] = cs2
         self.rho = ti.field(float, shape=(self.nx, self.ny))
@@ -43,7 +47,13 @@ class LBM_SolverBase:
 
 
         self.turbulenceGenerator = turbulenceGenerator
-        self.iterations_counter = 0
+
+
+
+    @ti.kernel
+    def update_iteration_counter(self):
+        self.iterations_counter[None] = self.iterations_counter[None] + 1
+
 
     @ti.kernel
     def init_gaussian_force_field(self, magnitude: float,  mu: float, variance: float):
