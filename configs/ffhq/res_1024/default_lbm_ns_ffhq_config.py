@@ -77,11 +77,24 @@ def get_default_configs():
     solver.max_init_gray_scale = 1.05
 
     solver.min_fwd_steps = 1
-    solver.n_denoising_steps = 100
+    solver.n_denoising_steps = 50
     solver.max_fwd_steps = solver.n_denoising_steps + 1 # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
-    solver.max_corruption_step = 50
-    solver.corrupt_sched = np.logspace(1, solver.max_corruption_step, solver.max_fwd_steps, base=2.0, dtype=int)
-  
+    solver.final_lbm_step = 50
+    solver.lin_sched = False
+
+    if solver.lin_sched: 
+        solver.corrupt_sched = np.linspace(
+            solver.min_fwd_steps, solver.final_lbm_step, solver.max_fwd_steps, dtype=int)
+    else:
+        solver.lbm_steps_base = 2.0
+        solver.starting_lbm_steps_pow = np.emath.logn(solver.lbm_steps_base, solver.min_fwd_steps)
+        solver.final_lbm_steps_pow = np.emath.logn(solver.lbm_steps_base, solver.final_lbm_step)
+        if np.math.pow(solver.lbm_steps_base, solver.final_lbm_steps_pow) != solver.final_lbm_step:
+            solver.final_lbm_steps_pow += 2*np.finfo(float).eps
+        solver.corrupt_sched = np.logspace(
+            solver.starting_lbm_steps_pow, solver.final_lbm_steps_pow,
+            solver.max_fwd_steps, base=solver.lbm_steps_base, dtype=int)
+
     config.stamp = stamp = ml_collections.ConfigDict()
 
     # model

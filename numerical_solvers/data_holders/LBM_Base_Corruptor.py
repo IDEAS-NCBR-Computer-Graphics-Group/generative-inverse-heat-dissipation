@@ -59,30 +59,15 @@ class LBM_Base_Corruptor(BaseCorruptor):
         self._intermediate_samples[0] = torch.tensor( # rescale for preview
             normalize_grayscale_image_range(np_gray_img, 0., 1.)).unsqueeze(0).clone()
 
-        # s = 0
-        # print(self.corrupt_sched)
-        for i in range(steps-1):
+        for i in range(1, steps+1):
             step_difference = self.corrupt_sched[i] - self.corrupt_sched[i-1]
-            if i == 0: step_difference = self.corrupt_sched[0]
+            if i == 1: step_difference = self.corrupt_sched[0]
             self.solver.solve(step_difference)
             rho_cpu = self.solver.rho.to_numpy()
             rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
-            self._intermediate_samples[i+1] = torch.tensor(rho_cpu).unsqueeze(0)
-            # print(i)
-            # print(f'sd: {step_difference}')
-            # s += step_difference
-        # print(steps)
-
-        step_difference = self.corrupt_sched[steps] - self.corrupt_sched[steps-1]
-        # print(f'sd: {step_difference}')
-        self.solver.solve(step_difference)
-        rho_cpu = self.solver.rho.to_numpy()
-        rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
-        self._intermediate_samples[steps] = torch.tensor(rho_cpu).unsqueeze(0)
+            self._intermediate_samples[i] = torch.tensor(rho_cpu).unsqueeze(0)
 
         logging.info(f"Corruptor.solver run for iterations: {self.solver.iterations_counter}")
-        # s += step_difference
-        # print(f'solver steps:{s}')
 
         if generate_pair:
             noisy_x = self._intermediate_samples[-1].clone()
