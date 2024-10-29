@@ -32,21 +32,8 @@ from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
 # https://github.com/taichi-dev/image-processing-with-taichi/blob/main/image_transpose.py
 
 # img_path = './numerical_solvers/runners/mnist-2.png'
-# img_path = './numerical_solvers/runners/cat_256x256.jpg'
-img_path = './numerical_solvers/runners/cat_768x768.jpg'
-# img_path = './numerical_solvers/runners/ffhq_1024_00062.png'
-
-target_size=None
-# target_size=(1024, 1024)
-# target_size=(768, 768)
-target_size=(512, 512)
-# target_size = (256, 256)
-# target_size = (128, 128)
-# target_size = (64, 64)
-# target_size = (28, 28)
-# target_size = None
-
-
+# img_path = './numerical_solvers/runners/cat_768x768.jpg'
+img_path = './numerical_solvers/runners/ffhq_1024_00062.png'
 
 
 
@@ -66,6 +53,17 @@ if __name__ == '__main__':
     
     config = get_config()
     
+    target_size=None
+    target_size=(config.data.image_size, config.data.image_size)
+    # target_size=(1024, 1024)
+    # target_size=(768, 768)
+    # target_size=(512, 512)
+    # target_size = (256, 256)
+    # target_size = (128, 128)
+    # target_size = (64, 64)
+    # target_size = (28, 28)
+    # target_size = None
+
     np_gray_image = read_img_in_grayscale(img_path, target_size)
     np_gray_image = normalize_grayscale_image_range(np_gray_image, config.solver.min_init_gray_scale, config.solver.max_init_gray_scale)
     
@@ -127,5 +125,5 @@ if __name__ == '__main__':
         
     ############################ standard renderer with multiple subwindows
     # run_with_gui(solver, np_gray_image, iter_per_frame = 1)
-    run_simple_gui(solver, np_gray_image, iter_per_frame=1)
+    run_simple_gui(solver, np_gray_image, iter_per_frame=1, sleep_time=0.05, show_gui=True)
     ############################

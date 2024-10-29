@@ -36,7 +36,6 @@ class LBM_NS_Solver(LBM_SolverBase):
             self.stream()
             self.update_macro_var()
             
-
             # self.collide_srt(omega_kin)
             self.collide_cm()
              
@@ -74,7 +73,8 @@ class LBM_NS_Solver(LBM_SolverBase):
 
         omega_kin = self.omega_kin[self.iterations_counter[None]]
         omega_bulk = self.omega_bulk[self.iterations_counter[None]]
-         
+        cs2 = self.cs2[self.iterations_counter[None]]
+        
         for i, j in ti.ndrange((1, self.nx - 1), (1, self.ny - 1)):
             # magnitude = 1E-12
             # noise =magnitude*get_gaussian_noise(0,1)
@@ -82,7 +82,7 @@ class LBM_NS_Solver(LBM_SolverBase):
             # noise = 0.1*get_gaussian_noise(0,1)
             # self.vel[i, j] = ti.Vector([noise[0], noise[1]]) # run as ade
             # cs2= 1./3.
-            cs2 = self.cs2[None]
+            
             #=== THIS IS AUTOMATICALLY GENERATED CODE ===
             ux = self.vel[i, j][0]
             uy = self.vel[i, j][1]

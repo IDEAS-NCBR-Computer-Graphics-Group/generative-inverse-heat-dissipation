@@ -5,17 +5,19 @@ import json
 import hashlib
 import numpy as np
 
+
+
 def exp_schedule(min_value, max_value, n, dtype=float):
-    return np.exp(np.linspace(np.log(min_value), np.log(max_value), n, dtype=dtype))
+    return np.exp(np.linspace(np.log(min_value), np.log(max_value), n)).astype(dtype)
 
 def lin_schedule(min_value, max_value, n, dtype=float):
-    return np.linspace(min_value ,max_value, n, dtype=dtype)
+    return np.linspace(min_value, max_value, n).astype(dtype)
 
-def cosine_beta_schedule(n, min_value, max_value, s=0.008, dtype=float):
+def cosine_beta_schedule(min_value, max_value, n, s=0.008, dtype=float):
     """
     Rescaled cosine schedule as proposed in https://arxiv.org/abs/2102.09672
     """
-    x = np.linspace(0, n, n, dtype=dtype)
+    x = np.linspace(0, n, n)
     alphas_cumprod = np.cos(((x / n) + s) / (1 + s) * np.pi * 0.5) ** 2
     alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
     betas = 1-(alphas_cumprod[1:] / alphas_cumprod[:-1])
@@ -26,25 +28,40 @@ def cosine_beta_schedule(n, min_value, max_value, s=0.008, dtype=float):
     # Rescale 1-alphas_cumprod
     alphas_scaled =  alphas_cumprod * (max_value - min_value) + min_value
     
-    return betas_scaled, alphas_scaled 
+    return betas_scaled.astype(dtype), alphas_scaled.astype(dtype) 
 
-def inv_cosine_aplha_schedule(n, min_value, max_value, s=1, dtype=float):
+def inv_cosine_aplha_schedule(min_value, max_value, n, s=0.008, dtype=float):
     """
     Insipredd by schedule proposed in https://arxiv.org/abs/2102.09672
     """
-    x = np.linspace(n, 0, n, dtype=dtype)
+    x = np.linspace(0, n, n)
     alphas_cumprod = np.cos(((x / n) + s) / (1 + s) * np.pi * 0.5) ** 2
     alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
-    
+
     # Rescale 1-alphas_cumprod
     alphas_inv_scaled =  (alphas_cumprod) * (max_value - min_value) + min_value
-    return  alphas_inv_scaled 
+    return np.flip(alphas_inv_scaled).astype(dtype) 
 
 def tanh_schedule(min_value, max_value, n, steepness = 0.005, dtype=float):
-    x = np.linspace(-500, 500, n, dtype=float)
+    x = np.linspace(-500, 500, n)
     result = (np.tanh(steepness*x) + 1) / 2
     result_scaled = result * (max_value - min_value) + min_value
-    return result_scaled 
+    return result_scaled.astype(dtype)
+
+def log_schedule(min_value, max_value, n, log_base=2.0, dtype=int):
+    starting_lbm_steps_pow = np.emath.logn(log_base, min_value)
+    final_lbm_steps_pow = np.emath.logn(log_base, max_value)
+    
+    # python 3.10 --> math.pow 
+    # python 3.12 --> np.pow
+    if np.pow(log_base, final_lbm_steps_pow) != max_value:
+        final_lbm_steps_pow += 2 * np.finfo(float).eps
+        
+    schedule = np.logspace(
+        starting_lbm_steps_pow,final_lbm_steps_pow,
+        n, base=log_base)
+    
+    return schedule.astype(dtype)
 
 def hash_int(int_value):
     return hashlib.md5(json.dumps(int_value).encode()).hexdigest()

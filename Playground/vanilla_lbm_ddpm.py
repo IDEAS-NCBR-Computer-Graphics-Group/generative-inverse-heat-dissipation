@@ -17,8 +17,8 @@ print(f'Using device: {device}')
 
 # %% dataset
 
-from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
-from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
+from numerical_solvers.corruptors.LBM_NS_Corruptor import LBM_NS_Corruptor
+from numerical_solvers.corruptors.CorruptedDataset import CorruptedDataset
 from configs.mnist.small_mnist_lbm_ns_turb_config import get_config as get_lbm_ns_turb_config
 
 # %% figure out paths

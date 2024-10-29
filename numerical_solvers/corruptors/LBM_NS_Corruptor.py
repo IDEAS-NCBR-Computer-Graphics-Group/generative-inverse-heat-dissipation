@@ -5,13 +5,13 @@ from abc import ABC
 import warnings
 
 from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range
-from numerical_solvers.solvers.LBM_ADE_Solver import LBM_ADE_Solver
+from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver    
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
-from numerical_solvers.data_holders.LBM_Base_Corruptor import LBM_Base_Corruptor
+from numerical_solvers.corruptors.LBM_Base_Corruptor import LBM_Base_Corruptor
 
-class LBM_ADE_Corruptor(LBM_Base_Corruptor):
+class LBM_NS_Corruptor(LBM_Base_Corruptor):
     def __init__(self, config, transform=None, target_transform=None):
-        super(LBM_ADE_Corruptor, self).__init__(config, transform, target_transform)
+        super(LBM_NS_Corruptor, self).__init__(config, transform, target_transform)
         
         grid_size = (config.data.image_size, config.data.image_size)
         spectralTurbulenceGenerator = SpectralTurbulenceGenerator(
@@ -25,8 +25,8 @@ class LBM_ADE_Corruptor(LBM_Base_Corruptor):
         
         # LBM NS Solver setup        
         # Instantiate the LBM NS Solver using the config and spectral turbulence generator
-        self.solver = LBM_ADE_Solver(
+        self.solver = LBM_NS_Solver(
             grid_size,
-            config.solver.niu, config.solver.bulk_visc,
+            config.solver.niu, config.solver.bulk_visc, config.solver.cs2,
             spectralTurbulenceGenerator
         )

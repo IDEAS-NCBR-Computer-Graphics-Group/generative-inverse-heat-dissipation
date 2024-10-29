@@ -1,11 +1,8 @@
-import os
+
 from absl import flags
 from absl import app
 from timeit import default_timer as timer
-import torchvision
-import torch
-import os
-import shutil
+import os, shutil
 from pathlib import Path
 
 import torchvision
@@ -13,13 +10,11 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-from scripts import utils
-from scripts.utils import load_config_from_path
-from scripts import sampling
 
 from scripts import datasets as ihd_datasets
 from scripts import sampling, utils
-from numerical_solvers.data_holders.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
+from numerical_solvers.corruptors.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
+
 FLAGS = flags.FLAGS
 
 # config_flags.DEFINE_config_file("config", None, "Training configuration.", lock_config=True) # this does not work in python 3.12 as 'imp' module has been removed
@@ -35,7 +30,7 @@ def main(argv):
   
   
 def produce_fwd_sample(config_path):
-    config = load_config_from_path(config_path)
+    config = utils.load_config_from_path(config_path)
     torch.manual_seed(config.seed)
     np.random.seed(config.seed)
 

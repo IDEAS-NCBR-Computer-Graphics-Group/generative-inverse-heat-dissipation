@@ -22,7 +22,14 @@ from ml_collections.config_dict import ConfigDict
 #     console = logging.StreamHandler()
 #     console.setLevel(logging.INFO)
 #     console.setFormatter(formatter)
-    
+
+def get_save_dir(base_folder, config):
+    input_data_dir = os.path.join(base_folder, "data")
+    dataset_name = f'corrupted_{config.data.dataset}'
+    output_data_dir = os.path.join(input_data_dir, dataset_name)
+    save_dir = os.path.join(output_data_dir, f'{config.data.processed_filename}_{config.stamp.fwd_solver_hash}')
+    return save_dir
+        
 def setup_logging(workdir):
     # Set up file logging after workdir is available
     os.makedirs(workdir, exist_ok=True)

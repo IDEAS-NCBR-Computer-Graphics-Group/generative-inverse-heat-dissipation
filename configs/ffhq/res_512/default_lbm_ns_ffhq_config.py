@@ -82,18 +82,11 @@ def get_default_configs():
     solver.final_lbm_step = 50
     solver.lin_sched = False
 
-    if solver.lin_sched: 
-        solver.corrupt_sched = np.linspace(
-            solver.min_fwd_steps, solver.final_lbm_step, solver.max_fwd_steps, dtype=int)
-    else:
-        solver.lbm_steps_base = 2.0
-        solver.starting_lbm_steps_pow = np.emath.logn(solver.lbm_steps_base, solver.min_fwd_steps)
-        solver.final_lbm_steps_pow = np.emath.logn(solver.lbm_steps_base, solver.final_lbm_step)
-        if np.math.pow(solver.lbm_steps_base, solver.final_lbm_steps_pow) != solver.final_lbm_step:
-            solver.final_lbm_steps_pow += 2*np.finfo(float).eps
-        solver.corrupt_sched = np.logspace(
-            solver.starting_lbm_steps_pow, solver.final_lbm_steps_pow,
-            solver.max_fwd_steps, base=solver.lbm_steps_base, dtype=int)
+    # solver.corrupt_sched = conf_utils.lin_schedul(
+    #         solver.min_fwd_steps, solver.final_lbm_step, solver.max_fwd_steps, dtype=int)
+    
+    solver.corrupt_sched = conf_utils.log_schedule(
+        solver.min_fwd_steps, solver.final_lbm_step, solver.max_fwd_steps, dtype=int)
 
     config.stamp = stamp = ml_collections.ConfigDict()
 

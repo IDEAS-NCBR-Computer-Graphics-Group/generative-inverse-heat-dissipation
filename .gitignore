@@ -33,6 +33,7 @@ test_configs/
 
 tmp_*
 tmp/*
+tests/artifacts/
 slurm-*
 local_outputs/
 unet_model.pth

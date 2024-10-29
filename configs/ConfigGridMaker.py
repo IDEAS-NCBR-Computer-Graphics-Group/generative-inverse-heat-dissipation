@@ -9,13 +9,22 @@ from configs.conf_utils import evaluate_config_file_name
 
 def main():
     # Define the hyperparameter grid
+    
     param_grid = {
-        'training.batch_size': [16, 32, 64],
         'training.n_iters': [20001],
-        'optim.lr': [1e-4, 5e-5, 2e-5, 1e-5],
+        'optim.lr': [1e-4, 5e-5, 2e-5],
         'turbulence.turb_intensity' : [0, 1E-4],
-        'solver.cs2' : [0.3*1./3 , 0.6*1./3 , 1./3 ]
+        'solver.are_steps_unique': [True, False] 
     }
+    
+    
+    # param_grid = {
+    #     'training.batch_size': [16, 32, 64],
+    #     'training.n_iters': [20001],
+    #     'optim.lr': [1e-4, 5e-5, 2e-5, 1e-5],
+    #     'turbulence.turb_intensity' : [0, 1E-4],
+    #     'solver.cs2' : [0.3*1./3 , 0.6*1./3 , 1./3 ]
+    # }
     
     # param_grid = {
     #     'training.batch_size': [64],
@@ -28,7 +37,7 @@ def main():
     # Create the grid
     grid = ParameterGrid(param_grid)
     # Define the directory to save the config files
-    save_dir =os.path.join("configs","campaign_ffhq_ns_128")
+    save_dir =os.path.join("configs","campaign_ffhq_ns_128_v2")
     os.makedirs(save_dir, exist_ok=True)
     # Define the default config
     default_cfg_dir_list =  ["configs", "ffhq", "res_128"]
@@ -69,6 +78,21 @@ def get_config():
             for param_key, param_value in params.items():
                 f.write(f"    config.{param_key} = {repr(param_value)}\n")
 
+            f.write(f"""
+    # Calculate solver.corrupt_sched
+    config.solver.corrupt_sched = conf_utils.exp_schedule(
+        config.solver.min_fwd_steps, config.solver.final_lbm_step, config.solver.max_fwd_steps, dtype=int)
+    
+    if config.solver.are_steps_unique:
+        config.solver.corrupt_sched = np.unique(config.solver.corrupt_sched)
+        config.solver.n_denoising_steps = len(config.solver.corrupt_sched)
+        config.solver.max_fwd_steps = config.solver.n_denoising_steps + 1
+        
+    config.solver.cs2 = conf_utils.lin_schedule(0.3*1./3, 1./3, config.solver.final_lbm_step)
+    niu_sched = conf_utils.lin_schedule(1E-4*1/6, 1./6, config.solver.final_lbm_step)
+    config.solver.niu = config.solver.bulk_visc = niu_sched
+    """)
+        
             f.write(f"""
     stamp = config.stamp
 

@@ -3,6 +3,7 @@ import taichi as ti
 import numpy as np
 import time
 from pathlib import Path
+import cv2
 
 from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
 from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
@@ -10,8 +11,9 @@ from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
 import matplotlib
 import matplotlib.cm as cm
 
-def run_simple_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show_gui=True):
-    gui_res = (1 * solver.nx, 3 * solver.ny)
+def run_simple_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, sleep_time=0.001, show_gui=True):
+    scale = 6
+    gui_res = (scale * 1 * solver.nx, scale * 3 * solver.ny)
     window = ti.ui.Window('CG - Renderer', res=gui_res)
     gui = window.get_gui()
     canvas = window.get_canvas()
@@ -30,11 +32,12 @@ def run_simple_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, sh
         force_mag = np.sqrt((force[:, :, 0] ** 2 + force[:, :, 1] ** 2))
         force_mag = cm.ScalarMappable(cmap="inferno").to_rgba(force_mag)
 
-        img = np.concatenate((rho_img, vel_img, force_mag), axis=1)
+        img = np.concatenate((rho_img, vel_img, force_mag), axis=1)        
         canvas.set_image(img.astype(np.float32))
-
+        
         solver.solve(iter_per_frame)
         window.show()
+        time.sleep(sleep_time)
 
 def run_with_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show_gui=True):
     gui_res = (6*solver.nx, 3 * solver.ny)

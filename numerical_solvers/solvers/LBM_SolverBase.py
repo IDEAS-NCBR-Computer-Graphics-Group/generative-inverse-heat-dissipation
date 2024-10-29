@@ -17,14 +17,16 @@ class LBM_SolverBase:
 
         self.max_iter = ti.field(ti.int32, shape=())
         self.max_iter[None] = len(kin_visc)
+        
         self.iterations_counter = ti.field(ti.int32, shape=())
         self.iterations_counter[None] = 0
         
-        self.omega_kin = ti.field(float, shape=self.max_iter[None])
+        self.omega_kin = ti.field(ti.f32, shape=self.max_iter[None])
         self.omega_kin.from_numpy(1.0 / (3.0* kin_visc + 0.5))
                 
-        self.cs2 = ti.field(ti.f32, shape=())
-        self.cs2[None] = cs2
+        self.cs2 = ti.field(ti.f32, shape=self.max_iter[None])
+        self.cs2.from_numpy(cs2)
+        
         self.rho = ti.field(float, shape=(self.nx, self.ny))
         self.vel = ti.Vector.field(2, float, shape=(self.nx, self.ny))
 
@@ -45,15 +47,12 @@ class LBM_SolverBase:
                                             [-1, -1], 
                                             [1, -1])
 
-
         self.turbulenceGenerator = turbulenceGenerator
-
 
 
     @ti.kernel
     def update_iteration_counter(self):
         self.iterations_counter[None] = self.iterations_counter[None] + 1
-
 
     @ti.kernel
     def init_gaussian_force_field(self, magnitude: float,  mu: float, variance: float):

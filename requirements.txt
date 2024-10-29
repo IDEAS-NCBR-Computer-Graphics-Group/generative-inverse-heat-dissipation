@@ -52,4 +52,6 @@ argparse
 opencv-python
 scipy
 
+# maintenance
 wandb
+pytest
