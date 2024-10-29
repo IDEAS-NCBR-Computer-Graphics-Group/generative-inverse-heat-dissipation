@@ -5,17 +5,17 @@ import json
 import hashlib
 import numpy as np
 
-def exp_schedule(min_value, max_value, n):
-    return np.exp(np.linspace(np.log(min_value), np.log(max_value), n))
+def exp_schedule(min_value, max_value, n, dtype=float):
+    return np.exp(np.linspace(np.log(min_value), np.log(max_value), n, dtype=dtype))
 
-def lin_schedule(min_value, max_value, n):
-    return np.linspace(min_value ,max_value, n)
+def lin_schedule(min_value, max_value, n, dtype=float):
+    return np.linspace(min_value ,max_value, n, dtype=dtype)
 
-def cosine_beta_schedule(n, min_value, max_value, s=0.008):
+def cosine_beta_schedule(n, min_value, max_value, s=0.008, dtype=float):
     """
     Rescaled cosine schedule as proposed in https://arxiv.org/abs/2102.09672
     """
-    x = np.linspace(0, n, n)
+    x = np.linspace(0, n, n, dtype=dtype)
     alphas_cumprod = np.cos(((x / n) + s) / (1 + s) * np.pi * 0.5) ** 2
     alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
     betas = 1-(alphas_cumprod[1:] / alphas_cumprod[:-1])
@@ -28,11 +28,11 @@ def cosine_beta_schedule(n, min_value, max_value, s=0.008):
     
     return betas_scaled, alphas_scaled 
 
-def inv_cosine_aplha_schedule(n, min_value, max_value, s=1):
+def inv_cosine_aplha_schedule(n, min_value, max_value, s=1, dtype=float):
     """
     Insipredd by schedule proposed in https://arxiv.org/abs/2102.09672
     """
-    x = np.linspace(n, 0, n)
+    x = np.linspace(n, 0, n, dtype=dtype)
     alphas_cumprod = np.cos(((x / n) + s) / (1 + s) * np.pi * 0.5) ** 2
     alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
     
@@ -40,8 +40,8 @@ def inv_cosine_aplha_schedule(n, min_value, max_value, s=1):
     alphas_inv_scaled =  (alphas_cumprod) * (max_value - min_value) + min_value
     return  alphas_inv_scaled 
 
-def tanh_schedule(min_value, max_value, n, steepness = 0.005):
-    x = np.linspace(-500, 500, n)
+def tanh_schedule(min_value, max_value, n, steepness = 0.005, dtype=float):
+    x = np.linspace(-500, 500, n, dtype=float)
     result = (np.tanh(steepness*x) + 1) / 2
     result_scaled = result * (max_value - min_value) + min_value
     return result_scaled 

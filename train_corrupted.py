@@ -139,11 +139,14 @@ def train(config_path):
     
     logging.info("Saving forward corruption process.")
     utils.save_gif(workdir, intermediate_corruption_samples, "corruption_init.gif")
-    utils.save_video(workdir, intermediate_corruption_samples, filename="corruption_init.mp4")
+    video_mpv4_filename, video_x264_filename = "corruption_init.mp4", "corruption_init_x264.mp4"
+    video_mpv4_path, video_x264_path = os.path.join(workdir, video_mpv4_filename), os.path.join(workdir, video_x264_filename)
+    utils.save_video(workdir, intermediate_corruption_samples, filename=video_mpv4_filename)
+    os.system(f'ffmpeg -i {video_mpv4_path} -vcodec libx264 -f mp4 {video_x264_path}')
     utils.save_png(workdir, clean_initial_sample, "clean_init.png")
     wandb.log({
         "clean_init": wandb.Image(os.path.join(workdir, "clean_init.png")),
-        "process": wandb.Video(os.path.join(workdir, 'corruption_init.gif'))
+        "corruption_init": wandb.Video(video_x264_path)
         })
 
 
@@ -225,8 +228,13 @@ def train(config_path):
 
 
             utils.save_gif(this_sample_dir, intermediate_samples)
-            utils.save_video(this_sample_dir, intermediate_samples)
-            wandb.log({"process": wandb.Video(os.path.join(this_sample_dir, 'process.gif'))})
+            video_mpv4_filename, video_x264_filename = "process.mp4", "process_x264.mp4"
+            video_mpv4_path, video_x264_path = os.path.join(this_sample_dir, video_mpv4_filename), os.path.join(this_sample_dir, video_x264_filename)
+            utils.save_video(this_sample_dir, intermediate_samples, filename=video_mpv4_filename)
+            os.system(f'ffmpeg -i {video_mpv4_path} -vcodec libx264 -f mp4 {video_x264_path}')
+            wandb.log({"process": wandb.Video(video_x264_path)})
+
+
 
     logging.info("Done.")
      

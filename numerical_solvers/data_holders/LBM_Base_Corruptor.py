@@ -23,6 +23,8 @@ class LBM_Base_Corruptor(BaseCorruptor):
         self.min_steps = config.solver.min_fwd_steps
         self.max_steps = config.solver.max_fwd_steps
 
+        self.corrupt_sched = config.solver.corrupt_sched
+
         self.min_init_gray_scale = config.solver.min_init_gray_scale
         self.max_init_gray_scale = config.solver.max_init_gray_scale
 
@@ -46,7 +48,6 @@ class LBM_Base_Corruptor(BaseCorruptor):
         Returns:
             Tuple[torch.Tensor, Optional[torch.Tensor]]: Corrupted image or a pair of corrupted images.
         """
-        step_difference = 1  # Step difference for generating pairs
         np_gray_img = x.numpy()[0, :, :]
         np_gray_img = normalize_grayscale_image_range( # rescale to fit solver stability range
             np_gray_img, self.min_init_gray_scale, self.max_init_gray_scale)
@@ -58,11 +59,13 @@ class LBM_Base_Corruptor(BaseCorruptor):
         self._intermediate_samples[0] = torch.tensor( # rescale for preview
             normalize_grayscale_image_range(np_gray_img, 0., 1.)).unsqueeze(0).clone()
 
-        for i in range(steps):
+        for i in range(1, steps+1):
+            step_difference = self.corrupt_sched[i] - self.corrupt_sched[i-1]
+            if i == 1: step_difference = self.corrupt_sched[0]
             self.solver.solve(step_difference)
             rho_cpu = self.solver.rho.to_numpy()
             rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
-            self._intermediate_samples[i+1] = torch.tensor(rho_cpu).unsqueeze(0)
+            self._intermediate_samples[i] = torch.tensor(rho_cpu).unsqueeze(0)
 
         logging.info(f"Corruptor.solver run for iterations: {self.solver.iterations_counter}")
 
