@@ -15,7 +15,7 @@ def get_default_configs():
 
     # training
     config.training = training = ml_collections.ConfigDict()
-    config.training.batch_size = 32
+    config.training.batch_size = 4
 
     training.n_evals = 25  # batches for test-set evaluation, arbitrary choice
     training.n_iters = 100001  # 1300001
@@ -26,6 +26,8 @@ def get_default_configs():
     # store additional checkpoints for preemption in cloud computing environments
     training.snapshot_freq = 5000  # 50000
     training.snapshot_freq_for_preemption = 5000
+
+    training.hash = conf_utils.hash_int(config.training.batch_size)
 
     # sampling
     config.sampling = sampling = ml_collections.ConfigDict()
@@ -43,6 +45,7 @@ def get_default_configs():
     data.random_flip = False
     data.centered = False
     data.uniform_dequantization = False
+    data.image_size = 256
 
     # data - cd
     data = config.data
@@ -54,8 +57,8 @@ def get_default_configs():
     # data.image_size = 1024
     # data.corrupted_image_size_write = 512
     data.transform = transforms.Compose(
-        [transforms.ToTensor(), transforms.Grayscale()])
-    data.num_channels = 1
+        [transforms.ToTensor()])
+    data.num_channels = 3
 
     # solver
     config.turbulence = turbulence = ml_collections.ConfigDict()
@@ -75,11 +78,11 @@ def get_default_configs():
     solver.type = 'ns'
     solver.min_init_gray_scale = 0.95
     solver.max_init_gray_scale = 1.05
-
+    solver.cs2 = 1./3.
     solver.min_fwd_steps = 1
-    solver.n_denoising_steps = 50
+    solver.n_denoising_steps = 100
     solver.max_fwd_steps = solver.n_denoising_steps + 1 # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
-    solver.final_lbm_step = 50
+    solver.final_lbm_step = 300
     solver.lin_sched = False
 
     if solver.lin_sched: 
@@ -95,6 +98,10 @@ def get_default_configs():
             solver.starting_lbm_steps_pow, solver.final_lbm_steps_pow,
             solver.max_fwd_steps, base=solver.lbm_steps_base, dtype=int)
 
+    niu_sched = conf_utils.lin_schedule(1E-4 * 1 / 6, 1 / 6, solver.max_fwd_steps)
+    solver.niu = solver.bulk_visc = niu_sched
+    solver.hash = conf_utils.hash_solver(solver)
+    
     config.stamp = stamp = ml_collections.ConfigDict()
 
     # model
@@ -119,6 +126,7 @@ def get_default_configs():
     model.num_head_channels = -1
     model.num_heads_upsample = -1
     model.skip_rescale = True
+    model.hash = conf_utils.hash_solver(model)
 
     # optimization
     config.optim = optim = ml_collections.ConfigDict()
@@ -130,6 +138,13 @@ def get_default_configs():
     optim.warmup = 5000
     optim.grad_clip = 1.
     optim.automatic_mp = True
+    optim.hash = conf_utils.hash_solver(optim)
+
+    config.stamp = stamp = ml_collections.ConfigDict()
+    stamp = config.stamp
+    stamp.fwd_solver_hash = conf_utils.hash_joiner([solver.hash, turbulence.hash])
+    stamp.model_optim_hash = conf_utils.hash_joiner([model.hash, optim.hash, training.hash])
+
 
     config.seed = 42
     config.device = torch.device(
@@ -140,6 +155,7 @@ def get_default_configs():
     else:
         debug = False
 
+    debug = False
     if debug:
         data = config.data
         data.processed_filename = f'{data.processed_filename}_debug'

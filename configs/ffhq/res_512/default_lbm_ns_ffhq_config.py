@@ -119,6 +119,7 @@ def get_default_configs():
     model.num_head_channels = -1
     model.num_heads_upsample = -1
     model.skip_rescale = True
+    model.hash = conf_utils.hash_solver(model)
 
     # optimization
     config.optim = optim = ml_collections.ConfigDict()
