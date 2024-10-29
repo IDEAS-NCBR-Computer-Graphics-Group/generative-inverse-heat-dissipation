@@ -1,4 +1,4 @@
-from configs.ffhq.res_128 import default_lbm_ffhq_128_config as default_lbm_ffhq_config
+from configs.ffhq.res_128.ns import default_lbm_ffhq_128_config as default_lbm_ffhq_config
 from configs import conf_utils
 
 
