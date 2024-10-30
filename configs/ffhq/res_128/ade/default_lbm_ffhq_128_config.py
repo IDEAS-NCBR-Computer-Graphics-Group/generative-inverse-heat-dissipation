@@ -76,7 +76,7 @@ def get_default_configs():
     solver.cs2 = 1./3.
     solver.min_fwd_steps = 1
     solver.n_denoising_steps = 100
-    solver.max_fwd_steps = solver.n_denoising_steps # + 1  # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
+    solver.max_fwd_steps = solver.n_denoising_steps + 1  # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
 
     niu_sched = conf_utils.lin_schedule(1E-4 * 1 / 6, 1 / 6, solver.max_fwd_steps)
     solver.niu = solver.bulk_visc = niu_sched

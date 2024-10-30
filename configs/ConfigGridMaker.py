@@ -4,6 +4,7 @@ import ml_collections
 from sklearn.model_selection import ParameterGrid
 import json
 import hashlib
+import numpy as np
 import sys
 print(f"Python executable: {sys.executable}")
 print(f"Current working directory: {os.getcwd()}")
@@ -102,6 +103,59 @@ def get_config():
             f.write(f"""
     stamp = config.stamp
 
+    timesteps_list = [0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        2,
+                        2,
+                        2,
+                        3,
+                        3,
+                        4,
+                        5,
+                        6,
+                        7,
+                        8,
+                        9,
+                        11,
+                        13,
+                        15,
+                        17,
+                        20,
+                        23,
+                        27,
+                        32,
+                        37,
+                        43,
+                        50,
+                        59,
+                        68,
+                        79,
+                        92,
+                        107,
+                        125,
+                        145,
+                        169,
+                        197,
+                        229,
+                        266,
+                        309,
+                        359,
+                        418,
+                        486,
+                        565,
+                        657,
+                        763,
+                        887,
+                        1032,
+                        1199]
+    
+    timesteps_array = np.array(timesteps_list)
     config.solver.hash = conf_utils.hash_solver(config.solver)
     config.turbulence.hash = conf_utils.hash_solver(config.turbulence)
     
@@ -115,8 +169,9 @@ def get_config():
     # config.solver.max_fwd_steps = solver.n_denoising_steps + 1 # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
     config.solver.final_lbm_step = 50
     if config.solver.lin_sched: 
-        config.solver.corrupt_sched = np.linspace(
-            config.solver.min_fwd_steps, config.solver.final_lbm_step, config.solver.max_fwd_steps, dtype=int)
+        # config.solver.corrupt_sched = np.linspace(
+        #     config.solver.min_fwd_steps, config.solver.final_lbm_step, config.solver.max_fwd_steps, dtype=int)
+        config.solver.corrupt_sched = timesteps_array
     else:
         config.solver.lbm_steps_base = 2.0
         config.solver.starting_lbm_steps_pow = np.emath.logn(config.solver.lbm_steps_base, config.solver.min_fwd_steps)
