@@ -59,7 +59,7 @@ class LBM_Base_Corruptor(BaseCorruptor):
         self._intermediate_samples[0] = torch.tensor( # rescale for preview
             normalize_grayscale_image_range(np_gray_img, 0., 1.)).unsqueeze(0).clone()
 
-        for i in range(1, steps):
+        for i in range(1, steps+1):
             step_difference = self.corrupt_sched[i] - self.corrupt_sched[i-1]
             # if step_difference == 0: logging.info(f"step_difference: {step_difference}") 
             if i == 1: step_difference = self.corrupt_sched[0]

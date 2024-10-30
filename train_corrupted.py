@@ -21,9 +21,7 @@ from scripts.utils import load_config_from_path, setup_logging
 
 FLAGS = flags.FLAGS
 
-# config_flags.DEFINE_config_file("config", None, "NN Training configuration.", lock_config=True) # removed in python 3.12 # this return a parsed object - ConfigDict
-flags.DEFINE_string("config", None, "Path to the config file.")
-flags.mark_flags_as_required(["config"])
+
 
 
 def main(argv):
@@ -148,7 +146,7 @@ def train(config_path):
     video_mpv4_filename, video_x264_filename = "corruption_init.mp4", "corruption_init_x264.mp4"
     video_mpv4_path, video_x264_path = os.path.join(workdir, video_mpv4_filename), os.path.join(workdir, video_x264_filename)
     utils.save_video(workdir, intermediate_corruption_samples, filename=video_mpv4_filename)
-    os.system(f'ffmpeg -i {video_mpv4_path} -vcodec libx264 -f mp4 {video_x264_path}')
+    os.system(f'ffmpeg -y -loglevel error -i {video_mpv4_path} -vcodec libx264 -f mp4 {video_x264_path}')
     utils.save_png(workdir, clean_initial_sample, "clean_init.png")
     wandb.log({
         "clean_init": wandb.Image(os.path.join(workdir, "clean_init.png")),
@@ -237,7 +235,7 @@ def train(config_path):
             video_mpv4_filename, video_x264_filename = "process.mp4", "process_x264.mp4"
             video_mpv4_path, video_x264_path = os.path.join(this_sample_dir, video_mpv4_filename), os.path.join(this_sample_dir, video_x264_filename)
             utils.save_video(this_sample_dir, intermediate_samples, filename=video_mpv4_filename)
-            os.system(f'ffmpeg -i {video_mpv4_path} -vcodec libx264 -f mp4 {video_x264_path}')
+            os.system(f'ffmpeg -y -loglevel error -i {video_mpv4_path} -vcodec libx264 -f mp4 {video_x264_path}')
             wandb.log({"process": wandb.Video(video_x264_path)})
 
 
@@ -245,4 +243,9 @@ def train(config_path):
     logging.info("Done.")
      
 if __name__ == "__main__":
+    
+    # config_flags.DEFINE_config_file("config", None, "NN Training configuration.", lock_config=True) # removed in python 3.12 # this return a parsed object - ConfigDict
+    flags.DEFINE_string("config", None, "Path to the config file.")
+    flags.mark_flags_as_required(["config"])
+
     app.run(main)

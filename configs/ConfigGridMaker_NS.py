@@ -88,8 +88,8 @@ def get_config():
     
     if config.solver.are_steps_unique:
         config.solver.corrupt_sched = np.unique(config.solver.corrupt_sched)
-        config.solver.n_denoising_steps = len(config.solver.corrupt_sched)
-        config.solver.max_fwd_steps = config.solver.n_denoising_steps + 1
+        config.solver.max_fwd_steps = len(config.solver.corrupt_sched)
+        config.solver.n_denoising_steps = config.solver.max_fwd_steps - 1
         
     config.solver.cs2 = conf_utils.lin_schedule(0.3*1./3, 1./3, config.solver.final_lbm_step)
     niu_sched = conf_utils.lin_schedule(1E-4*1/6, 1./6, config.solver.final_lbm_step)

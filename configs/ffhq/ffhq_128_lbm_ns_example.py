@@ -87,8 +87,8 @@ def get_default_configs():
     are_steps_unique = False
     if are_steps_unique:
         solver.corrupt_sched = np.unique(solver.corrupt_sched)
-        solver.n_denoising_steps = len(solver.corrupt_sched)
-        solver.max_fwd_steps = solver.n_denoising_steps + 1
+        solver.max_fwd_steps = len(solver.corrupt_sched)
+        solver.n_denoising_steps = solver.max_fwd_steps - 1
     
     solver.cs2 = conf_utils.lin_schedule(0.3*1./3, 1./3, solver.final_lbm_step)
     niu_sched = conf_utils.lin_schedule(1E-4*1/6, 1./6, solver.final_lbm_step)
@@ -158,7 +158,7 @@ def get_default_configs():
 
         config.training.batch_size = 1  # rtx2080
         config.eval.batch_size = 1
-        config.training.n_iters = 1001
-        config.training.sampling_freq = 100
+        config.training.n_iters = 101
+        config.training.sampling_freq = 25
 
     return config
