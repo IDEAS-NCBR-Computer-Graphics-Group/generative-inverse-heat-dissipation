@@ -50,6 +50,8 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu113
 ```.sh
 srun -N1 -n8 --account=plgclb2024-gpu-a100 --partition=plgrid-gpu-a100 --gres=gpu:1 --time=08:00:00 --pty /bin/bash -l
 
+module load GCCcore/12.3.0
+module load FFmpeg/6.0
 module load Python/3.10.4
 
 python -m venv py-ihd-env

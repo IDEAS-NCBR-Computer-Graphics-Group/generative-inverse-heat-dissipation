@@ -11,8 +11,11 @@ def main():
     # Define the hyperparameter grid
     
     param_grid = {
-        'training.n_iters': [20001],
-        'optim.lr': [1e-4, 5e-5, 2e-5],
+        # 'training.n_iters': [20001],
+        # 'optim.lr': [1e-4, 2e-5, 5e-6],
+    # solver.n_denoising_steps = 100
+    # solver.max_fwd_steps = solver.n_denoising_steps + 1  # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
+    # solver.final_lbm_step = 250
         'turbulence.turb_intensity' : [0, 1E-4],
         'solver.are_steps_unique': [True, False] 
     }
