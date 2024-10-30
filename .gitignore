@@ -18,6 +18,8 @@ runs/
 data/
 wandb/
 6_experiments/
+configs_old*
+configs/configs/campaign_ffhq_ade_128*
 
 __pycache__
 
