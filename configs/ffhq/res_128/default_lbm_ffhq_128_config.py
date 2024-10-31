@@ -75,9 +75,9 @@ def get_default_configs():
     solver.max_init_gray_scale = 1.05
     solver.cs2 = 1./3.
     solver.min_fwd_steps = 1
-    solver.n_denoising_steps = 2
+    solver.n_denoising_steps = 50
     solver.max_fwd_steps = solver.n_denoising_steps + 1 # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
-    solver.final_lbm_step = 2
+    solver.final_lbm_step = 50
     solver.lin_sched = False
 
     if solver.lin_sched: 
