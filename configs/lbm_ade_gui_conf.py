@@ -58,9 +58,42 @@ def get_config():
     config.turbulence = turbulence = ml_collections.ConfigDict()
     config.stamp = stamp = ml_collections.ConfigDict()
 
+    solver = config.solver
+
+    solver.min_init_gray_scale = 0.95
+    solver.max_init_gray_scale = 1.05
+
+    solver.type = 'ade'
+
+    solver.min_fwd_steps = 1
+    solver.n_denoising_steps = 200
+    solver.max_fwd_steps = solver.n_denoising_steps + 1  # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
+    solver.final_lbm_step = 500
+
+    # solver.corrupt_sched = conf_utils.lin_schedul(
+    #         solver.min_fwd_steps, solver.final_lbm_step, solver.max_fwd_steps, dtype=int)
+    
+    solver.corrupt_sched = conf_utils.exp_schedule(
+        solver.min_fwd_steps, solver.final_lbm_step, solver.max_fwd_steps, dtype=int)
+        
+    are_steps_unique = False
+    if are_steps_unique:
+        solver.corrupt_sched = np.unique(solver.corrupt_sched)
+        solver.max_fwd_steps = len(solver.corrupt_sched)
+        solver.n_denoising_steps = solver.max_fwd_steps - 1
+    
+    solver.cs2 = conf_utils.lin_schedule(1./3, 1./3, solver.final_lbm_step, dtype=np.float32)
+    # niu_sched = conf_utils.lin_schedule(1E-4*1 / 6, 1E-4 * 1 / 6, solver.final_lbm_step, dtype=np.float32)
+    niu_sched = conf_utils.tanh_schedule(1E-4* 1./ 6,  1./ 6, solver.final_lbm_step, dtype=np.float32)
+    # niu_sched  = conf_utils.exp_schedule(1E-4 * 1./6., 1./6., solver.max_fwd_steps)
+
+    solver.niu = solver.bulk_visc = niu_sched
+    solver.hash = conf_utils.hash_solver(solver)
+
+    
     # turbulence
     turbulence = config.turbulence
-    turbulence.turb_intensity = 5* 1E-4
+    turbulence.turb_intensity = conf_utils.lin_schedule(1E-6, 5E-4, solver.final_lbm_step, dtype=np.float32)
     turbulence.noise_limiter = (-1E-2, 1E-2)
     turbulence.domain_size = (1.0, 1.0)
     turbulence.dt_turb = 5 * 1E-4
@@ -70,32 +103,6 @@ def get_config():
     turbulence.energy_slope = -5.0 / 3.0
     turbulence.hash = conf_utils.hash_solver(turbulence)
     turbulence.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (turbulence.energy_slope)), 0, k ** (turbulence.energy_slope))
-
-    solver = config.solver
-
-    solver.min_init_gray_scale = 0.95
-    solver.max_init_gray_scale = 1.05
-    # solver.type = 'ns'
-    solver.type = 'ade'
-
-    
-    solver.min_fwd_steps = 1
-    solver.n_denoising_steps = 50
-    solver.max_fwd_steps = solver.n_denoising_steps + 1  # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
-    solver.final_lbm_step = 500
-    
-    solver.cs2 = conf_utils.lin_schedule(1./3, 1./3, solver.final_lbm_step, dtype=np.float32)
-    # niu_sched = conf_utils.lin_schedule(1E-4*1 / 6, 1E-4 * 1 / 6, solver.final_lbm_step, dtype=np.float32)
-    niu_sched = conf_utils.tanh_schedule(1E-3* 1 / 6,  1E-0* 1 / 6, solver.final_lbm_step, dtype=np.float32)
-    
-    # niu_sched  = conf_utils.exp_schedule(1E-4 * 1./6., 1./6., solver.max_fwd_steps)
-    # niu_sched = conf_utils.inv_cosine_aplha_schedule(1E-4 * 1./6., 1./6., solver.max_fwd_steps)
-    # niu_sched = conf_utils.tanh_schedule(1E-4 * 1. / 6., 1. / 6., solver.max_fwd_steps)
-    # niu_sched  = lin_schedule(1E-4 * 1./6., 1./6., solver.max_fwd_steps)
-    # niu_sched  = lin_schedule(1E-4 * 1./6., 1E-4 *1./6., solver.max_fwd_steps)
-
-    solver.niu = solver.bulk_visc = niu_sched
-    solver.hash = conf_utils.hash_solver(solver)
 
     stamp = config.stamp
     stamp.hash = conf_utils.hash_joiner([solver.hash, turbulence.hash])

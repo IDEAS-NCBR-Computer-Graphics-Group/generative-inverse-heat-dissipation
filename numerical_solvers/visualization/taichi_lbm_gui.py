@@ -30,7 +30,7 @@ def run_simple_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, sl
 
         force = solver.Force.to_numpy()
         force_mag = np.sqrt((force[:, :, 0] ** 2 + force[:, :, 1] ** 2))
-        force_mag = cm.ScalarMappable(cmap="inferno").to_rgba(force_mag)
+        force_mag = cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=1E-5, vmax=1E-3), cmap="inferno").to_rgba(force_mag)
 
         img = np.concatenate((rho_img, vel_img, force_mag), axis=1)        
         canvas.set_image(img.astype(np.float32))

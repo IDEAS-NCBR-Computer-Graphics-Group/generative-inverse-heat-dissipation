@@ -177,6 +177,8 @@ class LBM_NS_Solver(LBM_SolverBase):
     
     @ti.kernel
     def update_macro_var(self): 
+
+        # coeff = 1. - float(self.iterations_counter[None])/self.max_iter[None]
         for i, j in ti.ndrange((1, self.nx-1), (1,self.ny-1)):
             self.rho[i, j] = 0
             self.vel[i, j] = 0, 0
@@ -187,3 +189,4 @@ class LBM_NS_Solver(LBM_SolverBase):
             self.vel[i, j] += 0.5*self.Force[i,j]
             self.vel[i, j] /= self.rho[i, j]
             # self.vel[i, j] *= 0.95 
+            # self.vel[i, j] *= coeff

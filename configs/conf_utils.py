@@ -153,6 +153,8 @@ def evaluate_config_file_name(savedir, params):
         set_nested_value(config, keys, param_value)
     config_hash = hash_joiner([hash_solver(config)], num_bits=32)  # .to_dict()
     
+    # TODO: First, the default config shall be read from file. Then update values of specific keys.
+    # config_filename = os.path.join(savedir, f"config_{config.stamp.fwd_solver_hash}_{config.stamp.model_optim_hash}")
     # Define file path
     config_filename = os.path.join(savedir, f'config_{config_hash}.py')
     return config_filename
