@@ -64,8 +64,9 @@ def train(config_path):
     # copy config to know what has been run
     Path(workdir).mkdir(parents=True, exist_ok=True)
     shutil.copy(config_path, workdir) 
-    print(os.path.join(*config_path.split(os.sep)[:-1], f'default_lbm_{config.data.dataset.lower()}_config.py'))
-    shutil.copy(os.path.join(*config_path.split(os.sep)[:-1], f'default_lbm_{config.data.dataset.lower()}_config.py'), workdir)
+    default_config_path = os.path.join(*config_path.split(os.sep)[:-1], f'default_lbm_{config.data.dataset.lower()}_config.py')
+    print(default_config_path)
+    shutil.copy(default_config_path, workdir)
 
     # Setup logging once the workdir is known
     setup_logging(workdir)

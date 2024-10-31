@@ -46,7 +46,7 @@ def produce_fwd_sample(config_path):
     save_dir = os.path.join(storage_dir, save_scriptname)
     os.makedirs(save_dir, exist_ok=True)
     shutil.copy(config_path, save_dir)
-    shutil.copy(os.path.join(*config_path.split(os.sep)[0:2], f'default_lbm_{config.data.dataset.lower()}_config.py'), save_dir)
+    shutil.copy(os.path.join(*config_path.split(os.sep)[:-1], f'default_lbm_{config.data.dataset.lower()}_config.py'), save_dir)
 
     clean_image, batch = ihd_datasets.prepare_batch(iter(trainloader),'cpu')
     corrupted_image, less_corrupted_image, corruption_amount, label = batch
@@ -66,7 +66,7 @@ def produce_fwd_sample(config_path):
     axs[1].imshow(torchvision.utils.make_grid(corrupted_image)[0], cmap='Greys')
     axs[2].imshow(torchvision.utils.make_grid(less_corrupted_image)[0], cmap='Greys')
     plt.savefig(os.path.join(save_dir,'Corruption_pairs_sample.png'), bbox_inches='tight')
-    plt.show()
+    # plt.show()
     plt.close()
 
     corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
@@ -92,7 +92,7 @@ def produce_fwd_sample(config_path):
 
     plt.tight_layout()
     plt.savefig(os.path.join(save_dir,'Fully_corrupted_sample.png'), bbox_inches='tight')
-    plt.show()
+    # plt.show()
     plt.close()
     
 if __name__ == '__main__':
