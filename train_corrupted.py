@@ -64,8 +64,9 @@ def train(config_path):
     # copy config to know what has been run
     Path(workdir).mkdir(parents=True, exist_ok=True)
     shutil.copy(config_path, workdir) 
-    print(os.path.join(*config_path.split(os.sep)[:-1], f'default_lbm_ns_{config.data.dataset.lower()}_config.py'))
-    shutil.copy(os.path.join(*config_path.split(os.sep)[:-1], f'default_lbm_ns_{config.data.dataset.lower()}_config.py'), workdir)
+    default_config_path = os.path.join(*config_path.split(os.sep)[:-1], f'default_lbm_{config.data.dataset.lower()}_config.py')
+    print(default_config_path)
+    shutil.copy(default_config_path, workdir)
 
     # Setup logging once the workdir is known
     setup_logging(workdir)
@@ -113,7 +114,7 @@ def train(config_path):
         config, uniform_dequantization=config.data.uniform_dequantization)
     datadir = os.path.join(f'data/corrupted_{config.data.dataset}',f'{config.data.processed_filename}_{config.stamp.fwd_solver_hash}')
     shutil.copy(config_path, datadir)
-    shutil.copy(os.path.join(*config_path.split(os.sep)[:-1], f'default_lbm_ns_{config.data.dataset.lower()}_config.py'), datadir)
+    shutil.copy(os.path.join(*config_path.split(os.sep)[:-1], f'default_lbm_{config.data.dataset.lower()}_config.py'), datadir)
     train_iter = iter(trainloader)
     eval_iter = iter(testloader)
 

@@ -42,7 +42,7 @@ def get_default_configs():
     data.random_flip = False
     data.centered = False
     data.uniform_dequantization = False
-    data.num_channels = 1
+    data.num_channels = 3
 
     # data - cd
     data = config.data
@@ -53,7 +53,7 @@ def get_default_configs():
     data.dataset = 'FFHQ_128'
     data.image_size = 128
     data.transform = transforms.Compose(
-        [transforms.ToTensor(),transforms.Grayscale()])
+        [transforms.ToTensor()])
 
 
     # solver
@@ -75,9 +75,9 @@ def get_default_configs():
     solver.max_init_gray_scale = 1.05
     solver.cs2 = 1./3.
     solver.min_fwd_steps = 1
-    solver.n_denoising_steps = 50
+    solver.n_denoising_steps = 2
     solver.max_fwd_steps = solver.n_denoising_steps + 1 # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
-    solver.final_lbm_step = 50
+    solver.final_lbm_step = 2
     solver.lin_sched = False
 
     if solver.lin_sched: 
@@ -148,7 +148,7 @@ def get_default_configs():
     else:
         debug = False
     
-    debug = True
+    # debug = True
     if debug:
         data = config.data
         data.processed_filename = f'{data.processed_filename}_debug'
@@ -159,8 +159,8 @@ def get_default_configs():
         model.channel_mult = (1, 1, 2, 2, 2)
         model.attention_levels = (3, 4)
     
-        config.training.batch_size = 1 # rtx2080
-        config.eval.batch_size = 1
+        config.training.batch_size = 4 # rtx2080
+        config.eval.batch_size = 4
         config.training.n_iters = 1001
         config.training.sampling_freq = 100
         
