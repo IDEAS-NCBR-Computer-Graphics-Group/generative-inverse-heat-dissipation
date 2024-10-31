@@ -4,6 +4,7 @@ import torch
 from abc import ABC
 import warnings
 import logging
+import matplotlib.pyplot as plt
 
 import taichi as ti
 from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range
@@ -48,26 +49,44 @@ class LBM_Base_Corruptor(BaseCorruptor):
         Returns:
             Tuple[torch.Tensor, Optional[torch.Tensor]]: Corrupted image or a pair of corrupted images.
         """
-        np_gray_img = x.numpy()[0, :, :]
-        np_gray_img = normalize_grayscale_image_range( # rescale to fit solver stability range
-            np_gray_img, self.min_init_gray_scale, self.max_init_gray_scale)
-    
-        self.solver.init(np_gray_img)
-        self.solver.iterations_counter = 0  # Reset counter
+
+        # plt.imshow(np.transpose(x.numpy(), [1,2,0]), interpolation='nearest')
+        # plt.savefig('testrgb.png')
+        # print(x.numpy().shape)
+        # print(x.numpy()[0, :, :].shape)
+        # f, axarr = plt.subplots(1, 3)
+        # axarr[0].imshow(x.numpy()[0,:,:], interpolation='nearest')
+        # axarr[0].axis('off')
+        # axarr[1].imshow(x.numpy()[1,:,:], interpolation='nearest')
+        # axarr[1].axis('off')
+        # axarr[2].imshow(x.numpy()[2,:,:], interpolation='nearest')
+        # axarr[2].axis('off')
+        # plt.savefig('testgreys.png')
+
 
         self._intermediate_samples = torch.empty((steps + 1, *x.shape))
-        self._intermediate_samples[0] = torch.tensor( # rescale for preview
-            normalize_grayscale_image_range(np_gray_img, 0., 1.)).unsqueeze(0).clone()
 
-        for i in range(1, steps+1):
-            step_difference = self.corrupt_sched[i] - self.corrupt_sched[i-1]
-            if i == 1: step_difference = self.corrupt_sched[0]
-            self.solver.solve(step_difference)
-            rho_cpu = self.solver.rho.to_numpy()
-            rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
-            self._intermediate_samples[i] = torch.tensor(rho_cpu).unsqueeze(0)
+        for c in range(x.shape[0]):
+            np_gray_img = x.numpy()[c, :, :] # assumes that there is only one channel
+            np_gray_img = normalize_grayscale_image_range( # rescale to fit solver stability range
+                np_gray_img, self.min_init_gray_scale, self.max_init_gray_scale)
 
-        logging.info(f"Corruptor.solver run for iterations: {self.solver.iterations_counter}")
+            self.solver.init(np_gray_img)
+            self.solver.iterations_counter = 0  # Reset counter
+
+            # self._intermediate_samples = torch.empty((steps + 1, *x.shape))
+            self._intermediate_samples[0][c] = torch.tensor( # rescale for preview
+                normalize_grayscale_image_range(np_gray_img, 0., 1.)).unsqueeze(0).clone()
+
+            for i in range(1, steps+1):
+                step_difference = self.corrupt_sched[i] - self.corrupt_sched[i-1]
+                if i == 1: step_difference = self.corrupt_sched[0]
+                self.solver.solve(step_difference)
+                rho_cpu = self.solver.rho.to_numpy()
+                rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
+                self._intermediate_samples[i][c] = torch.tensor(rho_cpu).unsqueeze(0)
+
+            logging.info(f"Corruptor.solver run for iterations: {self.solver.iterations_counter}")
 
         if generate_pair:
             noisy_x = self._intermediate_samples[-1].clone()

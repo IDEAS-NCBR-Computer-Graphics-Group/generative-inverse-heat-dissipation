@@ -42,7 +42,7 @@ def get_default_configs():
     data.random_flip = False
     data.centered = False
     data.uniform_dequantization = False
-    data.num_channels = 1
+    data.num_channels = 3
 
     # data - cd
     data = config.data
@@ -53,7 +53,7 @@ def get_default_configs():
     data.dataset = 'FFHQ_128'
     data.image_size = 128
     data.transform = transforms.Compose(
-        [transforms.ToTensor(),transforms.Grayscale()])
+        [transforms.ToTensor()])
 
 
     # solver
@@ -148,7 +148,7 @@ def get_default_configs():
     else:
         debug = False
     
-    debug = True
+    # debug = True
     if debug:
         data = config.data
         data.processed_filename = f'{data.processed_filename}_debug'
@@ -159,8 +159,8 @@ def get_default_configs():
         model.channel_mult = (1, 1, 2, 2, 2)
         model.attention_levels = (3, 4)
     
-        config.training.batch_size = 1 # rtx2080
-        config.eval.batch_size = 1
+        config.training.batch_size = 4 # rtx2080
+        config.eval.batch_size = 4
         config.training.n_iters = 1001
         config.training.sampling_freq = 100
         
