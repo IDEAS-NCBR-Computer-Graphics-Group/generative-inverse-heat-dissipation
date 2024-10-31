@@ -32,8 +32,8 @@ from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
 # https://github.com/taichi-dev/image-processing-with-taichi/blob/main/image_transpose.py
 
 # img_path = './numerical_solvers/runners/mnist-2.png'
-# img_path = './numerical_solvers/runners/cat_768x768.jpg'
-img_path = './numerical_solvers/runners/ffhq_1024_00062.png'
+img_path = './numerical_solvers/runners/cat_768x768.jpg'
+# img_path = './numerical_solvers/runners/ffhq_1024_00062.png'
 
 
 
@@ -125,5 +125,5 @@ if __name__ == '__main__':
         
     ############################ standard renderer with multiple subwindows
     # run_with_gui(solver, np_gray_image, iter_per_frame = 1)
-    run_simple_gui(solver, np_gray_image, iter_per_frame=1, sleep_time=0.05, show_gui=True)
+    run_simple_gui(solver, np_gray_image, iter_per_frame=1, sleep_time=0.075, show_gui=True) # sleep_time=0.075,
     ############################

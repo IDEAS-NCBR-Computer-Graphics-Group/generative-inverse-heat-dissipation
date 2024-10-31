@@ -64,7 +64,9 @@ class LBM_ADE_Solver(LBM_SolverBase):
         
     @ti.kernel
     def collide_cm(self):
+        
         omega_kin = self.omega_kin[self.iterations_counter[None]]
+        cs2 = self.cs2[self.iterations_counter[None]]
         
         for i, j in ti.ndrange((1, self.nx - 1), (1, self.ny - 1)): 
             #=== THIS IS AUTOMATICALLY GENERATED CODE ===
@@ -115,12 +117,12 @@ class LBM_ADE_Solver(LBM_SolverBase):
             self.f_new[i,j][0] = m000
             self.f_new[i,j][1] = self.f[i,j][1]*(1.- omega_kin) 
             self.f_new[i,j][2] = self.f[i,j][2]*(1.- omega_kin) 
-            self.f_new[i,j][3] = self.cs2[None]*m000
-            self.f_new[i,j][4] = self.cs2[None]*m000
+            self.f_new[i,j][3] = cs2*m000
+            self.f_new[i,j][4] = cs2*m000
             self.f_new[i,j][5] = 0
             self.f_new[i,j][6] = self.f[i,j][6]*(1.- omega_kin) 
             self.f_new[i,j][7] = self.f[i,j][7]*(1.- omega_kin) 
-            self.f_new[i,j][8] = omega_kin*m000*self.cs2[None]*self.cs2[None]
+            self.f_new[i,j][8] = omega_kin*m000*cs2*cs2
             
             #back to raw moments
             self.f[i,j][0] = self.f_new[i,j][0]

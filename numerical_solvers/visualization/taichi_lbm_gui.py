@@ -12,7 +12,7 @@ import matplotlib
 import matplotlib.cm as cm
 
 def run_simple_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, sleep_time=0.001, show_gui=True):
-    scale = 6
+    scale = 5
     gui_res = (scale * 1 * solver.nx, scale * 3 * solver.ny)
     window = ti.ui.Window('CG - Renderer', res=gui_res)
     gui = window.get_gui()

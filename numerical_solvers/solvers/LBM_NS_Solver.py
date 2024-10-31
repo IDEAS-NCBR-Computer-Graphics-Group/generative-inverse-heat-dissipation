@@ -36,11 +36,12 @@ class LBM_NS_Solver(LBM_SolverBase):
             self.stream()
             self.update_macro_var()
             
-            # self.collide_srt(omega_kin)
+            # self.collide_srt()
             self.collide_cm()
              
             u_turb, v_turb = self.turbulenceGenerator.generate_turbulence(self.iterations_counter[None])
             turb_numpy = torch.stack((u_turb, v_turb), axis=-1)  # Shape becomes (128, 128, 2)
+            # self.vel.from_torch(turb_numpy)
             self.Force.from_torch(turb_numpy)
             
             # self.init_gaussian_force_field(1E-3, 0, 1)
@@ -177,15 +178,12 @@ class LBM_NS_Solver(LBM_SolverBase):
     @ti.kernel
     def update_macro_var(self): 
         for i, j in ti.ndrange((1, self.nx-1), (1,self.ny-1)):
-        # for i, j in ti.ndrange(self.nx, self.ny):
-
             self.rho[i, j] = 0
             self.vel[i, j] = 0, 0
-            # self.f[i,j] = self.f_new[i,j]
             for k in ti.static(range(9)):
                 self.rho[i, j] += self.f[i, j][k]
                 self.vel[i, j] += tm.vec2(self.e[k, 0], self.e[k, 1]) * self.f[i, j][k] 
 
-            self.vel[i, j] += 0.5*self.Force[i,j] # self.vel[i, j] += 0.5*self.Force[None]
+            self.vel[i, j] += 0.5*self.Force[i,j]
             self.vel[i, j] /= self.rho[i, j]
-            
+            # self.vel[i, j] *= 0.95 

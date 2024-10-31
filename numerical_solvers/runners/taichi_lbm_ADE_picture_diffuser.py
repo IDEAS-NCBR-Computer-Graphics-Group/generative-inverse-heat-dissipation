@@ -22,6 +22,7 @@ from numerical_solvers.solvers.img_reader import read_img_in_grayscale, normaliz
 from numerical_solvers.visualization.taichi_lbm_gui import run_with_gui, run_simple_gui
 
 from configs.lbm_ade_gui_conf import get_config
+
 # from configs.mnist.small_mnist_lbm_ade_turb_config import get_config
 from configs import conf_utils
 
@@ -49,16 +50,27 @@ ti_float_precision = ti.f32
 if __name__ == '__main__':    
     config = get_config()
 
+    target_size=None
+    target_size=(config.data.image_size, config.data.image_size)
+    # target_size=(1024, 1024)
+    # target_size=(768, 768)
+    # target_size=(512, 512)
+    # target_size = (256, 256)
+    # target_size = (128, 128)
+    # target_size = (64, 64)
+    # target_size = (28, 28)
+    # target_size = None
+
     np_gray_image = read_img_in_grayscale(img_path, target_size)
     np_gray_image = normalize_grayscale_image_range(np_gray_image, config.solver.min_init_gray_scale, config.solver.max_init_gray_scale)
-
+    
     grid_size = np_gray_image.shape
     # print(np_gray_image.shape)
     # plt.imshow(np_gray_image, cmap='gist_gray')
     # plt.colorbar()
     # plt.title(f'image')
     # plt.show()
-
+    
     spectralTurbulenceGenerator = SpectralTurbulenceGenerator(config.turbulence.domain_size, grid_size, 
             config.turbulence.turb_intensity, config.turbulence.noise_limiter,
             energy_spectrum=config.turbulence.energy_spectrum, 
@@ -72,8 +84,10 @@ if __name__ == '__main__':
         config.solver.niu, config.solver.bulk_visc, config.solver.cs2,
         spectralTurbulenceGenerator
         )    
-    # 
+    
     solver.init(np_gray_image) 
-
+    # solver.init(1.*np.ones(grid_size, dtype=np.float32))
+    
     # run_with_gui(solver, np_gray_image, iter_per_frame=100)
     run_simple_gui(solver, np_gray_image, iter_per_frame=1)
+    # run_simple_gui(solver, np_gray_image, iter_per_frame=1, sleep_time=0.075) #
