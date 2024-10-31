@@ -37,10 +37,10 @@ def main():
     save_dir = os.path.join("configs","campaign_ffhq_ade_128")
     os.makedirs(save_dir, exist_ok=False)
     param_grid = {
-        'training.batch_size': [32],
-        'training.n_iters': [50001],
+        'training.batch_size': [16],
+        'training.n_iters': [100001],
         'optim.lr': [1e-4, 5e-5, 2e-5, 1e-5],
-        'turbulence.turb_intensity' : [0, 1E-4],
+        'turbulence.turb_intensity' : [0, 1E-3],
         'solver.cs2' : [0.3*1./3 , 0.6*1./3 , 1./3 ]
     }
     
@@ -103,59 +103,23 @@ def get_config():
             f.write(f"""
     stamp = config.stamp
 
-    timesteps_list = [0,
-                        0,
-                        0,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        2,
-                        2,
-                        2,
-                        3,
-                        3,
-                        4,
-                        5,
-                        6,
-                        7,
-                        8,
-                        9,
-                        11,
-                        13,
-                        15,
-                        17,
-                        20,
-                        23,
-                        27,
-                        32,
-                        37,
-                        43,
-                        50,
-                        59,
-                        68,
-                        79,
-                        92,
-                        107,
-                        125,
-                        145,
-                        169,
-                        197,
-                        229,
-                        266,
-                        309,
-                        359,
-                        418,
-                        486,
-                        565,
-                        657,
-                        763,
-                        887,
-                        1032,
-                        1199]
+    timesteps_list_1 = [0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 4, 5, 6, 7, 8, 9, 11, 13, 15, 17, 20, 23, 27, 32, 37, 43,
+                        50, 59, 68, 79, 92, 107, 125, 145, 169, 197, 229, 266, 309, 359, 418, 486, 565, 657, 763, 887, 1032, 1199]
+
+    timesteps_list_2 = [0, 0, 0, 1, 1, 1, 2, 2, 3, 4, 5, 7, 9, 11, 14, 17, 22, 28, 35, 44, 55, 69, 86, 109, 136, 171, 215, 269, 338, 423, 531,
+                    666, 836, 1048, 1314, 1648, 2067, 2592, 3250, 4076, 5111, 6410, 8038, 10080, 12640, 15851, 19877, 24926, 31257, 39196, 49151]  
+
+    timesteps_list_3 = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4, 4, 5, 5, 6, 7, 7, 8, 9, 11, 12, 13, 15, 17, 19, 21, 24, 27, 30, 33,
+                    37, 42, 47, 52, 59, 66, 74, 82, 92, 103, 115, 129, 145, 162, 181, 203, 227, 254, 284, 317, 355, 397, 444, 497, 556, 622, 696,
+                    778, 871, 974, 1089, 1219, 1363, 1525, 1706, 1908, 2134, 2387, 2670, 2987, 3341, 3737, 4180, 4675, 5230, 5850, 6543, 7319, 8186,
+                    9157, 10242, 11457, 12815, 14334, 16033, 17934, 20059, 22437, 25097, 28072, 31400, 35122, 39286, 43943, 49151]                
     
-    timesteps_array = np.array(timesteps_list)
+    timesteps_list_4 = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 10, 10, 11,
+                        12, 13, 14, 15, 17, 18, 19, 21, 23, 24, 26, 28, 31, 33, 36, 38, 41, 45, 48, 52, 56, 60, 65, 70, 76, 82, 88, 95, 102, 110,
+                        119, 128, 138, 148, 160, 172, 186, 200, 216, 232, 250, 270, 291, 313, 338, 364, 392, 422, 455, 490, 528, 569, 613, 661,
+                        712, 767, 826, 890, 959, 1033, 1113, 1199]
+
+    timesteps_array = np.array(timesteps_list_4)
     config.solver.hash = conf_utils.hash_solver(config.solver)
     config.turbulence.hash = conf_utils.hash_solver(config.turbulence)
     
@@ -163,11 +127,7 @@ def get_config():
     config.optim.hash = conf_utils.hash_solver(config.optim)
     config.training.hash = conf_utils.hash_int(config.training.batch_size)
     config.solver.lin_sched = True
-
-
-    # config.solver.n_denoising_steps = 50
-    # config.solver.max_fwd_steps = solver.n_denoising_steps + 1 # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
-    config.solver.final_lbm_step = 50
+    config.solver.final_lbm_step = 100
     if config.solver.lin_sched: 
         # config.solver.corrupt_sched = np.linspace(
         #     config.solver.min_fwd_steps, config.solver.final_lbm_step, config.solver.max_fwd_steps, dtype=int)
