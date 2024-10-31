@@ -185,6 +185,13 @@ unzip ffhq-128-70k.zip -d ffhq-128-70k
 url:
 <https://www.kaggle.com/datasets/potatohd404/ffhq-128-70k>
 
+### lsun_church
+git clone https://github.com/fyu/lsun.git
+mkdir ./data/lsun
+python lsun/download.py -c church_outdoor -o ./data/lsun
+unzip ./data/lsun/church_outdoor_train_lmdb.zip -d ./data/lsun
+unzip ./data/lsun/church_outdoor_val_lmdb.zip -d ./data/lsun
+
 ### mount disk on gcp
 
 lsblk  

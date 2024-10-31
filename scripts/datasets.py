@@ -138,6 +138,36 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
             root="data/lsun", classes=['church_outdoor_train'], transform=transform)
         test_data = datasets.LSUN(
             root="data/lsun", classes=['church_outdoor_val'], transform=transform)
+        if getattr(config, 'solver', None):
+            start = timer()
+            logging.info("Corruption on train split")
+            corruptor._preprocess_and_save_data(
+                initial_dataset=training_data,
+                save_dir=save_dir,
+                is_train_dataset = True,
+                process_all=config.data.process_all,
+                process_pairs = config.data.process_pairs
+                )
+            logging.info("Corruption on test split")
+            corruptor._preprocess_and_save_data(
+                initial_dataset=test_data,
+                save_dir=save_dir,
+                is_train_dataset = False,
+                process_all = config.data.process_all,
+                process_pairs = config.data.process_pairs
+                )    
+            end = timer()
+            logging.info(f"Corruption took {end - start:.2f} seconds")
+            transform = [
+                transforms.ToPILImage(), 
+                transforms.Resize(config.data.image_size),
+                transforms.CenterCrop(config.data.image_size),
+                transforms.ToTensor()
+                ]
+            transform = transforms.Compose(transform)
+            training_data = CorruptedDataset(load_dir=save_dir, train=True, transform=transform)
+            test_data = CorruptedDataset(load_dir=save_dir, train=False, transform=transform)
+
     elif config.data.dataset == 'FFHQ':
         trainloader = load_data(data_dir="data/ffhq-dataset/images1024x1024",
                                 batch_size=train_batch_size, image_size=config.data.image_size,
