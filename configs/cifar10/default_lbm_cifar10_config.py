@@ -142,7 +142,7 @@ def get_default_configs():
     else:
         debug = False
     
-    debug = True
+    # debug = True
     if debug:
         data = config.data
         data.processed_filename = f'{data.processed_filename}_debug'
