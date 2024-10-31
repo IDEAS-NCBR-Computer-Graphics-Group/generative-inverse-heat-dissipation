@@ -42,7 +42,7 @@ def get_default_configs():
     data.random_flip = False
     data.centered = False
     data.uniform_dequantization = False
-    data.num_channels = 1
+    data.num_channels = 3
 
     # data - cd
     data = config.data
@@ -52,8 +52,7 @@ def get_default_configs():
     data.processed_filename = 'lbm_ns_pairs' if data.process_pairs else 'lbm_ns'
     data.dataset = 'FFHQ_128'
     data.image_size = 128
-    data.transform = transforms.Compose(
-        [transforms.ToTensor(),transforms.Grayscale()])
+    data.transform = transforms.Compose([transforms.ToTensor()]) # transforms.Grayscale()
 
 
     # solver

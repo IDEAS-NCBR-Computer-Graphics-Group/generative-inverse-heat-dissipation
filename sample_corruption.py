@@ -30,30 +30,31 @@ def produce_fwd_sample(config_path):
     torch.manual_seed(config.seed)
     np.random.seed(config.seed)
 
-    save_dir = os.path.join("tests", "artifacts", f"test_corruption_{config.stamp.fwd_solver_hash}")
+    # save_dir = os.path.join("runs", "sample_corruption", f"caseId_{config.stamp.fwd_solver_hash}")
+    save_dir = os.path.join("tests", "artifacts", f"fwd_corruption_{config.stamp.fwd_solver_hash}")
     utils.setup_logging(save_dir)
     logging.info(f"save_dir: {save_dir}")
     logging.info(f"config.corrupt_sched has {len(config.solver.corrupt_sched)} elements:\n {config.solver.corrupt_sched}")
 
-    
+
     # Get the absolute path of the current script
     current_file_path = Path(__file__).resolve()
     project_dir = current_file_path.parents[0]
-    
-    # remove previous corrupted dataset    
+
+    # remove previous corrupted dataset
     dataset_dir = utils.get_save_dir(project_dir, config)
     logging.info(f"dataset_dir: {dataset_dir}")
     if os.path.exists(dataset_dir):
         shutil.rmtree(dataset_dir)
         logging.info(f"Removed {dataset_dir}")
-        
+
     trainloader, testloader = ihd_datasets.get_dataset(config,
                                                         uniform_dequantization=config.data.uniform_dequantization)
 
     os.makedirs(save_dir, exist_ok=True)
     shutil.copy(config_path, save_dir)
 
-    default_cfg_path = os.path.join(*config_path.split(os.sep)[0:2], f'default_lbm_{config.data.dataset.lower()}_config.py')     
+    default_cfg_path = os.path.join(*config_path.split(os.sep)[0:2], f'default_lbm_{config.data.dataset.lower()}_config.py')
     if os.path.isfile(default_cfg_path):
         shutil.copy2(default_cfg_path, save_dir)
 
@@ -74,9 +75,9 @@ def produce_fwd_sample(config_path):
     axs[0].imshow(torchvision.utils.make_grid(clean_image)[0], cmap='Greys')
     axs[1].imshow(torchvision.utils.make_grid(corrupted_image)[0], cmap='Greys')
     axs[2].imshow(torchvision.utils.make_grid(less_corrupted_image)[0], cmap='Greys')
-    plt.savefig(os.path.join(save_dir, 'Corruption_pairs_sample.png'), bbox_inches='tight')
+    plt.savefig(os.path.join(save_dir,'Corruption_pairs_sample.png'), bbox_inches='tight')
     # plt.show()
-    # plt.close()
+    plt.close()
 
     corruptor = AVAILABLE_CORRUPTORS[config.solver.type](
         config=config,
@@ -101,10 +102,10 @@ def produce_fwd_sample(config_path):
     plt.tight_layout()
     plt.savefig(os.path.join(save_dir, 'Fully_corrupted_sample.png'), bbox_inches='tight')
     # plt.show()
-    # plt.close()
-        
+    plt.close()
+
 if __name__ == '__main__':
-    
+
     # config_flags.DEFINE_config_file("config", None, "Training configuration.", lock_config=True) # this does not work in python 3.12 as 'imp' module has been removed
     flags.DEFINE_string("config", None, "Path to the config file.")
     flags.mark_flags_as_required(["config"])
