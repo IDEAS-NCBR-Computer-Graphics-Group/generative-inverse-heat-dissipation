@@ -1,7 +1,9 @@
 import ml_collections
 import torch
 import numpy as np
-
+from configs import conf_utils
+from torchvision import transforms
+import os
 
 def get_config():
     return get_default_configs()
@@ -34,18 +36,66 @@ def get_default_configs():
 
     # data
     config.data = data = ml_collections.ConfigDict()
-    data.dataset = 'MNIST'
-    data.image_size = 28
     data.random_flip = False
     data.centered = False
     data.uniform_dequantization = False
     data.num_channels = 1
+
+    data.showcase_comparison = True
+    data.process_all = True
+    data.process_pairs = True
+    data.dataset = 'MNIST'
+    data.image_size = 28
+    data.processed_filename = 'lbm_ns_pairs' if data.process_pairs else 'lbm_ns'
+    data.transform = transforms.Compose(
+        [transforms.ToTensor()])
 
     # solver
     config.solver = solver = ml_collections.ConfigDict()
     config.turbulence = turbulence = ml_collections.ConfigDict()
     config.stamp = stamp = ml_collections.ConfigDict()
     
+    # solver
+    config.turbulence = turbulence = ml_collections.ConfigDict()
+    turbulence.turb_intensity = float(0.) #*1E-4
+    turbulence.noise_limiter = (-1E-3, 1E-3)
+    turbulence.domain_size = (1.0, 1.0)
+    turbulence.dt_turb = 5 * 1E-4
+    turbulence.k_min = 2.0 * torch.pi / min(turbulence.domain_size)
+    turbulence.k_max = 2.0 * torch.pi / (min(turbulence.domain_size) / 1024)
+    turbulence.is_divergence_free = False
+    turbulence.energy_slope = -5.0 / 3.0
+    turbulence.hash = conf_utils.hash_solver(turbulence)
+    turbulence.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (turbulence.energy_slope)), 0, k ** (turbulence.energy_slope))
+    
+    config.solver = solver = ml_collections.ConfigDict()
+    solver.type = 'ns'
+    solver.min_init_gray_scale = 0.95
+    solver.max_init_gray_scale = 1.05
+    solver.cs2 = 1./3.
+    solver.min_fwd_steps = 1
+    solver.n_denoising_steps = 50
+    solver.max_fwd_steps = solver.n_denoising_steps + 1 # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
+    solver.final_lbm_step = 50
+    solver.lin_sched = False
+
+    if solver.lin_sched: 
+        solver.corrupt_sched = np.linspace(
+            solver.min_fwd_steps, solver.final_lbm_step, solver.max_fwd_steps, dtype=int)
+    else:
+        solver.lbm_steps_base = 2.0
+        solver.starting_lbm_steps_pow = np.emath.logn(solver.lbm_steps_base, solver.min_fwd_steps)
+        solver.final_lbm_steps_pow = np.emath.logn(solver.lbm_steps_base, solver.final_lbm_step)
+        if np.math.pow(solver.lbm_steps_base, solver.final_lbm_steps_pow) != solver.final_lbm_step:
+            solver.final_lbm_steps_pow += 2*np.finfo(float).eps
+        solver.corrupt_sched = np.logspace(
+            solver.starting_lbm_steps_pow, solver.final_lbm_steps_pow,
+            solver.max_fwd_steps, base=solver.lbm_steps_base, dtype=int)
+
+    niu_sched = conf_utils.lin_schedule(1E-4 * 1 / 6, 1 / 6, solver.max_fwd_steps)
+    solver.niu = solver.bulk_visc = niu_sched
+    solver.hash = conf_utils.hash_solver(solver)
+
     # model
     config.model = model = ml_collections.ConfigDict()
     model.sigma = 0.01
