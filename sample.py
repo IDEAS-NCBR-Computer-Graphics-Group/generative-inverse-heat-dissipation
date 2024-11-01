@@ -108,7 +108,9 @@ def sample(config, workdir, checkpoint, save_sample_freq=1,
     utils.save_png(this_sample_dir, initial_sample, "init.png")
     utils.save_gif(this_sample_dir, intermediate_samples)
     utils.save_video(this_sample_dir, intermediate_samples)
-
+    video_mpv4_filename, video_x264_filename = "process.mp4", "process_x264.mp4"
+    video_mpv4_path, video_x264_path = os.path.join(this_sample_dir, video_mpv4_filename), os.path.join(this_sample_dir, video_x264_filename)
+    os.system(f'ffmpeg -y -hide_banner -loglevel error -i {video_mpv4_path} -vcodec libx264 -f mp4 {video_x264_path}')
 
 def sample_interpolate(config, workdir, checkpoint,
                        delta, num_points, number):
@@ -154,20 +156,25 @@ def sample_interpolate(config, workdir, checkpoint,
     logging.info("Sampling done!")
 
     logging.info("Saving results...")
+    video_mpv4_filename, video_x264_filename = "process.mp4", "process_x264.mp4"
+    video_mpv4_path, video_x264_path = os.path.join(this_sample_dir, video_mpv4_filename), os.path.join(this_sample_dir, video_x264_filename)
     if number == None:
         utils.save_png(this_sample_dir, x_sweep[0:1], "base_sample.png")
         utils.save_png(this_sample_dir, x_sweep,
                        "interpolation.png", nrow=num_points)
         print(x_sweep[-1:].repeat(2, 1, 1, 1))
-        utils.save_video(this_sample_dir,
-                         torch.cat([x_sweep, x_sweep[-1:].repeat(10, 1, 1, 1), reversed(x_sweep), x_sweep[:1].repeat(10, 1, 1, 1)]))
+        intermediate_samples = torch.cat([x_sweep, x_sweep[-1:].repeat(10, 1, 1, 1), reversed(x_sweep), x_sweep[:1].repeat(10, 1, 1, 1)])
+        utils.save_gif(this_sample_dir, intermediate_samples)
+        utils.save_video(this_sample_dir, intermediate_samples)
     else:
         utils.save_png(this_sample_dir,
                        x_sweep[0:1], "base_sample_{}.png".format(number))
         utils.save_png(this_sample_dir, x_sweep,
                        "interpolation_{}.png".format(number), nrow=num_points)
-        utils.save_video(this_sample_dir,
-                         torch.cat([x_sweep, x_sweep[-1:].repeat(10, 1, 1, 1), reversed(x_sweep), x_sweep[:1].repeat(10, 1, 1, 1)]))
+        intermediate_samples = torch.cat([x_sweep, x_sweep[-1:].repeat(10, 1, 1, 1), reversed(x_sweep), x_sweep[:1].repeat(10, 1, 1, 1)])
+        utils.save_gif(this_sample_dir, intermediate_samples)
+        utils.save_video(this_sample_dir, intermediate_samples)
+    os.system(f'ffmpeg -y -hide_banner -loglevel error -i {video_mpv4_path} -vcodec libx264 -f mp4 {video_x264_path}')
     logging.info("Done!")
 
 
