@@ -116,12 +116,12 @@ class SpectralTurbulenceGenerator(t.nn.Module):
 
         return u_limited, v_limited
 
-    def generate_turbulence(self, time):
+    def generate_turbulence(self, time: int):
         """
         Generates 2D synthetic turbulence using a spectral method at a specific time.
         
         Parameters:
-        - time: float, specific time at which to generate the turbulence
+        - time: int, specific time step at which to generate the turbulence
         
         Returns:
         - u: 2D array of x-velocity fluctuations (Ny, Nx)
@@ -155,7 +155,7 @@ class SpectralTurbulenceGenerator(t.nn.Module):
         v = t.real(t.fft.ifft2(v_hat))
 
        
-        if self.std_dev < 1E-14:
+        if self.std_dev[time] < 1E-14:
             u,v = 0*self.K, 0*self.K #avoid division by 0 in t.std(u)
         else:
             # u *= (self.desired_std/t.std(u))
@@ -168,8 +168,8 @@ class SpectralTurbulenceGenerator(t.nn.Module):
             # # todo: would the followin chagne the std deviation?
             # u *= self.std_dev 
             # v *= self.std_dev 
-            u *= self.std_dev / t.std(u)
-            v *= self.std_dev / t.std(v)
+            u *= self.std_dev[time] / t.std(u)
+            v *= self.std_dev[time] / t.std(v)
             
 
         # Apply limiter

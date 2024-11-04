@@ -7,6 +7,7 @@
     // Type Python: Select Interpreter
     "version": "0.2.0",
     "configurations": [
+
         {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
@@ -47,8 +48,20 @@
             "console": "integratedTerminal",
             "args": [
                 "--config",
-                "configs/ffhq/128_ffhq_lbm_ns_config.py",
+                "configs/ffhq/ffhq_128_lbm_ns_example.py",
             ]
+        },
+
+        {
+            "name": "Debugger: taichi_lbm_NS_picture_diffuser.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/numerical_solvers/runners/taichi_lbm_NS_picture_diffuser.py",
+            "console": "integratedTerminal",
+            // "args": [
+            //     "--config",
+            //     "configs/ffhq/ffhq_128_lbm_ns_example.py",
+            // ]
         },
     ]
 }

@@ -10,7 +10,7 @@ import taichi as ti
 from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range
 from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
-from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
+from numerical_solvers.corruptors.BaseCorruptor import BaseCorruptor
 
 from scripts.utils import load_config_from_path, setup_logging
 
@@ -72,7 +72,7 @@ class LBM_Base_Corruptor(BaseCorruptor):
                 np_gray_img, self.min_init_gray_scale, self.max_init_gray_scale)
 
             self.solver.init(np_gray_img)
-            self.solver.iterations_counter = 0  # Reset counter
+            self.solver.iterations_counter[None] = 0  # Reset counter
 
             # self._intermediate_samples = torch.empty((steps + 1, *x.shape))
             self._intermediate_samples[0][c] = torch.tensor( # rescale for preview
@@ -86,7 +86,7 @@ class LBM_Base_Corruptor(BaseCorruptor):
                 rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
                 self._intermediate_samples[i][c] = torch.tensor(rho_cpu).unsqueeze(0)
 
-            logging.info(f"Corruptor.solver run for iterations: {self.solver.iterations_counter}")
+        logging.info(f"Corruptor scheduler idx: {steps} --> solver run for iterations: {self.solver.iterations_counter}")
 
         if generate_pair:
             noisy_x = self._intermediate_samples[-1].clone()
