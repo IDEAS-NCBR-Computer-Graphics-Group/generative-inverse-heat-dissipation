@@ -37,11 +37,13 @@ def main():
     save_dir = os.path.join("configs","campaign_ffhq_ade_128")
     os.makedirs(save_dir, exist_ok=False)
     param_grid = {
-        'training.batch_size': [16],
-        'training.n_iters': [100001],
-        'optim.lr': [1e-4, 5e-5, 2e-5, 1e-5],
-        'turbulence.turb_intensity' : [0, 1E-3],
-        'solver.cs2' : [0.3*1./3 , 0.6*1./3 , 1./3 ]
+        'training.batch_size': [4],
+        'training.n_iters': [30001],
+        'optim.lr': [2e-5],
+        # 'optim.lr': [1e-4, 5e-5, 2e-5, 1e-5],
+        'turbulence.turb_intensity' : [1E-4, 1E-3],
+        'solver.cs2' : [1./3 ]
+        # 'solver.cs2' : [0.3*1./3 , 1./3 ]
     }
     
     # param_grid = {
@@ -119,7 +121,7 @@ def get_config():
                         119, 128, 138, 148, 160, 172, 186, 200, 216, 232, 250, 270, 291, 313, 338, 364, 392, 422, 455, 490, 528, 569, 613, 661,
                         712, 767, 826, 890, 959, 1033, 1113, 1199]
 
-    timesteps_array = np.array(timesteps_list_4)
+    timesteps_array = np.array(timesteps_list_1)
     config.solver.hash = conf_utils.hash_solver(config.solver)
     config.turbulence.hash = conf_utils.hash_solver(config.turbulence)
     
@@ -127,7 +129,7 @@ def get_config():
     config.optim.hash = conf_utils.hash_solver(config.optim)
     config.training.hash = conf_utils.hash_int(config.training.batch_size)
     config.solver.lin_sched = True
-    config.solver.final_lbm_step = 100
+    config.solver.final_lbm_step = 1199
     if config.solver.lin_sched: 
         # config.solver.corrupt_sched = np.linspace(
         #     config.solver.min_fwd_steps, config.solver.final_lbm_step, config.solver.max_fwd_steps, dtype=int)

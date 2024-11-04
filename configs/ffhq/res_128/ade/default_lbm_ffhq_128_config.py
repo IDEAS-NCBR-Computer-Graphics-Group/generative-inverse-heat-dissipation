@@ -16,9 +16,9 @@ def get_default_configs():
     training.batch_size = 32
     training.n_evals = 25 # batches for test-set evaluation, arbitrary choice
     training.n_iters = 25001  # 1300001
-    training.log_freq = 100
+    training.log_freq = 10000
     training.eval_freq = 200
-    training.sampling_freq = 2000 #10000
+    training.sampling_freq = 10000 #10000
     
     # store additional checkpoints for preemption in cloud computing environments
     training.snapshot_freq = 5000 # 50000
@@ -58,7 +58,7 @@ def get_default_configs():
 
     # solver
     config.turbulence = turbulence = ml_collections.ConfigDict()
-    turbulence.turb_intensity = float(0.) #*1E-4
+    turbulence.turb_intensity = 0 # conf_utils.lin_schedule(0, 1E-3, solver.max_fwd_steps)
     turbulence.noise_limiter = (-1E-3, 1E-3)
     turbulence.domain_size = (1.0, 1.0)
     turbulence.dt_turb = 5 * 1E-4
@@ -75,7 +75,7 @@ def get_default_configs():
     solver.max_init_gray_scale = 1.05
     solver.cs2 = 1./3.
     solver.min_fwd_steps = 1
-    solver.n_denoising_steps = 100
+    solver.n_denoising_steps = 50
     solver.max_fwd_steps = solver.n_denoising_steps + 1  # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
 
     niu_sched = conf_utils.lin_schedule(1E-4 * 1 / 6, 1 / 6, solver.max_fwd_steps)
