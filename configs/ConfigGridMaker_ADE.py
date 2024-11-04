@@ -41,8 +41,8 @@ def main():
         'training.n_iters': [30001],
         'optim.lr': [2e-5],
         # 'optim.lr': [1e-4, 5e-5, 2e-5, 1e-5],
-        'turbulence.turb_intensity' : [1E-4, 1E-3],
-        'solver.cs2' : [1./3 ]
+        'turbulence.turb_intensity' : [1e-4, 1e-3],
+        'solver.cs2' : [1./3]
         # 'solver.cs2' : [0.3*1./3 , 1./3 ]
     }
     
@@ -121,28 +121,14 @@ def get_config():
                         119, 128, 138, 148, 160, 172, 186, 200, 216, 232, 250, 270, 291, 313, 338, 364, 392, 422, 455, 490, 528, 569, 613, 661,
                         712, 767, 826, 890, 959, 1033, 1113, 1199]
 
-    timesteps_array = np.array(timesteps_list_1)
+    timesteps_array = np.array(timesteps_list_2)
     config.solver.hash = conf_utils.hash_solver(config.solver)
     config.turbulence.hash = conf_utils.hash_solver(config.turbulence)
     
     config.model.hash = conf_utils.hash_solver(config.model)
     config.optim.hash = conf_utils.hash_solver(config.optim)
     config.training.hash = conf_utils.hash_int(config.training.batch_size)
-    config.solver.lin_sched = True
-    config.solver.final_lbm_step = 1199
-    if config.solver.lin_sched: 
-        # config.solver.corrupt_sched = np.linspace(
-        #     config.solver.min_fwd_steps, config.solver.final_lbm_step, config.solver.max_fwd_steps, dtype=int)
-        config.solver.corrupt_sched = timesteps_array
-    else:
-        config.solver.lbm_steps_base = 2.0
-        config.solver.starting_lbm_steps_pow = np.emath.logn(config.solver.lbm_steps_base, config.solver.min_fwd_steps)
-        config.solver.final_lbm_steps_pow = np.emath.logn(config.solver.lbm_steps_base, config.solver.final_lbm_step)
-        if np.math.pow(config.solver.lbm_steps_base, config.solver.final_lbm_steps_pow) != config.solver.final_lbm_step:
-            config.solver.final_lbm_steps_pow += 2*np.finfo(float).eps
-        config.solver.corrupt_sched = np.logspace(
-            config.solver.starting_lbm_steps_pow, config.solver.final_lbm_steps_pow,
-            config.solver.max_fwd_steps, base=config.solver.lbm_steps_base, dtype=int)
+    config.solver.corrupt_sched = timesteps_array
     
     stamp.fwd_solver_hash = conf_utils.hash_joiner([config.solver.hash, config.turbulence.hash])
     stamp.model_optim_hash = conf_utils.hash_joiner([config.model.hash, config.optim.hash, config.training.hash])

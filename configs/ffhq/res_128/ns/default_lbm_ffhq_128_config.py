@@ -78,20 +78,20 @@ def get_default_configs():
     solver.n_denoising_steps = 50
     solver.max_fwd_steps = solver.n_denoising_steps + 1 # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
     solver.final_lbm_step = 50
-    solver.lin_sched = False
+    # solver.lin_sched = True
 
-    if solver.lin_sched: 
-        solver.corrupt_sched = np.linspace(
-            solver.min_fwd_steps, solver.final_lbm_step, solver.max_fwd_steps, dtype=int)
-    else:
-        solver.lbm_steps_base = 2.0
-        solver.starting_lbm_steps_pow = np.emath.logn(solver.lbm_steps_base, solver.min_fwd_steps)
-        solver.final_lbm_steps_pow = np.emath.logn(solver.lbm_steps_base, solver.final_lbm_step)
-        if np.math.pow(solver.lbm_steps_base, solver.final_lbm_steps_pow) != solver.final_lbm_step:
-            solver.final_lbm_steps_pow += 2*np.finfo(float).eps
-        solver.corrupt_sched = np.logspace(
-            solver.starting_lbm_steps_pow, solver.final_lbm_steps_pow,
-            solver.max_fwd_steps, base=solver.lbm_steps_base, dtype=int)
+    # if solver.lin_sched: 
+    #     solver.corrupt_sched = np.linspace(
+    #         solver.min_fwd_steps, solver.final_lbm_step, solver.max_fwd_steps, dtype=int)
+    # else:
+    #     solver.lbm_steps_base = 2.0
+    #     solver.starting_lbm_steps_pow = np.emath.logn(solver.lbm_steps_base, solver.min_fwd_steps)
+    #     solver.final_lbm_steps_pow = np.emath.logn(solver.lbm_steps_base, solver.final_lbm_step)
+    #     if np.math.pow(solver.lbm_steps_base, solver.final_lbm_steps_pow) != solver.final_lbm_step:
+    #         solver.final_lbm_steps_pow += 2*np.finfo(float).eps
+    #     solver.corrupt_sched = np.logspace(
+    #         solver.starting_lbm_steps_pow, solver.final_lbm_steps_pow,
+    #         solver.max_fwd_steps, base=solver.lbm_steps_base, dtype=int)
 
     niu_sched = conf_utils.lin_schedule(1E-4 * 1 / 6, 1 / 6, solver.max_fwd_steps)
     solver.niu = solver.bulk_visc = niu_sched
