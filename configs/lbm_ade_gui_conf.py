@@ -96,7 +96,7 @@ def get_config():
     turbulence.turb_intensity = conf_utils.lin_schedule(1E-6, 5E-4, solver.final_lbm_step, dtype=np.float32)
     turbulence.noise_limiter = (-1E-2, 1E-2)
     turbulence.domain_size = (1.0, 1.0)
-    turbulence.dt_turb = 5 * 1E-4
+    turbulence.dt_turb = 1 * 1E-3
     turbulence.k_min = 2.0 * torch.pi / min(turbulence.domain_size)
     turbulence.k_max = 2.0 * torch.pi / (min(turbulence.domain_size) / 1024)
     turbulence.is_divergence_free = False
