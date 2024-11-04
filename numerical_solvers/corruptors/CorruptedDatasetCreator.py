@@ -5,11 +5,11 @@ from pathlib import Path
 import logging
 import os
 
-from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
-from numerical_solvers.data_holders.LBM_ADE_Corruptor import LBM_ADE_Corruptor
-from numerical_solvers.data_holders.DCTBlurringCorruptor import DCTBlurringCorruptor
-from numerical_solvers.data_holders.GaussianBlurringCorruptor import GaussianBlurringCorruptor
-from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
+from numerical_solvers.corruptors.LBM_NS_Corruptor import LBM_NS_Corruptor
+from numerical_solvers.corruptors.LBM_ADE_Corruptor import LBM_ADE_Corruptor
+from numerical_solvers.corruptors.DCTBlurringCorruptor import DCTBlurringCorruptor
+from numerical_solvers.corruptors.GaussianBlurringCorruptor import GaussianBlurringCorruptor
+from numerical_solvers.corruptors.CorruptedDataset import CorruptedDataset
 
 AVAILABLE_CORRUPTORS = {
     'dct': DCTBlurringCorruptor,

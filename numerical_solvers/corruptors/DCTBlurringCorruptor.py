@@ -8,7 +8,7 @@ import logging
 
 from model_code.utils import DCTBlur
 
-from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
+from numerical_solvers.corruptors.BaseCorruptor import BaseCorruptor
 from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range
 
 

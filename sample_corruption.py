@@ -1,31 +1,22 @@
-import os
+
 from absl import flags
 from absl import app
 from timeit import default_timer as timer
-import torchvision
-import torch
-import os
-import shutil
+import os, shutil
 from pathlib import Path
+import logging
 
 import torchvision
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-from scripts import utils
-from scripts.utils import load_config_from_path
-from scripts import sampling
 
 from scripts import datasets as ihd_datasets
 from scripts import sampling, utils
-from numerical_solvers.data_holders.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
+from numerical_solvers.corruptors.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
+
 FLAGS = flags.FLAGS
-
-# config_flags.DEFINE_config_file("config", None, "Training configuration.", lock_config=True) # this does not work in python 3.12 as 'imp' module has been removed
-flags.DEFINE_string("config", None, "Path to the config file.")
-flags.mark_flags_as_required(["config"])
-
 
 def main(argv):
     # Example
@@ -35,27 +26,46 @@ def main(argv):
   
   
 def produce_fwd_sample(config_path):
-    config = load_config_from_path(config_path)
+    config = utils.load_config_from_path(config_path)
     torch.manual_seed(config.seed)
     np.random.seed(config.seed)
 
-    trainloader, testloader = ihd_datasets.get_dataset(config, uniform_dequantization=config.data.uniform_dequantization)
+    # save_dir = os.path.join("runs", "sample_corruption", f"caseId_{config.stamp.fwd_solver_hash}")
+    save_dir = os.path.join("tests", "artifacts", f"fwd_corruption_{config.stamp.fwd_solver_hash}")
+    utils.setup_logging(save_dir)
+    logging.info(f"save_dir: {save_dir}")
+    logging.info(f"config.corrupt_sched has {len(config.solver.corrupt_sched)} elements:\n {config.solver.corrupt_sched}")
 
-    storage_dir = 'runs'
-    save_scriptname = 'sample_corruption_' + config.stamp.fwd_solver_hash
-    save_dir = os.path.join(storage_dir, save_scriptname)
+
+    # Get the absolute path of the current script
+    current_file_path = Path(__file__).resolve()
+    project_dir = current_file_path.parents[0]
+
+    # remove previous corrupted dataset
+    dataset_dir = utils.get_save_dir(project_dir, config)
+    logging.info(f"dataset_dir: {dataset_dir}")
+    if os.path.exists(dataset_dir):
+        shutil.rmtree(dataset_dir)
+        logging.info(f"Removed {dataset_dir}")
+
+    trainloader, testloader = ihd_datasets.get_dataset(config,
+                                                        uniform_dequantization=config.data.uniform_dequantization)
+
     os.makedirs(save_dir, exist_ok=True)
     shutil.copy(config_path, save_dir)
-    shutil.copy(os.path.join(*config_path.split(os.sep)[:-1], f'default_lbm_{config.data.dataset.lower()}_config.py'), save_dir)
 
-    clean_image, batch = ihd_datasets.prepare_batch(iter(trainloader),'cpu')
+    default_cfg_path = os.path.join(*config_path.split(os.sep)[0:2], f'default_lbm_{config.data.dataset.lower()}_config.py')
+    if os.path.isfile(default_cfg_path):
+        shutil.copy2(default_cfg_path, save_dir)
+
+    clean_image, batch = ihd_datasets.prepare_batch(iter(trainloader), 'cpu')
     corrupted_image, less_corrupted_image, corruption_amount, label = batch
 
-    print('clean input shape:', clean_image.shape)
-    print('corruption_amount:', corruption_amount)
-    print('batch_size = x.shape[0]:', clean_image.shape[0])
-    print('Labels:', label.shape)
-    
+    logging.info(f"clean input shape: {clean_image.shape}")
+    logging.info(f"corruption_amount: {corruption_amount}")
+    logging.info(f"batch_size = x.shape[0]: {clean_image.shape[0]}")
+    logging.info(f"Labels: {label.shape}")
+
     matplotlib.use('TkAgg')
     fig, axs = plt.subplots(3, 1, figsize=(20, 20), sharex=True)
     axs[0].set_title('clean x', fontsize=24)
@@ -69,7 +79,7 @@ def produce_fwd_sample(config_path):
     # plt.show()
     plt.close()
 
-    corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
+    corruptor = AVAILABLE_CORRUPTORS[config.solver.type](
         config=config,
         transform=config.data.transform)
 
@@ -77,7 +87,6 @@ def produce_fwd_sample(config_path):
     n_denoising_steps = config.solver.n_denoising_steps
     initial_corrupted_sample, clean_initial_sample, intermediate_corruption_samples = sampling.get_initial_corrupted_sample(
         trainloader, n_denoising_steps, corruptor)
-
 
     utils.save_gif(save_dir, intermediate_corruption_samples, "corruption_init.gif")
     utils.save_video(save_dir, intermediate_corruption_samples, filename="corruption_init.mp4")
@@ -91,9 +100,14 @@ def produce_fwd_sample(config_path):
     axs[1].imshow(torchvision.utils.make_grid(initial_corrupted_sample)[0], cmap='Greys')
 
     plt.tight_layout()
-    plt.savefig(os.path.join(save_dir,'Fully_corrupted_sample.png'), bbox_inches='tight')
+    plt.savefig(os.path.join(save_dir, 'Fully_corrupted_sample.png'), bbox_inches='tight')
     # plt.show()
     plt.close()
-    
+
 if __name__ == '__main__':
+
+    # config_flags.DEFINE_config_file("config", None, "Training configuration.", lock_config=True) # this does not work in python 3.12 as 'imp' module has been removed
+    flags.DEFINE_string("config", None, "Path to the config file.")
+    flags.mark_flags_as_required(["config"])
+
     app.run(main)

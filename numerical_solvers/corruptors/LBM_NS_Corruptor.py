@@ -7,7 +7,7 @@ import warnings
 from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range
 from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver    
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
-from numerical_solvers.data_holders.LBM_Base_Corruptor import LBM_Base_Corruptor
+from numerical_solvers.corruptors.LBM_Base_Corruptor import LBM_Base_Corruptor
 
 class LBM_NS_Corruptor(LBM_Base_Corruptor):
     def __init__(self, config, transform=None, target_transform=None):

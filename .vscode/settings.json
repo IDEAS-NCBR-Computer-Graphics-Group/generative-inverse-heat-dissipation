@@ -12,5 +12,14 @@
   },
   "jupyter.runStartupCommands": [
       "import os; import sys; sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))"
-  ]
+],
+"python.testing.unittestArgs": [
+    "-v",
+    "-s",
+    "./tests",
+    "-p",
+    "test_*.py"
+],
+"python.testing.pytestEnabled": false,
+"python.testing.unittestEnabled": true
 }

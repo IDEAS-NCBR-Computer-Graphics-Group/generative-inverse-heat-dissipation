@@ -3,7 +3,7 @@ import numpy as np
 import logging
 from scripts import datasets
 # from numerical_solvers.data_holders.LBM_NS_Corruptor import LBM_NS_Corruptor
-from numerical_solvers.data_holders.BaseCorruptor import BaseCorruptor
+from numerical_solvers.corruptors.BaseCorruptor import BaseCorruptor
 from torchvision import transforms
 
 def get_sampling_fn_inverse_lbm_ns(
