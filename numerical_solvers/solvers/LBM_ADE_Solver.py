@@ -151,7 +151,6 @@ class LBM_ADE_Solver(LBM_SolverBase):
     @ti.kernel
     def update_macro_var(self): 
         for i, j in ti.ndrange((1, self.nx-1), (1,self.ny-1)):
-        # for i, j in ti.ndrange(self.nx, self.ny):
             self.rho[i, j] = 0
             
             for k in ti.static(range(9)):

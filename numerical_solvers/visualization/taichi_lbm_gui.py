@@ -26,7 +26,7 @@ def run_simple_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, sl
 
         vel = solver.vel.to_numpy()
         vel_mag = np.sqrt((vel[:, :, 0] ** 2 + vel[:, :, 1] ** 2))
-        vel_img = cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=0.0, vmax=0.05), cmap="coolwarm").to_rgba(vel_mag)
+        vel_img = cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=0.0, vmax=0.01), cmap="coolwarm").to_rgba(vel_mag)
 
         force = solver.Force.to_numpy()
         force_mag = np.sqrt((force[:, :, 0] ** 2 + force[:, :, 1] ** 2))

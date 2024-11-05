@@ -1,7 +1,7 @@
 import ml_collections
 import torch
 import numpy as np
-
+from configs import conf_utils
 
 def get_config():
     return get_default_configs()
@@ -78,7 +78,8 @@ def get_default_configs():
     optim.warmup = 5000
     optim.grad_clip = 1.
     optim.automatic_mp = False
-
+    optim.hash = conf_utils.hash_solver(optim)
+    
     config.seed = 42
     
     # config.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
