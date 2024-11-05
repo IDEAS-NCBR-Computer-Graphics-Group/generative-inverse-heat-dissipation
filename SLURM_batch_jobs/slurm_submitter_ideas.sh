@@ -83,7 +83,7 @@ for CONFIG_FILE in $CONFIG_DIRNAME/*.py; do
     ) > "$JOB_SCRIPT"
     
     if $PRINT_ONLY; then
-        echo "Generated SLURM script for $CONFIG_FILE:"
+        echo "Generated SLURM script $JOB_SCRIPT for $CONFIG_FILE:"
         cat "$JOB_SCRIPT"
         echo # Add a blank line for readability
     else
