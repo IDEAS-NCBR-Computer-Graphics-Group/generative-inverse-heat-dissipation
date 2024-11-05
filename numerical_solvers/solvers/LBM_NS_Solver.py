@@ -52,8 +52,8 @@ class LBM_NS_Solver(LBM_SolverBase):
             self.apply_nee_bc()
             self.update_iteration_counter()
             
-            if self.iterations_counter[None]  % 10 == 0:
-                print(f"iterations: {self.iterations_counter}")
+            # if self.iterations_counter[None]  % 10 == 0:
+            #     print(f"iterations: {self.iterations_counter}")
             
         # print(f"Solver run for iterations: {self.iterations_counter[None]}")                    
 
