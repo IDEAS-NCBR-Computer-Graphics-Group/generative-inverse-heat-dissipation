@@ -84,25 +84,27 @@ def get_config():
         solver.n_denoising_steps = solver.max_fwd_steps - 1
     
     solver.cs2 = conf_utils.lin_schedule(1./3, 1./3, solver.final_lbm_step, dtype=np.float32)
-    niu_sched = conf_utils.lin_schedule(1E-4*1./6, 1./6., solver.final_lbm_step, dtype=np.float32)
+    # niu_sched = conf_utils.lin_schedule(1E-5*1./6, 1./6., solver.final_lbm_step, dtype=np.float32)
     # niu_sched = conf_utils.lin_schedule(1 / 6,  1 / 6, solver.final_lbm_step, dtype=np.float32)
-    # niu_sched  = conf_utils.lin_schedule(1E-4 * 1./6., 1E-4 *1./6., solver.final_lbm_step)
-    # niu_sched  = conf_utils.exp_schedule(1E-4 * 1./6., 1./6., solver.final_lbm_step)
-    # niu_sched = conf_utils.inv_cosine_aplha_schedule(1E-4*1./6., 1./6., solver.final_lbm_step)
-    # niu_sched = conf_utils.tanh_schedule(1E-4 *1./6., 1./6., solver.final_lbm_step)
-
-    solver.niu = solver.bulk_visc = niu_sched
+   
     
+    # niu_sched = conf_utils.inv_cosine_aplha_schedule(1E-4*1./6., 1./6., solver.final_lbm_step)
+ 
+    # niu_sched  = conf_utils.lin_schedule(1E-4, 1E-4, solver.final_lbm_step)
+    # niu_sched = conf_utils.tanh_schedule(1E-5* 1./ 6,  1./ 6, solver.final_lbm_step, dtype=np.float32)
+    niu_sched  = conf_utils.exp_schedule(1E-4*1./6, 1./6., solver.final_lbm_step)
+    solver.niu = solver.bulk_visc = niu_sched
+    solver.u_damper = conf_utils.lin_schedule(0.9, 0., solver.final_lbm_step, dtype=np.float32)
+    # solver.u_damper = conf_utils.exp_schedule(1, 0.000001, solver.final_lbm_step, dtype=np.float32)
     
     solver.hash = conf_utils.hash_solver(solver)
 
     # turbulence
     turbulence = config.turbulence
-    # turbulence.turb_intensity = 1* 1E-4
-    turbulence.turb_intensity = conf_utils.lin_schedule(1E-5, 1E-3, solver.final_lbm_step, dtype=np.float32)
+    turbulence.turb_intensity = conf_utils.lin_schedule(1E-6, 1E-4, solver.final_lbm_step, dtype=np.float32)
     turbulence.noise_limiter = (-1E-2, 1E-2)
     turbulence.domain_size = (1.0, 1.0)
-    turbulence.dt_turb = 7 * 1E-4
+    turbulence.dt_turb = 5 * 1E-3
     turbulence.k_min = 2.0 * torch.pi / min(turbulence.domain_size)
     turbulence.k_max = 2.0 * torch.pi / (min(turbulence.domain_size) / 1024)
     turbulence.is_divergence_free = False

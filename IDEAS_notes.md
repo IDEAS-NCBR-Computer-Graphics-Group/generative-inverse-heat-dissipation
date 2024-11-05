@@ -4,6 +4,8 @@
 image:
 c2-deeplearning-pytorch-1-13-cu113-v20240730-debian-11
 
+sudo snap install ffmpeg
+
 ## conda way
 
 create and activate conda env
@@ -244,7 +246,7 @@ python numerical_solvers/runners/taichi_lbm_NS_picture_diffuser.py
 
 python train.py --config configs/mnist/small_mnist.py --workdir runs/mnist/small_mnist
 
-python train_corrupted.py --config configs/mnist/small_mnist_lbm_ns_config.py  --workdir runs/mnist/small_lbm_mnist  
+python train_corrupted.py --config configs/mnist/small_mnist_lbm_ns_config.py 
 
 python train_corrupted.py --config configs/mnist/small_mnist_lbm_ns_turb_config.py --workdir runs/mnist/small_lbm_turb_mnist
 

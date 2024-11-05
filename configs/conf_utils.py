@@ -7,13 +7,13 @@ import numpy as np
 
 
 
-def exp_schedule(min_value, max_value, n, dtype=float):
+def exp_schedule(min_value, max_value, n, dtype=np.float32):
     return np.exp(np.linspace(np.log(min_value), np.log(max_value), n)).astype(dtype)
 
-def lin_schedule(min_value, max_value, n, dtype=float):
+def lin_schedule(min_value, max_value, n, dtype=np.float32):
     return np.linspace(min_value, max_value, n).astype(dtype)
 
-def cosine_beta_schedule(min_value, max_value, n, s=0.008, dtype=float):
+def cosine_beta_schedule(min_value, max_value, n, s=0.008, dtype=np.float32):
     """
     Rescaled cosine schedule as proposed in https://arxiv.org/abs/2102.09672
     """
@@ -30,7 +30,7 @@ def cosine_beta_schedule(min_value, max_value, n, s=0.008, dtype=float):
     
     return betas_scaled.astype(dtype), alphas_scaled.astype(dtype) 
 
-def inv_cosine_aplha_schedule(min_value, max_value, n, s=0.008, dtype=float):
+def inv_cosine_aplha_schedule(min_value, max_value, n, s=0.008, dtype=np.float32):
     """
     Insipredd by schedule proposed in https://arxiv.org/abs/2102.09672
     """
@@ -42,7 +42,7 @@ def inv_cosine_aplha_schedule(min_value, max_value, n, s=0.008, dtype=float):
     alphas_inv_scaled =  (alphas_cumprod) * (max_value - min_value) + min_value
     return np.flip(alphas_inv_scaled).astype(dtype) 
 
-def tanh_schedule(min_value, max_value, n, steepness = 0.005, dtype=float):
+def tanh_schedule(min_value, max_value, n, steepness = 0.005, dtype=np.float32):
     x = np.linspace(-500, 500, n)
     result = (np.tanh(steepness*x) + 1) / 2
     result_scaled = result * (max_value - min_value) + min_value

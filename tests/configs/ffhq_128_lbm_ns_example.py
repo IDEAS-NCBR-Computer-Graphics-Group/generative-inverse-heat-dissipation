@@ -58,19 +58,6 @@ def get_default_configs():
         [transforms.ToTensor(), transforms.Grayscale()])
 
     # solver
-    config.turbulence = turbulence = ml_collections.ConfigDict()
-    turbulence.turb_intensity = float(0.)  # *1E-4
-    turbulence.noise_limiter = (-1E-3, 1E-3)
-    turbulence.domain_size = (1.0, 1.0)
-    turbulence.dt_turb = 5 * 1E-4
-    turbulence.k_min = 2.0 * torch.pi / min(turbulence.domain_size)
-    turbulence.k_max = 2.0 * torch.pi / (min(turbulence.domain_size) / 1024)
-    turbulence.is_divergence_free = False
-    turbulence.energy_slope = -5.0 / 3.0
-    turbulence.hash = conf_utils.hash_solver(turbulence)
-    turbulence.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (turbulence.energy_slope)), 0,
-                                                       k ** (turbulence.energy_slope))
-
     config.solver = solver = ml_collections.ConfigDict()
     solver.type = 'ns'
     solver.min_init_gray_scale = 0.95
@@ -90,11 +77,26 @@ def get_default_configs():
         solver.max_fwd_steps = len(solver.corrupt_sched)
         solver.n_denoising_steps = solver.max_fwd_steps - 1
     
-    solver.cs2 = conf_utils.lin_schedule(0.3*1./3, 1./3, solver.final_lbm_step)
-    niu_sched = conf_utils.lin_schedule(1E-4*1/6, 1./6, solver.final_lbm_step)
+    solver.cs2 = conf_utils.lin_schedule(0.3*1./3, 1./3, solver.final_lbm_step, dtype=np.float32)
+    niu_sched = conf_utils.lin_schedule(1E-4*1/6, 1./6, solver.final_lbm_step, dtype=np.float32)
     solver.niu = solver.bulk_visc = niu_sched
+    solver.u_damper = 0.*conf_utils.lin_schedule(.5, 1E-6, solver.final_lbm_step, dtype=np.float32)
     solver.hash = conf_utils.hash_solver(solver)
 
+    
+    # turbulence
+    config.turbulence = turbulence = ml_collections.ConfigDict()
+    turbulence.turb_intensity = conf_utils.lin_schedule(1E-5, 1E-3, solver.final_lbm_step, dtype=np.float32)
+    turbulence.noise_limiter = (-1E-3, 1E-3)
+    turbulence.domain_size = (1.0, 1.0)
+    turbulence.dt_turb = 1 * 1E-3
+    turbulence.k_min = 2.0 * torch.pi / min(turbulence.domain_size)
+    turbulence.k_max = 2.0 * torch.pi / (min(turbulence.domain_size) / 1024)
+    turbulence.is_divergence_free = False
+    turbulence.energy_slope = -5.0 / 3.0
+    turbulence.hash = conf_utils.hash_solver(turbulence)
+    turbulence.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (turbulence.energy_slope)), 0,
+                                                       k ** (turbulence.energy_slope))
     # model
     config.model = model = ml_collections.ConfigDict()
 
@@ -140,7 +142,7 @@ def get_default_configs():
     config.device = torch.device(
         'cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 
-    if os.uname().nodename in ['pc']:
+    if os.uname().nodename in ['pc', 'laptop']:
         debug = True
     else:
         debug = False

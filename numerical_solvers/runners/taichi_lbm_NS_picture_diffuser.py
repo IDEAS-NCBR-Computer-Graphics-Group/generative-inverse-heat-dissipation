@@ -88,6 +88,7 @@ if __name__ == '__main__':
         config.solver.niu,
         config.solver.bulk_visc,
         config.solver.cs2,
+        config.solver.u_damper,
         spectralTurbulenceGenerator
         )    
     
@@ -125,6 +126,6 @@ if __name__ == '__main__':
         
     ############################ standard renderer with multiple subwindows
     # run_with_gui(solver, np_gray_image, iter_per_frame = 1)
-    # run_simple_gui(solver, np_gray_image, iter_per_frame=1, sleep_time=0.0, show_gui=True) 
-    run_simple_gui(solver, np_gray_image, iter_per_frame=1, sleep_time=0.075, show_gui=True) # sleep_time=0.075,
+    run_simple_gui(solver, np_gray_image, iter_per_frame=1, sleep_time=0.0, show_gui=True) 
+    # run_simple_gui(solver, np_gray_image, iter_per_frame=1, sleep_time=0.075, show_gui=True) # sleep_time=0.075,
     ############################

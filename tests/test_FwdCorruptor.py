@@ -19,7 +19,7 @@ class TestFwdCorruptor(unittest.TestCase):
         self.project_dir = current_file_path.parents[1]
 
         # Construct the config path relative to the script directory
-        config_dir = os.path.join(self.project_dir, "configs", "ffhq")
+        config_dir = os.path.join(self.project_dir, "tests", "configs")
         config_file = "ffhq_128_lbm_ns_example.py"
         
         # config_dir = os.path.join(self.project_dir, "configs", "campaign_ffhq_ns_128_v2")

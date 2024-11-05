@@ -90,9 +90,10 @@ def get_default_configs():
         solver.max_fwd_steps = len(solver.corrupt_sched)
         solver.n_denoising_steps = solver.max_fwd_steps - 1
     
-    solver.cs2 = conf_utils.lin_schedule(0.3 * 1./3, 1./3, solver.final_lbm_step)
+    solver.cs2 = conf_utils.lin_schedule(1./3, 1./3, solver.final_lbm_step)
     niu_sched = conf_utils.lin_schedule(1E-3 * 1./6, 1./6, solver.final_lbm_step)
     solver.niu = solver.bulk_visc = niu_sched
+    solver.u_damper = 0.*conf_utils.lin_schedule(.5, 1E-6, solver.final_lbm_step, dtype=np.float32)
     solver.hash = conf_utils.hash_solver(solver)
 
     # model
