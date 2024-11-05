@@ -42,7 +42,7 @@ def get_default_configs():
     data.random_flip = False
     data.centered = False
     data.uniform_dequantization = False
-    data.num_channels = 3
+    data.num_channels = 1
 
     # data - cd
     data = config.data
@@ -52,7 +52,8 @@ def get_default_configs():
     data.processed_filename = 'lbm_ns_pairs' if data.process_pairs else 'lbm_ns'
     data.dataset = 'FFHQ_128'
     data.image_size = 128
-    data.transform = transforms.Compose([transforms.ToTensor()]) # transforms.Grayscale()
+    data.transform = transforms.Compose(
+        [transforms.ToTensor(),transforms.Grayscale()])
 
 
     # solver
@@ -83,17 +84,16 @@ def get_default_configs():
     
     solver.corrupt_sched = conf_utils.exp_schedule(
         solver.min_fwd_steps, solver.final_lbm_step, solver.max_fwd_steps, dtype=int)
-    
+        
     are_steps_unique = False
     if are_steps_unique:
         solver.corrupt_sched = np.unique(solver.corrupt_sched)
         solver.max_fwd_steps = len(solver.corrupt_sched)
         solver.n_denoising_steps = solver.max_fwd_steps - 1
     
-    solver.cs2 = conf_utils.lin_schedule(1./3, 1./3, solver.final_lbm_step)
+    solver.cs2 = conf_utils.lin_schedule(1./3. , 1./3, solver.final_lbm_step)
     niu_sched = conf_utils.lin_schedule(1E-3 * 1./6, 1./6, solver.final_lbm_step)
     solver.niu = solver.bulk_visc = niu_sched
-    solver.u_damper = 0.*conf_utils.lin_schedule(.5, 1E-6, solver.final_lbm_step, dtype=np.float32)
     solver.hash = conf_utils.hash_solver(solver)
 
     # model
@@ -160,7 +160,7 @@ def get_default_configs():
     
         config.training.batch_size = 1 # rtx2080
         config.eval.batch_size = 1
-        config.training.n_iters = 101
+        config.training.n_iters = 51
         config.training.eval_freq = 20
         config.training.sampling_freq = 25
         

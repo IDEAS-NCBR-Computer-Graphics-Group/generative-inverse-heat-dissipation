@@ -19,18 +19,18 @@ class TestFwdCorruptor(unittest.TestCase):
         self.project_dir = current_file_path.parents[1]
 
         # Construct the config path relative to the script directory
-        config_dir = os.path.join(self.project_dir, "tests", "configs")
-        config_file = "ffhq_128_lbm_ns_example.py"
+        self.config_dir = os.path.join(self.project_dir, "tests", "configs")
+        self.config_files = ["ffhq_128_lbm_ade_example.py","ffhq_128_lbm_ns_example.py"]
         
-        # config_dir = os.path.join(self.project_dir, "configs", "campaign_ffhq_ns_128_v2")
-        # config_file = "config_00e20971.py"
-                
-        self.config_path = os.path.join(config_dir, config_file)
-        logging.info(f"config_path = {self.config_path}")
-
-
     def test_produce_fwd_sample(self):
-        produce_fwd_sample(self.config_path)
+        # test your campaign before launch
+        # self.config_dir = os.path.join(self.project_dir, "configs", "campaign_ffhq_ade_128")
+        # self.config_files = ["config_d17dedb5.py"]
+        
+        for config_file in self.config_files:
+            config_path = os.path.join(self.config_dir, config_file)
+            logging.info(f"fwd corruption: config_path = {config_path}")
+            produce_fwd_sample(config_path)
 
 if __name__ == '__main__':
     unittest.main()
