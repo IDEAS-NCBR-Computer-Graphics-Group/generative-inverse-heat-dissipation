@@ -3,6 +3,7 @@ import taichi as ti
 import numpy as np
 import time
 from pathlib import Path
+import cv2
 
 from numerical_solvers.solvers.LBM_NS_Solver import LBM_NS_Solver
 from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
@@ -10,8 +11,9 @@ from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
 import matplotlib
 import matplotlib.cm as cm
 
-def run_simple_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show_gui=True):
-    gui_res = (1 * solver.nx, 3 * solver.ny)
+def run_simple_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, sleep_time=0.001, show_gui=True):
+    scale = 5
+    gui_res = (scale * 1 * solver.nx, scale * 3 * solver.ny)
     window = ti.ui.Window('CG - Renderer', res=gui_res)
     gui = window.get_gui()
     canvas = window.get_canvas()
@@ -24,17 +26,18 @@ def run_simple_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, sh
 
         vel = solver.vel.to_numpy()
         vel_mag = np.sqrt((vel[:, :, 0] ** 2 + vel[:, :, 1] ** 2))
-        vel_img = cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=0.0, vmax=0.05), cmap="coolwarm").to_rgba(vel_mag)
+        vel_img = cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=0.0, vmax=0.01), cmap="coolwarm").to_rgba(vel_mag)
 
         force = solver.Force.to_numpy()
         force_mag = np.sqrt((force[:, :, 0] ** 2 + force[:, :, 1] ** 2))
-        force_mag = cm.ScalarMappable(cmap="inferno").to_rgba(force_mag)
+        force_mag = cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=1E-5, vmax=1E-3), cmap="inferno").to_rgba(force_mag)
 
-        img = np.concatenate((rho_img, vel_img, force_mag), axis=1)
+        img = np.concatenate((rho_img, vel_img, force_mag), axis=1)        
         canvas.set_image(img.astype(np.float32))
-
+        
         solver.solve(iter_per_frame)
         window.show()
+        time.sleep(sleep_time)
 
 def run_with_gui(solver: LBM_NS_Solver, np_init_gray_image, iter_per_frame, show_gui=True):
     gui_res = (6*solver.nx, 3 * solver.ny)

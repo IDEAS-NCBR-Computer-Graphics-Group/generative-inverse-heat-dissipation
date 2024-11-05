@@ -15,15 +15,13 @@ from absl import app
 from absl import flags
 import wandb
 
-from numerical_solvers.data_holders.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
+from numerical_solvers.corruptors.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
 from scripts.git_utils import get_git_branch, get_git_revision_hash, get_git_revision_short_hash
 from scripts.utils import load_config_from_path, setup_logging
 
 FLAGS = flags.FLAGS
 
-# config_flags.DEFINE_config_file("config", None, "NN Training configuration.", lock_config=True) # removed in python 3.12 # this return a parsed object - ConfigDict
-flags.DEFINE_string("config", None, "Path to the config file.")
-flags.mark_flags_as_required(["config"])
+
 
 
 def main(argv):
@@ -64,10 +62,12 @@ def train(config_path):
     # copy config to know what has been run
     Path(workdir).mkdir(parents=True, exist_ok=True)
     shutil.copy(config_path, workdir) 
-    default_config_path = os.path.join(*config_path.split(os.sep)[:-1], f'default_lbm_{config.data.dataset.lower()}_config.py')
-    print(default_config_path)
-    shutil.copy(default_config_path, workdir)
-
+    
+    default_cfg_path = os.path.join(*config_path.split(os.sep)[:-1], f'default_lbm_{config.data.dataset.lower()}_config.py')
+    
+    if os.path.isfile(default_cfg_path):
+        shutil.copy2(default_cfg_path, workdir)
+      
     # Setup logging once the workdir is known
     setup_logging(workdir)
 
@@ -114,7 +114,10 @@ def train(config_path):
         config, uniform_dequantization=config.data.uniform_dequantization)
     datadir = os.path.join(f'data/corrupted_{config.data.dataset}',f'{config.data.processed_filename}_{config.stamp.fwd_solver_hash}')
     shutil.copy(config_path, datadir)
-    shutil.copy(os.path.join(*config_path.split(os.sep)[:-1], f'default_lbm_{config.data.dataset.lower()}_config.py'), datadir)
+    
+    if os.path.isfile(default_cfg_path):
+        shutil.copy2(default_cfg_path, datadir)
+
     train_iter = iter(trainloader)
     eval_iter = iter(testloader)
 
@@ -143,7 +146,11 @@ def train(config_path):
     video_mpv4_filename, video_x264_filename = "corruption_init.mp4", "corruption_init_x264.mp4"
     video_mpv4_path, video_x264_path = os.path.join(workdir, video_mpv4_filename), os.path.join(workdir, video_x264_filename)
     utils.save_video(workdir, intermediate_corruption_samples, filename=video_mpv4_filename)
+<<<<<<< HEAD
     os.system(f'ffmpeg -y -hide_banner -loglevel error -i {video_mpv4_path} -vcodec libx264 -f mp4 {video_x264_path}')
+=======
+    os.system(f'ffmpeg -y -loglevel error -i {video_mpv4_path} -vcodec libx264 -f mp4 {video_x264_path}')
+>>>>>>> main
     utils.save_png(workdir, clean_initial_sample, "clean_init.png")
     wandb.log({
         "clean_init": wandb.Image(os.path.join(workdir, "clean_init.png")),
@@ -232,7 +239,11 @@ def train(config_path):
             video_mpv4_filename, video_x264_filename = "process.mp4", "process_x264.mp4"
             video_mpv4_path, video_x264_path = os.path.join(this_sample_dir, video_mpv4_filename), os.path.join(this_sample_dir, video_x264_filename)
             utils.save_video(this_sample_dir, intermediate_samples, filename=video_mpv4_filename)
+<<<<<<< HEAD
             os.system(f'ffmpeg -y -hide_banner -loglevel error -i {video_mpv4_path} -vcodec libx264 -f mp4 {video_x264_path}')
+=======
+            os.system(f'ffmpeg -y -loglevel error -i {video_mpv4_path} -vcodec libx264 -f mp4 {video_x264_path}')
+>>>>>>> main
             wandb.log({"process": wandb.Video(video_x264_path)})
 
 
@@ -240,4 +251,9 @@ def train(config_path):
     logging.info("Done.")
      
 if __name__ == "__main__":
+    
+    # config_flags.DEFINE_config_file("config", None, "NN Training configuration.", lock_config=True) # removed in python 3.12 # this return a parsed object - ConfigDict
+    flags.DEFINE_string("config", None, "Path to the config file.")
+    flags.mark_flags_as_required(["config"])
+
     app.run(main)

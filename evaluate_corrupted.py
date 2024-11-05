@@ -12,7 +12,7 @@ import os
 import logging
 import sys
 
-from numerical_solvers.data_holders.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
+from numerical_solvers.corruptors.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
 
 FLAGS = flags.FLAGS
 

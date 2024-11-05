@@ -70,6 +70,8 @@ for CONFIG_FILE in $CONFIG_DIRNAME/*.py; do
         
         echo
         
+        echo "module load GCCcore/12.3.0"
+        echo "module load FFmpeg/6.0"
         echo "module load Python/3.10.4"
 
         echo

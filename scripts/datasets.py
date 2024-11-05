@@ -14,8 +14,10 @@ from pathlib import Path
 import logging
 
 import os
-from numerical_solvers.data_holders.CorruptedDataset import CorruptedDataset
-from numerical_solvers.data_holders.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
+from numerical_solvers.corruptors.CorruptedDataset import CorruptedDataset
+from numerical_solvers.corruptors.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
+from scripts import utils
+
 
 class UniformDequantize(object):
     def __init__(self):
@@ -36,15 +38,11 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
     https://github.com/clovaai/stargan-v2/blob/master/README.md#animal-faces-hq-dataset-afhq
     https://github.com/fyu/lsun
     """
-
-    if getattr(config, 'solver', None):
-        solver_hash = config.solver.hash      
+    
+    if getattr(config, 'solver', None):     
         current_file_path = Path(__file__).resolve()
-        base_folder = current_file_path.parents[1]
-        input_data_dir = os.path.join(base_folder, "data")
-        dataset_name = f'corrupted_{config.data.dataset}'
-        output_data_dir = os.path.join(input_data_dir, dataset_name)
-        save_dir = os.path.join(output_data_dir, f'{config.data.processed_filename}_{config.stamp.fwd_solver_hash}')
+        save_dir = utils.get_save_dir(current_file_path.parents[1], config)
+        
         corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
             config=config,
             transform=config.data.transform

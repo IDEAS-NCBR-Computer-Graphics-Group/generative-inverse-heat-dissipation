@@ -1,6 +1,7 @@
 from configs.mnist import default_lbm_mnist_config as default_mnist_configs
 import ml_collections
 import numpy as np
+import os
 import torch
 from torchvision import transforms
 from configs import conf_utils
@@ -11,6 +12,7 @@ def get_config():
     model = config.model
     model.model_channels = 64
     model.channel_mult = (1, 1, 1)
+    model.hash = conf_utils.hash_solver(model)
     
     # model.blur_sigma_max = 20
     # model.blur_sigma_min = 0.5
@@ -35,10 +37,38 @@ def get_config():
     training.log_freq = 100
     training.eval_freq = 200
     training.sampling_freq = 200
+    training.hash = conf_utils.hash_int(config.training.batch_size)
+    
+
+    
+    solver = config.solver
+    solver.min_init_gray_scale = 0.95
+    solver.max_init_gray_scale = 1.05
+    solver.type = 'ns'
+    # solver.niu = solver.bulk_visc = 0.5 * 1/6
+    solver.min_fwd_steps = 1
+    solver.n_denoising_steps = 20
+    solver.max_fwd_steps = solver.n_denoising_steps + 1  # corruption_amount = np.random.randint(self.min_steps, self.max_steps) we need to add +1 as max_fwd_steps is excluded from tossing
+    solver.final_lbm_step = 21
+    
+    solver.corrupt_sched = conf_utils.exp_schedule(
+    solver.min_fwd_steps, solver.final_lbm_step, solver.max_fwd_steps, dtype=int)
+    
+    are_steps_unique = False
+    if are_steps_unique:
+        solver.corrupt_sched = np.unique(solver.corrupt_sched)
+        solver.max_fwd_steps = len(solver.corrupt_sched)
+        solver.n_denoising_steps = solver.max_fwd_steps - 1
+    
+    solver.cs2 = conf_utils.lin_schedule(0.3*1./3, 1./3, solver.final_lbm_step, dtype=np.float32)
+    niu_sched  = conf_utils.lin_schedule(0.5 * 1/6, 0.5 * 1/6, solver.final_lbm_step, dtype=np.float32)
+    solver.niu = solver.bulk_visc = niu_sched
+    solver.hash = conf_utils.hash_solver(solver)
+    
     
     # turbulence
     turbulence = config.turbulence
-    turbulence.turb_intensity = 0 #*1E-4
+    turbulence.turb_intensity = conf_utils.lin_schedule(1E-5, 1E-3, solver.final_lbm_step, dtype=np.float32)
     turbulence.noise_limiter = (-1E-3, 1E-3)
     turbulence.domain_size = (1.0, 1.0)
     turbulence.dt_turb = 5 * 1E-4
@@ -50,22 +80,17 @@ def get_config():
     turbulence.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (turbulence.energy_slope)), 0, k ** (turbulence.energy_slope))
     
     
-    solver = config.solver
-    solver.min_init_gray_scale = 0.95
-    solver.max_init_gray_scale = 1.05
-    solver.type = 'ns'
-    # solver.niu = solver.bulk_visc = 0.5 * 1/6
-    solver.min_fwd_steps = 1
-    solver.n_denoising_steps = 20
-    solver.max_fwd_steps = solver.n_denoising_steps + 1  # corruption_amount = np.random.randint(self.min_steps, self.max_steps) we need to add +1 as max_fwd_steps is excluded from tossing
-   
-    niu_sched  = conf_utils.lin_schedule(0.5 * 1/6, 0.5 * 1/6, solver.max_fwd_steps)
-    solver.niu = solver.bulk_visc = niu_sched
-    solver.hash = conf_utils.hash_solver(solver)
-    
+    config.stamp = stamp = ml_collections.ConfigDict()
     stamp = config.stamp
-    stamp.hash = conf_utils.hash_joiner([solver.hash, turbulence.hash])
+    stamp.fwd_solver_hash = conf_utils.hash_joiner([solver.hash, turbulence.hash])
+    stamp.model_optim_hash = conf_utils.hash_joiner([model.hash, config.optim.hash, training.hash])
+
     
+    if os.uname().nodename in ['pc', 'laptop']:
+        debug = True
+    else:
+        debug = False
+        
     debug = True
     if debug:
         data.processed_filename = f'{data.processed_filename}_debug'

@@ -42,6 +42,8 @@ def get_config():
     
     
     solver = config.solver
+    solver.cs2 = 1./3
+    solver.min_init_gray_scale = 0.95
     solver.max_init_gray_scale = 1.05
     solver.type = 'ade'
     solver.min_fwd_steps = 1
