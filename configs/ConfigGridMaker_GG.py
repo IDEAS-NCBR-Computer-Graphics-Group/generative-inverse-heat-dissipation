@@ -57,12 +57,12 @@ def main():
     # Create the grid
     grid = ParameterGrid(param_grid)
     # Define the directory to save the config files
-    save_dir =os.path.join("configs","campaign_ffhq_ade_128")
+    save_dir =os.path.join("configs","campaign_ffhq_ade_128_rgb")
     if os.path.exists(save_dir):
         shutil.rmtree(save_dir)
     os.makedirs(save_dir, exist_ok=True)
     # Define the default config
-    default_cfg_dir_list =  ["configs", "ffhq", "res_128_grayscale"]
+    default_cfg_dir_list =  ["configs", "ffhq", "res_128"]
     default_cfg_file = "default_lbm_ade_ffhq_128_config.py"
 
     shutil.copy(os.path.join(os.path.join(*default_cfg_dir_list), default_cfg_file),

@@ -1,4 +1,4 @@
-import os
+import os, glob
 import shutil
 from pathlib import Path
 import logging
@@ -57,17 +57,30 @@ def train(config_path):
     np.random.seed(config.seed)
 
     # Setup working directory path 
-    workdir = os.path.join(f'runs/corrupted_{config.data.dataset}',case_name)
+    workdir = os.path.join(f'runs/corrupted_{config.data.dataset}', case_name)
 
     # copy config to know what has been run
     Path(workdir).mkdir(parents=True, exist_ok=True)
     shutil.copy(config_path, workdir) 
     
-    default_cfg_path = os.path.join(*config_path.split(os.sep)[:-1], f'default_lbm_{config.data.dataset.lower()}_config.py')
     
-    if os.path.isfile(default_cfg_path):
-        shutil.copy2(default_cfg_path, workdir)
-      
+    
+    # Extract the directory from `config_path`
+    config_dir = os.path.join('/', *config_path.split(os.sep)[:-1])
+
+    # Use glob to find the single matching file
+    default_cfg_files = os.path.join(config_dir, "default_lbm_*_config.py")
+    matching_files = glob.glob(default_cfg_files)
+
+
+    # Copy each matching file to `workdir`
+    if matching_files:
+        for file_path in matching_files:
+            shutil.copy2(file_path, workdir)
+    else:
+        logging.info(f"Nothing to copy to {workdir}. No matching default config files found: {default_cfg_files}.")
+
+
     # Setup logging once the workdir is known
     setup_logging(workdir)
 
@@ -115,8 +128,13 @@ def train(config_path):
     datadir = os.path.join(f'data/corrupted_{config.data.dataset}',f'{config.data.processed_filename}_{config.stamp.fwd_solver_hash}')
     shutil.copy(config_path, datadir)
     
-    if os.path.isfile(default_cfg_path):
-        shutil.copy2(default_cfg_path, datadir)
+    # Copy each matching file to `datadir`
+    if matching_files:
+        for file_path in matching_files:
+            shutil.copy2(file_path, datadir)
+    else:
+        logging.info(f"Nothing to copy to {datadir}. No matching default config files found: {default_cfg_files}.")
+
 
     train_iter = iter(trainloader)
     eval_iter = iter(testloader)

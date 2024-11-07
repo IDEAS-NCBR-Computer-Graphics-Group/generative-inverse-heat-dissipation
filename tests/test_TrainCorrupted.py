@@ -37,6 +37,8 @@ class TestTrainCorrupted(unittest.TestCase):
         # test your campaign before launch
         # self.config_dir = os.path.join(self.project_dir, "configs", "campaign_ffhq_ade_128")
         # self.config_files = ["config_d17dedb5.py"]
+        self.config_dir = os.path.join(self.project_dir, "configs", "campaign_ffhq_ade_128_rgb")
+        self.config_files = ["config_1cd7f47d.py"]
         
         for config_file in self.config_files:
             config_path = os.path.join(self.config_dir, config_file)

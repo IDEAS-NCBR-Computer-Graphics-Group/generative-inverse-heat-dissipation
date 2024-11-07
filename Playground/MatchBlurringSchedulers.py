@@ -17,6 +17,7 @@ import taichi as ti
 import taichi.math as tm
 from model_code.utils import DCTBlur
 from numerical_solvers.solvers.LBM_ADE_Solver import LBM_ADE_Solver
+from configs import conf_utils
 from configs.mnist.small_mnist_lbm_ade_turb_config import get_config
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
@@ -174,8 +175,9 @@ blurred_by_gaussian_schedule = gaussianBlur(t_initial_condition, fwd_steps).floa
 
 
 # %% ################ ADE_LBM VS DCT ################
-niu = 1./6 # assumption - max diffusivity for LBM
-
+# assumption - max diffusivity for LBM
+niu = conf_utils.lin_schedule(1. / 6, 1. / 6, config.solver.final_lbm_step, dtype=np.float32)
+niu0= niu[0]
 #mnist
 # blur_sigma_max = 20
 # L = 28 
@@ -186,7 +188,7 @@ niu = 1./6 # assumption - max diffusivity for LBM
 
 
 # #ffhq128 - estimate
-blur_sigma_max = 50
+blur_sigma_max = 20
 L = 128
 
 
@@ -202,7 +204,7 @@ def get_timesteps_from_sigma(diffusivity, sigma):
     tc = sigma*sigma/(2*diffusivity)
     return int(tc)
     
-lbm_iter = get_timesteps_from_sigma(niu, blur_sigma_max)
+lbm_iter = get_timesteps_from_sigma(niu0, blur_sigma_max)
 print(f"lbm_iter = {lbm_iter}")
 
 def get_sigma_from_Fo(Fo, L):
@@ -218,7 +220,7 @@ def get_timesteps_from_Fo_niu_L(Fo, diffusivity, L):
     tc = sigma*sigma/(2*diffusivity)
     return int(tc)
 
-print(f"lbm_iter check = {get_timesteps_from_Fo_niu_L(Fo, niu, L)}")
+print(f"lbm_iter check = {get_timesteps_from_Fo_niu_L(Fo, niu0, L)}")
 # %% run solver
 
 spectralTurbulenceGenerator = SpectralTurbulenceGenerator(config.turbulence.domain_size, initial_condition.shape, 
@@ -229,11 +231,11 @@ spectralTurbulenceGenerator = SpectralTurbulenceGenerator(config.turbulence.doma
     is_div_free=False)
 solver = LBM_ADE_Solver(
     initial_condition.shape,
-    niu, config.solver.bulk_visc,
+    niu, config.solver.bulk_visc, config.solver.cs2,
     spectralTurbulenceGenerator
     )
 solver.init(np_init_gray_image) 
-solver.solve(iterations=1000)
+solver.solve(iterations=lbm_iter)
 
 img = solver.rho
 rho_np = np.rot90(img.to_numpy().copy(), k=1) # torch to numpy + rotation

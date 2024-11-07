@@ -2,7 +2,7 @@
 from absl import flags
 from absl import app
 from timeit import default_timer as timer
-import os, shutil
+import os, shutil, glob
 from pathlib import Path
 import logging
 
@@ -48,15 +48,25 @@ def produce_fwd_sample(config_path):
         shutil.rmtree(dataset_dir)
         logging.info(f"Removed {dataset_dir}")
 
+        os.makedirs(save_dir, exist_ok=True)
+    shutil.copy(config_path, save_dir)
+
+    # copy configs 
+    config_dir = os.path.join('/', *config_path.split(os.sep)[:-1])
+    default_cfg_files = os.path.join(config_dir, "default_lbm_*_config.py")
+    matching_files = glob.glob(default_cfg_files)
+       
+    if matching_files:
+        for file_path in matching_files:
+            shutil.copy2(file_path, save_dir)
+    else:
+        logging.info(f"Nothing to copy to {save_dir}. No matching default config files found: {default_cfg_files}.")
+
+
+    # produce data
     trainloader, testloader = ihd_datasets.get_dataset(config,
                                                         uniform_dequantization=config.data.uniform_dequantization)
 
-    os.makedirs(save_dir, exist_ok=True)
-    shutil.copy(config_path, save_dir)
-
-    default_cfg_path = os.path.join(*config_path.split(os.sep)[0:2], f'default_lbm_{config.data.dataset.lower()}_config.py')
-    if os.path.isfile(default_cfg_path):
-        shutil.copy2(default_cfg_path, save_dir)
 
     clean_image, batch = ihd_datasets.prepare_batch(iter(trainloader), 'cpu')
     corrupted_image, less_corrupted_image, corruption_amount, label = batch
