@@ -220,21 +220,6 @@ pip install opencv-python
 
 maybe `pip install opencv-python-headless`
 
-# check disk usage
-
-```.sh
-sudo df -h
-du -sh * | sort -hr | head -n10
-ncdu $HOME
-hpc-fs # athena util
-```
-
-# check TRES (GPU) usage
-
-sacct -X --user $USER -S 2024-01-01 --format=jobid,jobname,account,partition,alloccpus,Submit,Start,End,Elapsed,QOS,Timelimit,state,exitcode,Priority 
-
-sacct -X --user $USER -S 2024-01-01 --format=jobid,jobname,AllocTRES%50,Submit,Start,End,Elapsed,QOS,Timelimit,state,exitcode,Priority 
-
 
 # runs
 
@@ -253,9 +238,33 @@ python train_corrupted.py --config configs/mnist/small_mnist_lbm_ns_turb_config.
 python train_corrupted.py --config configs/mnist/small_mnist_gaussian_blurring_config.py --workdir runs/mnist/small_gaussian_blurr_mnist
 
 
-
-
 python train_corrupted.py --config=configs/ffhq/128_ffhq_lbm_ns_config.py
 
 python sample_corruption.py --config=configs/ffhq/128_ffhq_lbm_ns_config.py
+```
+
+# check disk usage
+
+```.sh
+sudo df -h
+du -sh * | sort -hr | head -n10
+ncdu $HOME
+hpc-fs # athena util
+```
+
+# check TRES (GPU) usage
+
+sacct -X --user $USER -S 2024-01-01 --format=jobid,jobname,account,partition,alloccpus,Submit,Start,End,Elapsed,QOS,Timelimit,state,exitcode,Priority 
+
+sacct -X --user $USER -S 2024-01-01 --format=jobid,jobname,AllocTRES%50,Submit,Start,End,Elapsed,QOS,Timelimit,state,exitcode,Priority 
+
+
+
+### check results
+
+```
+module load GCCcore/12.3.0
+module load Python/3.10.4
+source $SCRATCH/py-ihd-env/bin/activate
+tensorboard --logdir $SCRATCH/generative-inverse-heat-dissipation/runs/corrupted_FFHQ_128
 ```
