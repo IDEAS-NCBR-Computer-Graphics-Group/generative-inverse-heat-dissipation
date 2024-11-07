@@ -75,11 +75,12 @@ def get_default_configs():
     solver.max_init_gray_scale = 1.05
     solver.cs2 = 1./3.
     solver.min_fwd_steps = 1
-    solver.n_denoising_steps = 200
+    solver.n_denoising_steps = 600
     solver.max_fwd_steps = solver.n_denoising_steps + 1  # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
 
     # niu_sched = conf_utils.lin_schedule(1E-4 * 1 / 6, 1 / 6, solver.max_fwd_steps)
-    niu_sched = conf_utils.tanh_schedule(1E-4* 1./ 6,  1./ 6, solver.max_fwd_steps, dtype=np.float32)
+    niu_sched = conf_utils.lin_schedule(1 / 6,  1 / 6, solver.max_fwd_steps, dtype=np.float32)
+    # niu_sched = conf_utils.tanh_schedule(1E-4 *1./ 6,  1./ 6, solver.max_fwd_steps, dtype=np.float32)
     solver.niu = solver.bulk_visc = niu_sched
     solver.hash = conf_utils.hash_solver(solver)
 

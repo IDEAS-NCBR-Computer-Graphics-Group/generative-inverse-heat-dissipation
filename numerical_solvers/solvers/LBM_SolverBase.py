@@ -27,7 +27,7 @@ class LBM_SolverBase:
         self.cs2 = ti.field(ti.f32, shape=self.max_iter[None])
         if isinstance(cs2, float):
             cs2 = np.array([cs2])
-            cs2 = np.full((201,), cs2)
+            cs2 = np.full((self.max_iter[None],), cs2)
         self.cs2.from_numpy(cs2)
         self.cs2.from_numpy(cs2)
         
