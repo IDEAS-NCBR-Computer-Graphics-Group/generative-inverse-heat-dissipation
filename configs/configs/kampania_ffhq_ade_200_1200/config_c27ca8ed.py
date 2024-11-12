@@ -11,8 +11,8 @@ def get_config():
             
     config.optim.lr = 2e-05
     config.solver.cs2 = 0.3333333333333333
-    config.training.batch_size = 16
-    config.training.n_iters = 200001
+    config.training.batch_size = 8
+    config.training.n_iters = 500001
     config.turbulence.turb_intensity = conf_utils.lin_schedule(0.001, 0.001, 1200, dtype=np.float32)
 
     stamp = config.stamp

@@ -38,7 +38,7 @@ def main():
     save_dir = os.path.join("configs","kampania_ffhq_ade_200_3100")
     os.makedirs(save_dir, exist_ok=False)
     param_grid = {
-        'training.batch_size': [16],
+        'training.batch_size': [8],
         'training.n_iters': [200001],
         'optim.lr': [2e-5],
         # 'optim.lr': [1e-4, 5e-5, 2e-5, 1e-5],

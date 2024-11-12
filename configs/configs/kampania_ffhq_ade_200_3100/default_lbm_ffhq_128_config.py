@@ -13,7 +13,7 @@ def get_default_configs():
 
     # training
     config.training = training = ml_collections.ConfigDict()
-    training.batch_size = 32
+    training.batch_size = 8
     training.n_evals = 25 # batches for test-set evaluation, arbitrary choice
     training.n_iters = 200000  # 1300001
     training.log_freq = 10000
