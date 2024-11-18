@@ -58,7 +58,7 @@ def get_default_configs():
 
     # solver
     config.turbulence = turbulence = ml_collections.ConfigDict()
-    # turbulence.turb_intensity = conf_utils.lin_schedule(1E-6, 5E-4, solver.final_lbm_step, dtype=np.float32)
+    turbulence.turb_intensity = conf_utils.lin_schedule(1E-6, 5E-4, solver.final_lbm_step, dtype=np.float32)
     turbulence.noise_limiter = (-1E-2, 1E-2)
     turbulence.domain_size = (1.0, 1.0)
     turbulence.dt_turb = 5 * 1E-4

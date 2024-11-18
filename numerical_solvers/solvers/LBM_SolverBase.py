@@ -29,7 +29,6 @@ class LBM_SolverBase:
             cs2 = np.array([cs2])
             cs2 = np.full((self.max_iter[None],), cs2)
         self.cs2.from_numpy(cs2)
-        self.cs2.from_numpy(cs2)
         
         self.rho = ti.field(float, shape=(self.nx, self.ny))
         self.vel = ti.Vector.field(2, float, shape=(self.nx, self.ny))
