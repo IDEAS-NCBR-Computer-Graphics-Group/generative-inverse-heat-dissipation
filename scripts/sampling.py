@@ -28,14 +28,6 @@ def get_sampling_fn_inverse_lbm_ns(
             if intermediate_sample_indices != None and n_denoising_steps in intermediate_sample_indices:
                 intermediate_samples_out.append((u, u)) # store the initial (fully blurred) sample
                 
-            # assuming n_denoising_steps=4, then
-            # for i in range(n_denoising_steps, 0, -1):
-            #     print(i):
-            #         4
-            #         3
-            #         2
-            #         1
-
             for i in range(n_denoising_steps, 0, -1):
                 # we assume max_noise_level=n_denoising_steps
                 vec_fwd_steps = torch.ones(initial_sample.shape[0], device=device, dtype=torch.long) * i
@@ -111,8 +103,7 @@ def get_sampling_fn_inverse_heat_interpolate(config, initial_sample,
 
     # Linear interpolation between the two input states
     init_input = torch.linspace(1, 0, num_points, device=device)[:, None, None, None] * initial_sample[0][None] + \
-        (1-torch.linspace(1, 0, num_points, device=device)
-         )[:, None, None, None] * initial_sample[1][None]
+        (1-torch.linspace(1, 0, num_points, device=device))[:, None, None, None] * initial_sample[1][None]
     init_input = init_input.to(config.device).float()
     logging.info("init input shape: {}".format(init_input.shape))
 
@@ -148,6 +139,55 @@ def get_sampling_fn_inverse_heat_interpolate(config, initial_sample,
 
     return sampler, init_input
 
+def get_sampling_fn_inverse_heat_interpolate_corrupted(config, initial_sample,
+                                             delta, device, num_points):
+    """Returns an interpolation between two images, where the interpolation is
+    done with the latent noise and the initial sample. Arguments: 
+    initial_sample: Two initial states to interpolate over. 
+                                    Shape: (2, num_channels, height, width)
+    delta: Sampling noise standard deviation
+    num_points: Number of point to use in the interpolation 
+    """
+    assert initial_sample.shape[0] == 2
+    shape = initial_sample.shape
+
+    max_fwd_steps = config.solver.max_fwd_steps
+
+    # Linear interpolation between the two input states
+    init_input = torch.linspace(1, 0, num_points, device=device)[:, None, None, None] * initial_sample[0][None] + \
+        (1-torch.linspace(1, 0, num_points, device=device))[:, None, None, None] * initial_sample[1][None]
+    init_input = init_input.to(config.device).float()
+    logging.info("init input shape: {}".format(init_input.shape))
+
+    # Get all the noise steps
+    noise1 = [torch.randn_like(init_input[0]).to(device)[None]
+              for i in range(0, max_fwd_steps)]
+    noise1 = torch.cat(noise1, 0)
+    noise2 = [torch.randn_like(init_input[0]).to(device)[None]
+              for i in range(0, max_fwd_steps)]
+    noise2 = torch.cat(noise2, 0)
+
+    # Spherical interpolation between the noise endpoints.
+    noise_weightings = torch.linspace(
+        0, np.pi/2, num_points, device=device)[None, :, None, None, None]
+    noise1 = noise1[:, None, :, :, :]
+    noise2 = noise2[:, None, :, :, :]
+    noises = torch.cos(noise_weightings) * noise1 + \
+        torch.sin(noise_weightings) * noise2
+
+    def sampler(model):
+        with torch.no_grad():
+            x = init_input.to(device).float()
+            for i in range(max_fwd_steps, 0, -1):
+                vec_fwd_steps = torch.ones(
+                    num_points, device=device, dtype=torch.long) * i
+                x_mean = model(x, vec_fwd_steps).to(device) + x
+                noise = noises[i-1]
+                x = x_mean + noise*delta
+            x_sweep = x_mean
+            return x_sweep
+
+    return sampler, init_input
 
 def get_initial_sample(config, forward_heat_module, delta, batch_size=None):
     """Take a draw from the prior p(u_K)"""
