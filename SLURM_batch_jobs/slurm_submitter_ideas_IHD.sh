@@ -77,7 +77,7 @@ for CONFIG_FILE in $CONFIG_DIRNAME/*.py; do
         echo "cd \$HOME/generative-inverse-heat-dissipation"
         
         # Set the command to run with the specific config file
-        CMD="python train.py --config $CONFIG_FILE --workdir runs/ffhq/default"
+        CMD="python train.py --config $CONFIG_FILE --workdir runs/ffhq/ffhq256_sigma_128"
         echo 'echo "Executing CMD:"'
         echo "echo \"$CMD\""
         echo "eval $CMD"

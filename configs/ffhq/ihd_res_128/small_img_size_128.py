@@ -8,7 +8,7 @@ import numpy as np
 def get_config():
     config = default_ffhq_configs.get_default_configs()
     model = config.model
-    config.training.batch_size = 2 # to fit rtx 4080
+    # config.training.batch_size = 12 # to fit rtx 4080
     config.data.image_size = 128
     config.data.dataset = 'FFHQ_128' 
     config.training.n_iters = 20001

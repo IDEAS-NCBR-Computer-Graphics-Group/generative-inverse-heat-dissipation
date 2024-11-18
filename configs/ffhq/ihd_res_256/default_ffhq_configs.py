@@ -26,7 +26,7 @@ def get_default_configs():
 
     # evaluation
     config.eval = evaluate = ml_collections.ConfigDict()
-    evaluate.batch_size = 4
+    evaluate.batch_size = 1
     evaluate.enable_sampling = False
     evaluate.num_samples = 50000
     evaluate.enable_loss = True
@@ -68,7 +68,7 @@ def get_default_configs():
     model.skip_rescale = True
     
     model.K = 200
-    model.blur_sigma_max = 32
+    model.blur_sigma_max = 128
     model.blur_sigma_min = 0.5
     model.blur_schedule = np.exp(np.linspace(np.log(model.blur_sigma_min),
                                              np.log(model.blur_sigma_max), model.K))

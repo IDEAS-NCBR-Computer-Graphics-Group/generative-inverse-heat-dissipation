@@ -68,7 +68,7 @@ def get_default_configs():
     model.skip_rescale = True
     
     model.K = 200
-    model.blur_sigma_max = 32
+    model.blur_sigma_max = 16
     model.blur_sigma_min = 0.5
     model.blur_schedule = np.exp(np.linspace(np.log(model.blur_sigma_min),
                                              np.log(model.blur_sigma_max), model.K))
