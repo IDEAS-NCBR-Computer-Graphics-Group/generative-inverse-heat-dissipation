@@ -13,7 +13,7 @@ def get_default_configs():
 
     # training
     config.training = training = ml_collections.ConfigDict()
-    training.batch_size = 4
+    training.batch_size = 32
     training.n_evals = 25 # batches for test-set evaluation, arbitrary choice
     training.n_iters = 1300001
     training.log_freq = 1000
@@ -133,7 +133,7 @@ def get_default_configs():
     optim.eps = 1e-8
     optim.warmup = 5000
     optim.grad_clip = 1.
-    optim.automatic_mp = True
+    optim.automatic_mp = False  # Automatic mixed precision
     optim.hash = conf_utils.hash_solver(optim)
 
     config.stamp = stamp = ml_collections.ConfigDict()
