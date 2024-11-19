@@ -267,4 +267,6 @@ module load GCCcore/12.3.0
 module load Python/3.10.4
 source $SCRATCH/py-ihd-env/bin/activate
 tensorboard --logdir $SCRATCH/generative-inverse-heat-dissipation/runs/corrupted_FFHQ_128
+
+grep -nri "pattern" slurm*.out
 ```
