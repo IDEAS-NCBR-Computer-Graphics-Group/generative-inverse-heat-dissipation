@@ -108,10 +108,10 @@ def get_dataset(config, uniform_dequantization=False, train_batch_size=None,
         test_data = datasets.LSUN(
             root="data/lsun", classes=['church_outdoor_val'], transform=transform)
     elif config.data.dataset == 'FFHQ':
-        trainloader = load_data(data_dir="data/ffhq_dataset",
+        trainloader = load_data(data_dir="data/ffhq-dataset/images1024x1024",
                                 batch_size=train_batch_size, image_size=config.data.image_size,
                                 random_flip=config.data.random_flip)
-        testloader = load_data(data_dir="data/ffhq_dataset",
+        testloader = load_data(data_dir="data/ffhq-dataset/images1024x1024",
                                batch_size=eval_batch_size, image_size=config.data.image_size,
                                random_flip=False)
         if not getattr(config, 'solver', None):
