@@ -158,9 +158,11 @@ def get_default_configs():
         model.channel_mult = (1, 1, 2, 2, 2)
         model.attention_levels = (3, 4)
 
+        config.training.n_iters = 51
         config.training.batch_size = 1  # rtx2080
         config.eval.batch_size = 1
-        config.training.n_iters = 101
         config.training.sampling_freq = 25
+        config.training.log_freq = 10
+        config.training.eval_freq = 20
 
     return config

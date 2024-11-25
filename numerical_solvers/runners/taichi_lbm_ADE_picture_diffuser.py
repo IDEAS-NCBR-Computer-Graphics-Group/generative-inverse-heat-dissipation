@@ -23,7 +23,7 @@ from numerical_solvers.visualization.taichi_lbm_gui import run_with_gui, run_sim
 
 from configs.lbm_ade_gui_conf import get_config
 
-# from configs.mnist.small_mnist_lbm_ade_turb_config import get_config
+# from configs.ffhq.res_128_grayscale.default_lbm_ade_ffhq_128_config import get_default_configs as get_config
 from configs import conf_utils
 
 
