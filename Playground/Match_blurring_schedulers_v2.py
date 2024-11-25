@@ -138,5 +138,10 @@ def main():
     print(f'Maximal value of DCT blurr: {blurred_by_dct.max()}')
     print(f'Maximal value of LBM blurr: {blurred_by_lbm.max()}')
 
+    squared_diff = (blurred_by_dct - blurred_by_lbm) ** 2
+    mse = np.mean(squared_diff)
+    print(f'MSE: {mse}')
+
+
 if __name__ == '__main__':
     main()
