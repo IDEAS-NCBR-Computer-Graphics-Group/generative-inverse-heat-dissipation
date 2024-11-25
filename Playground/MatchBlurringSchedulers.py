@@ -17,9 +17,11 @@ import taichi as ti
 import taichi.math as tm
 from model_code.utils import DCTBlur
 from numerical_solvers.solvers.LBM_ADE_Solver import LBM_ADE_Solver
-from configs.mnist.small_mnist_lbm_ade_turb_config import get_config
+from tests.configs.ffhq_128_lbm_ade_example import get_config
+# from configs.mnist.small_mnist_lbm_ade_turb_config import get_config
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
+from configs import match_sim_numbers
 
 ti.init(arch=ti.gpu) if torch.cuda.is_available() else ti.init(arch=ti.cpu)
 
@@ -39,14 +41,7 @@ def make_circle(xx, yy, initial_condition, r0=0.25, x0=0., y0=0., intensity=1.):
             if r < r0:
                 initial_condition[i,j] = intensity
 
-def plot_matrix(matrix, title="Temperature Map (Matrix)"):
-  # Create a heatmap using matplotlib
-  plt.imshow(matrix, cmap='hot', interpolation='nearest')
-  plt.colorbar()
-  plt.title(title)
-  plt.xlabel("X-axis")
-  plt.ylabel("Y-axis")
-  plt.show()
+
   
 # %% ################ SETUP ################
 diffusivity0 = 20. # 8.
@@ -78,7 +73,7 @@ xx, yy = np.meshgrid(x, y)
 
 for r0, x0, y0, intensity0 in cirles:
   make_circle(xx, yy, initial_condition, r0, x0, y0, intensity0)
-plot_matrix(initial_condition, title="IC")
+match_sim_numbers.plot_matrix(initial_condition, title="IC")
 np_init_gray_image = np.rot90(initial_condition.copy(), k=-1)
 t_initial_condition = torch.from_numpy(initial_condition).unsqueeze(0)
 
@@ -128,13 +123,13 @@ blurred_by_fft = fft_ade(initial_condition, tc, diffusivity0, advection_coeff_0)
 sigma = calc_sigma(tc, diffusivity0)
 print(f"Blurring sigma = {sigma}")
 
-plot_matrix(blurred_by_fft, title="FFT Blurr")
+match_sim_numbers.plot_matrix(blurred_by_fft, title="FFT Blurr")
 
 # %% ################ Blurr by gaussian, show difference to FFT ################
 
 blurred_by_gaussian = gaussian_filter(initial_condition, sigma=sigma, mode='wrap')
-plot_matrix(blurred_by_gaussian, title="Gaussian Blurr")
-plot_matrix(blurred_by_fft-blurred_by_gaussian, title="Difference (FFT-Gaussian)")
+match_sim_numbers.plot_matrix(blurred_by_gaussian, title="Gaussian Blurr")
+match_sim_numbers.plot_matrix(blurred_by_fft-blurred_by_gaussian, title="Difference (FFT-Gaussian)")
 
 
 # %% ################ Import DCT ################
@@ -149,10 +144,7 @@ model.blur_sigma_max = 20
 model.blur_sigma_min = 0.5
 model.blur_schedule = np.exp(np.linspace(np.log(model.blur_sigma_min),
                                             np.log(model.blur_sigma_max), model.K))
-model.blur_schedule = np.array(
-    [0] + list(model.blur_schedule))  # Add the k=0 timestep
-
-
+model.blur_schedule = np.array([0] + list(model.blur_schedule))  # Add the k=0 timestep
 dctBlur = DCTBlur(model.blur_schedule, image_size=n, device="cpu")
 
 # %% ################ RUN DCT schedule ################
@@ -160,7 +152,7 @@ dctBlur = DCTBlur(model.blur_schedule, image_size=n, device="cpu")
 fwd_steps = model.K* torch.ones(1, dtype=torch.long) 
 blurred_by_dct = dctBlur(t_initial_condition, fwd_steps).float()
 blurred_by_dct = blurred_by_dct.squeeze().numpy()
-plot_matrix(blurred_by_dct, title="DCT schedule Blurr")
+match_sim_numbers.plot_matrix(blurred_by_dct, title="DCT schedule Blurr")
 
 # %% ################ DCT schedule vs Gaussian Schedule ################
 
@@ -189,36 +181,13 @@ niu = 1./6 # assumption - max diffusivity for LBM
 blur_sigma_max = 50
 L = 128
 
-
-def calc_Fo(sigma, L):
-    Fo = sigma / (L*L)
-    return Fo
-
-Fo = calc_Fo(blur_sigma_max, L)
+Fo = match_sim_numbers.calc_Fo(blur_sigma_max, L)
 print(f"Fo = {Fo}")
 
-def get_timesteps_from_sigma(diffusivity, sigma):
-    # sigma = np.sqrt(2 * diffusivity * tc)
-    tc = sigma*sigma/(2*diffusivity)
-    return int(tc)
-    
-lbm_iter = get_timesteps_from_sigma(niu, blur_sigma_max)
+lbm_iter = match_sim_numbers.get_timesteps_from_sigma(niu, blur_sigma_max)
 print(f"lbm_iter = {lbm_iter}")
-
-def get_sigma_from_Fo(Fo, L):
-    sigma = Fo * L*L
-    return sigma
-
-
-print(f"sigma check = {get_sigma_from_Fo(Fo, L)}")
-
-def get_timesteps_from_Fo_niu_L(Fo, diffusivity, L):
-    # sigma = np.sqrt(2 * diffusivity * tc)
-    sigma = Fo * L*L
-    tc = sigma*sigma/(2*diffusivity)
-    return int(tc)
-
-print(f"lbm_iter check = {get_timesteps_from_Fo_niu_L(Fo, niu, L)}")
+print(f"sigma check = {match_sim_numbers.get_sigma_from_Fo(Fo, L)}")
+print(f"lbm_iter check = {match_sim_numbers.get_timesteps_from_Fo_niu_L(Fo, niu, L)}")
 # %% run solver
 
 spectralTurbulenceGenerator = SpectralTurbulenceGenerator(config.turbulence.domain_size, initial_condition.shape, 
@@ -229,7 +198,7 @@ spectralTurbulenceGenerator = SpectralTurbulenceGenerator(config.turbulence.doma
     is_div_free=False)
 solver = LBM_ADE_Solver(
     initial_condition.shape,
-    niu, config.solver.bulk_visc,
+    niu, config.solver.bulk_visc, config.solver.cs2,
     spectralTurbulenceGenerator
     )
 solver.init(np_init_gray_image) 
@@ -238,8 +207,8 @@ solver.solve(iterations=1000)
 img = solver.rho
 rho_np = np.rot90(img.to_numpy().copy(), k=1) # torch to numpy + rotation
 
-plot_matrix(rho_np, title="LBM BLURR")
-plot_matrix(blurred_by_dct-rho_np, title="Difference DCT schedule - LBM")
+match_sim_numbers.plot_matrix(rho_np, title="LBM BLURR")
+match_sim_numbers.plot_matrix(blurred_by_dct-rho_np, title="Difference DCT schedule - LBM")
 print(f'Maximal value of DCT blurr: {blurred_by_dct.max()}')
 print(f'Maximal value of LBM blurr: {rho_np.max()}')
 # %%
