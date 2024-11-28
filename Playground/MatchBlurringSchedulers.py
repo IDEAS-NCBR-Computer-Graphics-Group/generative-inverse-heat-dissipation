@@ -21,7 +21,7 @@ from configs import conf_utils
 from configs.mnist.small_mnist_lbm_ade_turb_config import get_config
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from numerical_solvers.visualization.CanvasPlotter import CanvasPlotter
-
+from numerical_solvers.solvers.img_reader import read_img_in_grayscale, normalize_grayscale_image_range
 ti.init(arch=ti.gpu) if torch.cuda.is_available() else ti.init(arch=ti.cpu)
 
 # %% ################ helper functions ################
@@ -77,11 +77,20 @@ x = np.linspace(0, L, n, endpoint=True)
 y = np.linspace(0, L, n, endpoint=True)
 xx, yy = np.meshgrid(x, y)
 
-for r0, x0, y0, intensity0 in cirles:
-  make_circle(xx, yy, initial_condition, r0, x0, y0, intensity0)
-plot_matrix(initial_condition, title="IC")
+# for r0, x0, y0, intensity0 in cirles:
+#   make_circle(xx, yy, initial_condition, r0, x0, y0, intensity0)
+# plot_matrix(initial_condition, title="IC")
+# np_init_gray_image = np.rot90(initial_condition.copy(), k=-1)
+# t_initial_condition = torch.from_numpy(initial_condition).unsqueeze(0)
+
+img_path = './numerical_solvers/runners/cat_768x768.jpg'
+# img_path = './numerical_solvers/runners/ffhq_1024_00062.png'
+target_size = (128, 128)
+initial_condition = read_img_in_grayscale(img_path, target_size)
+initial_condition = normalize_grayscale_image_range(initial_condition, 0, 1)
 np_init_gray_image = np.rot90(initial_condition.copy(), k=-1)
 t_initial_condition = torch.from_numpy(initial_condition).unsqueeze(0)
+plot_matrix(initial_condition, title="IC")
 
 # %% ################ Solvers ################
 def fft_ade(image, time, diff_coeff, advect_coeff):
@@ -188,7 +197,7 @@ niu0= niu[0]
 
 
 # #ffhq128 - estimate
-blur_sigma_max = 20
+blur_sigma_max = model.blur_sigma_max
 L = 128
 
 

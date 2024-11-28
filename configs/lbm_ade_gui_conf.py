@@ -83,7 +83,7 @@ def get_config():
         solver.n_denoising_steps = solver.max_fwd_steps - 1
     
     solver.cs2 = conf_utils.lin_schedule(1./3, 1./3, solver.final_lbm_step, dtype=np.float32)
-    # niu_sched = conf_utils.lin_schedule(1E-4*1 / 6, 1E-4 * 1 / 6, solver.final_lbm_step, dtype=np.float32)
+    # niu_sched = conf_utils.lin_schedule(1E-4*1 / 6, 1 / 6, solver.final_lbm_step, dtype=np.float32)
     niu_sched = conf_utils.tanh_schedule(1E-4* 1./ 6,  1./ 6, solver.final_lbm_step, dtype=np.float32)
     # niu_sched  = conf_utils.exp_schedule(1E-4 * 1./6., 1./6., solver.max_fwd_steps)
 
