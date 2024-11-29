@@ -1,6 +1,7 @@
 import taichi as ti
 import taichi.math as tm
 import torch
+import logging
 
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from numerical_solvers.solvers.GaussianTurbulenceGenerator import get_gaussian_noise1d, get_gaussian_noise2d
@@ -11,9 +12,8 @@ from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
 
 @ti.data_oriented
 class LBM_ADE_Solver(LBM_SolverBase):
-    def __init__(self, domain_size, kin_visc, bulk_visc, cs2,
-                turbulenceGenerator: SpectralTurbulenceGenerator):
-        print(f"LBM_ADE_Solver constructor called.")
+    def __init__(self, domain_size, kin_visc, bulk_visc, cs2, turbulenceGenerator: SpectralTurbulenceGenerator):
+        logging.debug("LBM_ADE_Solver constructor called.")
         super().__init__(domain_size, kin_visc, cs2, turbulenceGenerator)
         
         
@@ -51,7 +51,7 @@ class LBM_ADE_Solver(LBM_SolverBase):
         # print(f"Solver run for iterations: {self.iterations_counter[None]}")
                             
         if self.iterations_counter[None] == self.max_iter[None]:
-             print(f"Solver run for max iterations {self.max_iter}.")
+             logging.debug(f"Solver run for max iterations {self.max_iter}.")
                     
 
     @ti.kernel

@@ -67,7 +67,7 @@ class LBM_Base_Corruptor(BaseCorruptor):
         self._intermediate_samples = torch.empty((steps + 1, *x.shape))
 
         for c in range(x.shape[0]):
-            np_gray_img = x.numpy()[c, :, :] # assumes that there is only one channel
+            np_gray_img = x.numpy()[c, :, :]
             np_gray_img = normalize_grayscale_image_range( # rescale to fit solver stability range
                 np_gray_img, self.min_init_gray_scale, self.max_init_gray_scale)
 
