@@ -10,6 +10,7 @@ from tests.configs.ffhq_128_lbm_ade_example import get_config
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from configs import conf_utils, match_sim_numbers
 from numerical_solvers.solvers.img_reader import read_img_in_grayscale, normalize_grayscale_image_range
+from numerical_solvers.visualization import plotting
 
 def load_image(config, L):
     img_path = './numerical_solvers/runners/cat_768x768.jpg'
@@ -65,12 +66,12 @@ def main():
     np_gray_image = load_image(config, L)
     # np_gray_image_rot90 = np.rot90(np_gray_image.copy(), k=-1)
 
-    match_sim_numbers.plot_matrix(map01(np_gray_image), title="IC")
+    plotting.plot_matrix(map01(np_gray_image), title="IC")
     t_init = torch.from_numpy(np_gray_image).unsqueeze(0)
 
     fwd_steps = config.model.K * torch.ones(1, dtype=torch.long)
     blurred_by_dct = dctBlur(t_init, fwd_steps).float().squeeze().numpy()
-    match_sim_numbers.plot_matrix(map01(blurred_by_dct), title=f'DCT schedule Blurr for sigma')
+    plotting.plot_matrix(map01(blurred_by_dct), title=f'DCT schedule Blurr for sigma')
 
     blurred_by_dct_all = []
     blurred_by_delta_dct_all = []
@@ -85,8 +86,8 @@ def main():
         blurred_by_delta_dct_all.append(map01(blurred_by_dct_diff))
         blurred_by_dct_m1 = blurred_by_dct_diff
 
-    match_sim_numbers.plot_matrices_in_grid(blurred_by_dct_all, columns=4)
-    match_sim_numbers.plot_matrices_in_grid(blurred_by_delta_dct_all, columns=4)
+    plotting.plot_matrices_in_grid(blurred_by_dct_all, columns=4)
+    plotting.plot_matrices_in_grid(blurred_by_delta_dct_all, columns=4)
 
     dFo_array = match_sim_numbers.calc_Fo(bs_diff, L)
 
@@ -135,16 +136,16 @@ def main():
         )
 
     solver.init(np_gray_image_rot90.copy()) 
-    lbm_corrupted = [map01(np_gray_image)]
+    lbm_corrupted = []
     for lbm_iter in dt_array:
         solver.solve(iterations=lbm_iter)
         img = solver.rho
         blurred_by_lbm = np.rot90(img.to_numpy(), k=1)
         lbm_corrupted.append(map01(blurred_by_lbm))
 
-    match_sim_numbers.plot_matrices_in_grid(lbm_corrupted, columns=4)
-    match_sim_numbers.plot_matrix_side_by_side(lbm_corrupted[-1], blurred_by_dct_all[-1], title="LBM BLURR")
-    match_sim_numbers.plot_matrix(blurred_by_dct_all[-1]-lbm_corrupted[-1], title="Difference DCT schedule - LBM", range=(0,1))
+    plotting.plot_matrices_in_grid(lbm_corrupted, columns=4)
+    plotting.plot_matrix_side_by_side(lbm_corrupted[-1], blurred_by_dct_all[-1], title="LBM BLURR")
+    plotting.plot_matrix(blurred_by_dct_all[-1]-lbm_corrupted[-1], title="Difference DCT schedule - LBM", range=(0,1))
     print(f'Difference: {np.mean((blurred_by_dct_all[-1]-lbm_corrupted[-1])**2)}')
 
 if __name__ == '__main__':
