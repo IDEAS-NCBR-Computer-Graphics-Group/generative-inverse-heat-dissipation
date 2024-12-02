@@ -13,18 +13,18 @@ import conf_utils
 from conf_utils import evaluate_config_file_name, lin_schedule
 
 def main():
-    save_dir = os.path.join("configs","kampania_ffhq_ade_200_sigma_128")
+    save_dir = os.path.join("configs","kamp_ffhq128_ade_sigma_32")
     os.makedirs(save_dir, exist_ok=False)
     param_grid = {
         'training.batch_size': [8],
         'training.n_iters': [200001],
         'optim.lr': [2e-5],
-        'turbulence.turb_intensity' : [conf_utils.lin_schedule(0, 0, 1199, dtype=np.float32)], # , lin_schedule(1e-4, 1e-4, 3100, dtype=np.float32), lin_schedule(1e-3, 1e-3, 3100, dtype=np.float32), lin_schedule(1E-6, 5E-4, 3100, dtype=np.float32)
+        'turbulence.turb_intensity' : [conf_utils.lin_schedule(0, 0, 200, dtype=np.float32)], # , lin_schedule(1e-4, 1e-4, 3100, dtype=np.float32), lin_schedule(1e-3, 1e-3, 3100, dtype=np.float32), lin_schedule(1E-6, 5E-4, 3100, dtype=np.float32)
         'solver.cs2' : [1./3.]
     }
 
-    default_cfg_dir_list = ["ffhq", "res_128", "ade"]
-    default_cfg_file = "default_lbm_ffhq_128_config.py"
+    default_cfg_dir_list = ["ffhq"]
+    default_cfg_file = "default_lbm_ade_ffhq_128_config.py"
     src_path = os.path.join(os.path.join(*default_cfg_dir_list), default_cfg_file)
     print(f"Source path: {src_path}")
     
