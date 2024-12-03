@@ -90,7 +90,8 @@ def get_config():
     solver.niu = solver.bulk_visc = niu_sched
     solver.hash = conf_utils.hash_solver(solver)
 
-    
+
+    # turbulence.turb_intensity = conf_utils.lin_schedule(1E-6, 5E-4, solver.final_lbm_step, dtype=np.float32)
     # turbulence
     turbulence = config.turbulence
     turbulence.turb_intensity = conf_utils.lin_schedule(1E-6, 5E-4, solver.final_lbm_step, dtype=np.float32)
@@ -103,6 +104,13 @@ def get_config():
     turbulence.energy_slope = -5.0 / 3.0
     turbulence.hash = conf_utils.hash_solver(turbulence)
     turbulence.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (turbulence.energy_slope)), 0, k ** (turbulence.energy_slope))
+
+    Pe = 1E-1
+
+    def u_from_Pe(Pe, niu, L):
+        u = Pe*niu/L
+        return u    # Pe = conf_utils.lin_schedule(5E-1, 1E-0, solver.final_lbm_step, dtype=np.float32)
+    turbulence.turb_intensity = u_from_Pe(Pe, solver.niu, data.image_size)
 
     stamp = config.stamp
     stamp.hash = conf_utils.hash_joiner([solver.hash, turbulence.hash])
