@@ -74,3 +74,8 @@ def get_ihd_solver_setup(config):
     config.solver.hash = conf_utils.hash_solver(config.solver)
 
     return config
+
+
+def calculate_u_max(niu, Pe, L):
+  U_max = (Pe * niu) / L
+  return U_max

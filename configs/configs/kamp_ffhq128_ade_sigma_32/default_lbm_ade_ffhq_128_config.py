@@ -6,7 +6,7 @@ from torchvision import transforms
 import os
 
 from configs.ffhq.ihd.default_ffhq_configs import get_config as get_config_ihd
-from configs.match_sim_numbers import get_ihd_solver_setup, calculate_u_max
+from configs.match_sim_numbers import get_ihd_solver_setup
 
 def get_config():
     return get_default_configs()
@@ -85,7 +85,7 @@ def get_default_configs():
         solver.max_fwd_steps = len(solver.corrupt_sched)
         solver.n_denoising_steps = solver.max_fwd_steps - 1
     
-    solver.cs2 = conf_utils.lin_schedule(solver.min_cs2, solver.max_cs2, solver.final_lbm_step, dtype=np.float32)
+    # solver.cs2 = conf_utils.lin_schedule(solver.min_cs2, solver.max_cs2, solver.final_lbm_step, dtype=np.float32)
     
     # niu_sched = conf_utils.lin_schedule(1E-4*1 / 6, 1E-4 * 1 / 6, solver.final_lbm_step, dtype=np.float32)
     niu_sched = conf_utils.tanh_schedule(solver.min_niu, solver.max_niu, solver.final_lbm_step, dtype=np.float32)
@@ -110,8 +110,6 @@ def get_default_configs():
     turbulence.energy_slope = -5.0 / 3.0
     turbulence.hash = conf_utils.hash_solver(turbulence)
     turbulence.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (turbulence.energy_slope)), 0, k ** (turbulence.energy_slope))
-
-    config.turb_intensity = calculate_u_max(niu_sched, Pe = 100, L = data.image_size)
 
     # model
     config.model = model = ml_collections.ConfigDict()

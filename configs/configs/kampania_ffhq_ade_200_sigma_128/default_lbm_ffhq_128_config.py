@@ -5,27 +5,24 @@ from configs import conf_utils
 from torchvision import transforms
 import os
 
-from configs.ffhq.ihd.default_ffhq_configs import get_config as get_config_ihd
-from configs.match_sim_numbers import get_ihd_solver_setup, calculate_u_max
-
 def get_config():
     return get_default_configs()
 
 def get_default_configs():
-    config = get_config_ihd()
+    config = ml_collections.ConfigDict()
 
     # training
     config.training = training = ml_collections.ConfigDict()
     training.batch_size = 32
     training.n_evals = 25 # batches for test-set evaluation, arbitrary choice
-    training.n_iters = 1300001
-    training.log_freq = 1000
-    training.eval_freq = 2000
-    training.sampling_freq = 10000
+    training.n_iters = 200000  # 1300001
+    training.log_freq = 10000
+    training.eval_freq = 200
+    training.sampling_freq = 5000 #10000
     
     # store additional checkpoints for preemption in cloud computing environments
-    training.snapshot_freq = 50000
-    training.snapshot_freq_for_preemption = 10000
+    training.snapshot_freq = 5000 # 50000
+    training.snapshot_freq_for_preemption = 5000
 
     training.hash = conf_utils.hash_int(config.training.batch_size)
 
@@ -45,7 +42,7 @@ def get_default_configs():
     data.random_flip = False
     data.centered = False
     data.uniform_dequantization = False
-    data.num_channels = 3
+    data.num_channels = 1
 
     # data - cd
     data = config.data
@@ -56,62 +53,36 @@ def get_default_configs():
     data.dataset = 'FFHQ_128'
     data.image_size = 128
     data.transform = transforms.Compose(
-        [transforms.ToTensor()])
+        [transforms.ToTensor(),transforms.Grayscale()])
+
 
     # solver
-    solver = config.solver =  ml_collections.ConfigDict()
-
-    solver.type = 'ade'
-    solver.min_init_gray_scale = 0.95
-    solver.max_init_gray_scale = 1.05
-    solver.min_fwd_steps = 1
-    solver.n_denoising_steps = 200
-    solver.max_fwd_steps = solver.n_denoising_steps + 1  # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
-    solver.final_lbm_step = 10000
-    solver.min_niu = 1E-4* 1./ 6
-    solver.max_niu = 1./ 6
-    solver.max_cs2 = solver.min_cs2 = 1./3
-
-
-    # solver.corrupt_sched = conf_utils.lin_schedul(
-    #         solver.min_fwd_steps, solver.final_lbm_step, solver.max_fwd_steps, dtype=int)
-    
-    solver.corrupt_sched = conf_utils.exp_schedule(
-        solver.min_fwd_steps, solver.final_lbm_step, solver.max_fwd_steps, dtype=int)
-        
-    are_steps_unique = False
-    if are_steps_unique:
-        solver.corrupt_sched = np.unique(solver.corrupt_sched)
-        solver.max_fwd_steps = len(solver.corrupt_sched)
-        solver.n_denoising_steps = solver.max_fwd_steps - 1
-    
-    solver.cs2 = conf_utils.lin_schedule(solver.min_cs2, solver.max_cs2, solver.final_lbm_step, dtype=np.float32)
-    
-    # niu_sched = conf_utils.lin_schedule(1E-4*1 / 6, 1E-4 * 1 / 6, solver.final_lbm_step, dtype=np.float32)
-    niu_sched = conf_utils.tanh_schedule(solver.min_niu, solver.max_niu, solver.final_lbm_step, dtype=np.float32)
-    # niu_sched  = conf_utils.exp_schedule(1E-4 * 1./6., 1./6., solver.max_fwd_steps)
-
-    solver.niu = solver.bulk_visc = niu_sched
-    solver.hash = conf_utils.hash_solver(solver)
-
-    config = get_ihd_solver_setup(config)
-
-    # turbulence
-    turbulence = config.turbulence = ml_collections.ConfigDict()
-    turbulence.max_turb_intensity = 0 * 1E-6
-    turbulence.min_turb_intensity = 0 * 5E-4
-    turbulence.turb_intensity = conf_utils.lin_schedule(turbulence.min_turb_intensity, turbulence.max_turb_intensity, solver.final_lbm_step, dtype=np.float32)
+    config.solver = solver = ml_collections.ConfigDict()
+    config.turbulence = turbulence = ml_collections.ConfigDict()
+    solver.final_lbm_step = 49151
+    turbulence.turb_intensity = conf_utils.lin_schedule(1E-6, 5E-4, solver.final_lbm_step, dtype=np.float32)
     turbulence.noise_limiter = (-1E-2, 1E-2)
     turbulence.domain_size = (1.0, 1.0)
-    turbulence.dt_turb = 1 * 1E-3
+    turbulence.dt_turb = 5 * 1E-4
     turbulence.k_min = 2.0 * torch.pi / min(turbulence.domain_size)
     turbulence.k_max = 2.0 * torch.pi / (min(turbulence.domain_size) / 1024)
     turbulence.is_divergence_free = False
     turbulence.energy_slope = -5.0 / 3.0
     turbulence.hash = conf_utils.hash_solver(turbulence)
     turbulence.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (turbulence.energy_slope)), 0, k ** (turbulence.energy_slope))
+    
+    
+    solver.type = 'ade'
+    solver.min_init_gray_scale = 0.95
+    solver.max_init_gray_scale = 1.05
+    solver.cs2 = 1./3.
+    solver.min_fwd_steps = 1
+    solver.n_denoising_steps = 200
+    solver.max_fwd_steps = solver.n_denoising_steps + 1  # corruption_amount = np.random.randint(self.min_steps, self.max_steps) thus we need to add +1 as max_fwd_steps is excluded from tossing
+    
 
-    config.turb_intensity = calculate_u_max(niu_sched, Pe = 100, L = data.image_size)
+
+
 
     # model
     config.model = model = ml_collections.ConfigDict()
@@ -151,7 +122,7 @@ def get_default_configs():
 
     config.stamp = stamp = ml_collections.ConfigDict()
     stamp = config.stamp
-    stamp.fwd_solver_hash = conf_utils.hash_joiner([solver.hash, turbulence.hash])
+    stamp.fwd_solver_hash = conf_utils.hash_joiner([model.hash, turbulence.hash])
     stamp.model_optim_hash = conf_utils.hash_joiner([model.hash, optim.hash, training.hash])
 
     config.seed = 42
@@ -159,12 +130,12 @@ def get_default_configs():
         'cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 
     
-    if os.uname().nodename in ['pc', 'laptop', 'armadillo']:
+    if os.uname().nodename in ['pc']:
         debug = True
     else:
         debug = False
-    
-    # debug = True
+    # debug = False
+    debug = True
     if debug:
         data = config.data
         data.processed_filename = f'{data.processed_filename}_debug'
@@ -174,13 +145,10 @@ def get_default_configs():
         model.model_channels = 32
         model.channel_mult = (1, 1, 2, 2, 2)
         model.attention_levels = (3, 4)
-
-        
-        config.training.n_iters = 51
-        config.training.batch_size = 1  # rtx2080
-        config.eval.batch_size = 16
-        config.training.sampling_freq = 25
-        config.training.log_freq = 10
-        config.training.eval_freq = 20
+    
+        config.training.batch_size = 1 # rtx2080
+        config.eval.batch_size = 1
+        config.training.n_iters = 1001
+        config.training.sampling_freq = 100
         
     return config
