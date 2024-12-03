@@ -89,5 +89,6 @@ if __name__ == '__main__':
     # solver.init(1.*np.ones(grid_size, dtype=np.float32))
     
     # run_with_gui(solver, np_gray_image, iter_per_frame=100)
-    run_simple_gui(solver, np_gray_image, iter_per_frame=1)
+    # run_simple_gui(solver, np_gray_image, iter_per_frame=1)
     # run_simple_gui(solver, np_gray_image, iter_per_frame=1, sleep_time=0.075) #
+    run_simple_gui(solver, np_gray_image, iter_per_frame=1, sleep_time=0.01)

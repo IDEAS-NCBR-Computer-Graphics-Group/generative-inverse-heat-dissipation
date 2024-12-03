@@ -5,16 +5,18 @@ from timeit import default_timer as timer
 import os, shutil, glob
 from pathlib import Path
 import logging
-
 import torchvision
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
+import taichi as ti
+import cv2
 
-from scripts import datasets as ihd_datasets
-from scripts import sampling, utils
+from scripts import sampling, utils, datasets
 from numerical_solvers.corruptors.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
+from scripts.utils import load_config_from_path
+from torchvision.utils import make_grid
 
 FLAGS = flags.FLAGS
 
@@ -22,9 +24,74 @@ def main(argv):
     # Example
     # python sample_corruption.py --config=configs/ffhq/ffhq_128_lbm_ns_config_high_visc.py
     # python sample_corruption.py --config=configs/mnist/small_mnist_lbm_ns_config.py
-    produce_fwd_sample(FLAGS.config)
+    if FLAGS.demo:
+        live_demo(FLAGS.config)
+    else:
+        produce_fwd_sample(FLAGS.config)
   
-  
+def live_demo(config):
+    ti.init(arch=ti.gpu) if torch.cuda.is_available() else ti.init(arch=ti.cpu)
+
+    config = load_config_from_path(config)
+    if getattr(config, 'solver', None):
+        solver = config.solver
+        config.solver = None
+
+    torch.manual_seed(config.seed)
+    np.random.seed(config.seed)
+
+    trainloader, _ = datasets.get_dataset(
+        config,
+        uniform_dequantization=config.data.uniform_dequantization,
+        train_batch_size=config.eval.batch_size
+        )
+
+    config.solver = solver
+    corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
+        config=config,
+        transform=config.data.transform
+    )
+
+    n_denoising_steps = config.solver.n_denoising_steps
+    original_pil_image, _ = next(iter(trainloader))
+    noisy_initial_images = original_pil_image.clone()
+    intermediate_samples = []
+
+    for index in range(original_pil_image.shape[0]):
+        noisy_initial_images[index], _ = corruptor._corrupt(original_pil_image[index], n_denoising_steps)
+        intermediate_samples.append(corruptor.intermediate_samples)
+        corruptor.solver.turbulenceGenerator.randomize()
+    intermediate_samples = [torch.stack([sample[i] for sample in intermediate_samples]) for i in range(len(intermediate_samples[0]))]
+
+    padding = 0
+    nrow = int(np.sqrt(intermediate_samples[0].shape[0]))
+    imgs = []
+    for idx in range(len(intermediate_samples)):
+        sample = intermediate_samples[idx].cpu().detach().numpy()
+        sample = np.clip(sample * 255, 0, 255)
+        image_grid = make_grid(torch.Tensor(sample), nrow, padding=padding).numpy(
+        ).transpose(1, 2, 0).astype(np.uint8)
+        imgs.append(image_grid)
+    video_size = tuple(reversed(tuple(s for s in imgs[0].shape[:2])))
+    images = []
+    for i in range(len(imgs)):
+        image = cv2.resize(imgs[i], video_size, fx=0,
+                        fy=0, interpolation=cv2.INTER_CUBIC)
+        image = np.ascontiguousarray(np.flip(np.transpose(image.T, [1,2,0]),axis=1))
+        images.append(image.astype(np.float32)/255.0)
+
+    window = ti.ui.Window('CG - Renderer', res=image.shape[:2])
+    canvas = window.get_canvas()
+    index = 0
+    while window.running:
+        window.GUI.begin("Display Panel", 0, 0, 0.4, 0.2)
+        index = window.GUI.slider_int("corrupt_idx", index, 0, len(intermediate_samples)-1)
+        if window.GUI.button("+1"): index += 1
+        if window.GUI.button("-1"): index -= 1
+        window.GUI.end()
+        canvas.set_image(images[index])
+        window.show()
+
 def produce_fwd_sample(config_path):
     config = utils.load_config_from_path(config_path)
     torch.manual_seed(config.seed)
@@ -49,13 +116,17 @@ def produce_fwd_sample(config_path):
         logging.info(f"Removed {dataset_dir}")
 
         os.makedirs(save_dir, exist_ok=True)
+    trainloader, testloader = datasets.get_dataset(config,
+                                                        uniform_dequantization=config.data.uniform_dequantization)
+
+    os.makedirs(save_dir, exist_ok=True)
     shutil.copy(config_path, save_dir)
 
-    # copy configs 
+    # copy configs
     config_dir = os.path.join('/', *config_path.split(os.sep)[:-1])
     default_cfg_files = os.path.join(config_dir, "default_lbm_*_config.py")
     matching_files = glob.glob(default_cfg_files)
-       
+
     if matching_files:
         for file_path in matching_files:
             shutil.copy2(file_path, save_dir)
@@ -64,11 +135,11 @@ def produce_fwd_sample(config_path):
 
 
     # produce data
-    trainloader, testloader = ihd_datasets.get_dataset(config,
+    trainloader, testloader = datasets.get_dataset(config,
                                                         uniform_dequantization=config.data.uniform_dequantization)
 
 
-    clean_image, batch = ihd_datasets.prepare_batch(iter(trainloader), 'cpu')
+    clean_image, batch = datasets.prepare_batch(iter(trainloader), 'cpu')
     corrupted_image, less_corrupted_image, corruption_amount, label = batch
 
     logging.info(f"clean input shape: {clean_image.shape}")
@@ -118,6 +189,7 @@ if __name__ == '__main__':
 
     # config_flags.DEFINE_config_file("config", None, "Training configuration.", lock_config=True) # this does not work in python 3.12 as 'imp' module has been removed
     flags.DEFINE_string("config", None, "Path to the config file.")
+    flags.DEFINE_boolean("demo", False, "Runs the script in demonstration mode.")
     flags.mark_flags_as_required(["config"])
 
     app.run(main)

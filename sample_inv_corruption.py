@@ -9,6 +9,8 @@ from scripts import utils
 from absl import app
 from absl import flags
 from ml_collections.config_flags import config_flags
+from numerical_solvers.corruptors.CorruptedDatasetCreator import AVAILABLE_CORRUPTORS
+from scripts import datasets
 
 FLAGS = flags.FLAGS
 
@@ -39,11 +41,25 @@ flags.DEFINE_integer(
 
 def main(argv):
     if FLAGS.interpolate:
-        sample_interpolate(FLAGS.config, FLAGS.workdir, FLAGS.checkpoint,
-                           FLAGS.delta, FLAGS.num_points, FLAGS.number)
+        sample_interpolate(
+            FLAGS.config, # config
+            FLAGS.workdir, # from where model
+            FLAGS.checkpoint, # from which checkpoint
+            FLAGS.delta, # how much noise to add during inference
+            FLAGS.num_points, # how many points for a sweep
+            FLAGS.number # just naming things for 
+            )
     else:
-        sample(FLAGS.config, FLAGS.workdir, FLAGS.checkpoint, FLAGS.save_sample_freq, FLAGS.delta,
-               FLAGS.batch_size, FLAGS.share_noise, FLAGS.same_init)
+        sample( 
+            FLAGS.config, # config
+            FLAGS.workdir, # from where model
+            FLAGS.checkpoint, # from which checkpoint
+            FLAGS.save_sample_freq, # how often to save sample in process.gif/mp4
+            FLAGS.delta, # how much noise to add during inference
+            FLAGS.batch_size, # doesnt work as far as im concerned
+            FLAGS.share_noise, # share noise during inference
+            FLAGS.same_init  # share initial noise state
+            )
 
 
 def sample(config, workdir, checkpoint, save_sample_freq=1,
@@ -66,28 +82,35 @@ def sample(config, workdir, checkpoint, save_sample_freq=1,
     logging.info("Loaded model from {}".format(checkpoint_dir))
     logging.info("Running on {}".format(config.device))
 
-    logging.info("Creating the forward process...")
-    scales = config.model.blur_schedule
-    heat_forward_module = mutils.create_forward_process_from_sigmas(
-        config, scales, config.device)
+    logging.info("Loading forward processed data from dataset...")
+    trainloader, testloader = datasets.get_dataset(
+        config, uniform_dequantization=config.data.uniform_dequantization)
+
+    corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
+        config=config,
+        transform=config.data.transform
+    )
+
+    n_denoising_steps = config.solver.n_denoising_steps
+    initial_sample, original_images, intermediate_corruption_samples = sampling.get_initial_corrupted_sample(
+        trainloader, n_denoising_steps, corruptor)
     logging.info("Done")
-    initial_sample, original_images = sampling.get_initial_sample(config, heat_forward_module, delta, batch_size)
     
     if same_init:
         initial_sample = torch.cat(batch_size*[initial_sample[0][None]], 0)
         original_images = torch.cat(batch_size*[original_images[0][None]], 0)
     initial_sample, original_images = initial_sample[:batch_size], original_images[:batch_size]
-    sampling_shape = initial_sample.shape
 
-    intermediate_sample_indices = list(
-        range(0, config.model.K+1, save_sample_freq))
     sample_dir = os.path.join(workdir, "additional_samples")
     this_sample_dir = os.path.join(
         sample_dir, "checkpoint_{}".format(checkpoint))
 
-    # Get smapling function and save directory
-    sampling_fn = sampling.get_sampling_fn_inverse_heat(
-        config, initial_sample, intermediate_sample_indices, delta, config.device, share_noise=share_noise)
+    sampling_fn = sampling.get_sampling_fn_inverse_lbm_ns(
+        n_denoising_steps = n_denoising_steps,
+        initial_sample = initial_sample, 
+        intermediate_sample_indices=list(range(n_denoising_steps+1)), # assuming n_denoising_steps=3, then intermediate_sample_indices = [0, 1, 2, 3]
+        delta=config.model.sigma*1.25, 
+        device=config.device)
     
     this_sample_dir = os.path.join(this_sample_dir, "delta_{}".format(delta))
     if same_init:
@@ -100,7 +123,6 @@ def sample(config, workdir, checkpoint, save_sample_freq=1,
     logging.info("Do sampling")
     sample, n, intermediate_samples = sampling_fn(model_fn)
 
-    # Save results
     logging.info("Save results")
     utils.save_tensor_list(this_sample_dir, intermediate_samples, "samples.np")
     utils.save_tensor(this_sample_dir, sample, "final.np")
@@ -112,8 +134,8 @@ def sample(config, workdir, checkpoint, save_sample_freq=1,
     video_mpv4_path, video_x264_path = os.path.join(this_sample_dir, video_mpv4_filename), os.path.join(this_sample_dir, video_x264_filename)
     os.system(f'ffmpeg -y -hide_banner -loglevel error -i {video_mpv4_path} -vcodec libx264 -f mp4 {video_x264_path}')
 
-def sample_interpolate(config, workdir, checkpoint,
-                       delta, num_points, number):
+
+def sample_interpolate(config, workdir, checkpoint, delta, num_points, number):
     # The interpolation function returns only one interpolation between two random points
     # -> batch_size = 2
     batch_size = 2
@@ -129,12 +151,21 @@ def sample_interpolate(config, workdir, checkpoint,
     logging.info("Loaded model from {}".format(checkpoint_dir))
     logging.info("Running on {}".format(config.device))
     logging.info("Creating the forward process...")
-    scales = config.model.blur_schedule
-    heat_forward_module = mutils.create_forward_process_from_sigmas(
-        config, scales, config.device)
+
+    logging.info("Loading forward processed data from dataset...")
+    trainloader, testloader = datasets.get_dataset(
+        config, uniform_dequantization=config.data.uniform_dequantization)
+
+    corruptor=AVAILABLE_CORRUPTORS[config.solver.type](
+        config=config,
+        transform=config.data.transform
+    )
+
+    n_denoising_steps = config.solver.n_denoising_steps
+    initial_sample, original_images, intermediate_corruption_samples = sampling.get_initial_corrupted_sample(
+        trainloader, n_denoising_steps, corruptor)
     logging.info("Done")
-    initial_sample, original_images = sampling.get_initial_sample(
-        config, heat_forward_module, delta, batch_size)
+
     initial_sample = initial_sample[:batch_size]
 
     # Directory name for saving results
@@ -143,9 +174,9 @@ def sample_interpolate(config, workdir, checkpoint,
         sample_dir, "checkpoint_{}".format(checkpoint))
 
     # Get the sampling function
-    sampling_fn, init_input = sampling.get_sampling_fn_inverse_heat_interpolate(
+    sampling_fn, init_input = sampling.get_sampling_fn_inverse_heat_interpolate_corrupted(
         config, initial_sample,
-        delta, device=config.device, num_points=num_points)
+        delta, device='cpu', num_points=num_points)
     this_sample_dir = os.path.join(
         this_sample_dir, "interpolate_delta_{}".format(delta))
     Path(this_sample_dir).mkdir(parents=True, exist_ok=True)
@@ -167,8 +198,7 @@ def sample_interpolate(config, workdir, checkpoint,
         utils.save_gif(this_sample_dir, intermediate_samples)
         utils.save_video(this_sample_dir, intermediate_samples)
     else:
-        utils.save_png(this_sample_dir,
-                       x_sweep[0:1], "base_sample_{}.png".format(number))
+        utils.save_png(this_sample_dir,x_sweep[0:1], "base_sample_{}.png".format(number))
         utils.save_png(this_sample_dir, x_sweep,
                        "interpolation_{}.png".format(number), nrow=num_points)
         intermediate_samples = torch.cat([x_sweep, x_sweep[-1:].repeat(10, 1, 1, 1), reversed(x_sweep), x_sweep[:1].repeat(10, 1, 1, 1)])
