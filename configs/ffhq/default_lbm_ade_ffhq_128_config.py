@@ -55,8 +55,7 @@ def get_default_configs():
     data.processed_filename = 'lbm_ade_pairs' if data.process_pairs else 'lbm_ade'
     data.dataset = 'FFHQ_128'
     data.image_size = 128
-    data.transform = transforms.Compose(
-        [transforms.ToTensor()])
+    data.transform = transforms.Compose([transforms.ToTensor()])
 
     # solver
     solver = config.solver =  ml_collections.ConfigDict()

@@ -7,7 +7,7 @@ import logging
 import matplotlib.pyplot as plt
 
 import taichi as ti
-from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range
+from numerical_solvers.solvers.img_reader import normalize_grayscale_image_range, change_value_range
 from numerical_solvers.solvers.LBM_SolverBase import LBM_SolverBase
 from numerical_solvers.solvers.SpectralTurbulenceGenerator import SpectralTurbulenceGenerator
 from numerical_solvers.corruptors.BaseCorruptor import BaseCorruptor
@@ -74,16 +74,17 @@ class LBM_Base_Corruptor(BaseCorruptor):
             self.solver.init(np_gray_img)
             self.solver.iterations_counter[None] = 0  # Reset counter
 
-            # self._intermediate_samples = torch.empty((steps + 1, *x.shape))
-            self._intermediate_samples[0][c] = torch.tensor( # rescale for preview
-                normalize_grayscale_image_range(np_gray_img, 0., 1.)).unsqueeze(0).clone()
+            step_difference = self.corrupt_sched[0]
+            self.solver.solve(step_difference)
+            rho_cpu = self.solver.rho.to_numpy()
+            rho_cpu = change_value_range(rho_cpu, self.min_init_gray_scale, self.max_init_gray_scale, 0., 1.)
+            self._intermediate_samples[0][c] = torch.tensor(rho_cpu).unsqueeze(0)
 
             for i in range(1, steps+1):
                 step_difference = self.corrupt_sched[i] - self.corrupt_sched[i-1]
-                if i == 1: step_difference = self.corrupt_sched[0]
                 self.solver.solve(step_difference)
                 rho_cpu = self.solver.rho.to_numpy()
-                rho_cpu = normalize_grayscale_image_range(rho_cpu, 0., 1.)
+                rho_cpu = change_value_range(rho_cpu, self.min_init_gray_scale, self.max_init_gray_scale, 0., 1.)
                 self._intermediate_samples[i][c] = torch.tensor(rho_cpu).unsqueeze(0)
 
         logging.info(f"Corruptor scheduler idx: {steps} --> solver run for iterations: {self.solver.iterations_counter}")
@@ -138,7 +139,7 @@ class LBM_Base_Corruptor(BaseCorruptor):
                 logging.info(f"Preprocessing (lbm) {index}")
             
             # max_steps is excluded from tossing
-            corruption_amount = np.random.randint(self.min_steps, self.max_steps)
+            corruption_amount = np.random.randint(self.min_steps, self.max_steps + 1)
             original_pil_image, label = initial_dataset[index]
             if process_images:
                 original_pil_image = np.transpose(original_pil_image, [1, 2, 0])
