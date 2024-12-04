@@ -5,14 +5,14 @@ from configs import conf_utils
 from torchvision import transforms
 import os
 
-from configs.ffhq.ihd.default_ffhq_configs import get_config as get_config_ihd
-from configs.match_sim_numbers import get_ihd_solver_setup, calculate_u_max
+# from configs.ffhq.ihd.default_ffhq_configs import get_config as get_config_ihd
+# from configs.match_sim_numbers import get_ihd_solver_setup, calculate_u_max
 
 def get_config():
     return get_default_configs()
 
 def get_default_configs():
-    config = get_config_ihd()
+    config = ml_collections.ConfigDict()
 
     # training
     config.training = training = ml_collections.ConfigDict()
@@ -93,7 +93,7 @@ def get_default_configs():
     solver.niu = solver.bulk_visc = niu_sched
     solver.hash = conf_utils.hash_solver(solver)
 
-    config = get_ihd_solver_setup(config)
+    # config = get_ihd_solver_setup(config)
 
     # turbulence
     turbulence = config.turbulence = ml_collections.ConfigDict()
@@ -110,7 +110,7 @@ def get_default_configs():
     turbulence.hash = conf_utils.hash_solver(turbulence)
     turbulence.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (turbulence.energy_slope)), 0, k ** (turbulence.energy_slope))
 
-    config.turb_intensity = calculate_u_max(niu_sched, Pe = 100, L = data.image_size)
+    # config.turb_intensity = calculate_u_max(niu_sched, Pe = 100, L = data.image_size)
 
     # model
     config.model = model = ml_collections.ConfigDict()
