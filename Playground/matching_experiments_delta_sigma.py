@@ -43,10 +43,14 @@ def display_schedules(Fo, Fo_realizable):
     plt.plot(Fo_realizable,  'gx', label=f'Fo_realizable')
     # plt.plot(corrupt_sched, Fo_realizable, 'bx', label=f'Fo_realizable(lbm_steps)')
     # plt.plot(np.unique(Fo_schedule_unique), 'bx', label=f'Fo_schedule_unique')
+
+
     ax.grid(True, which="both", ls="--")
     ax.set_xlabel(r"denoising steps")
     ax.set_ylabel(r"Fo")
+
     plt.legend()
+
 
 def main():
     config = get_config()
