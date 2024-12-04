@@ -5,8 +5,8 @@ def plot_matrix(matrix, title="Temperature Map (Matrix)", range=None):
   # Create a heatmap using matplotlib
   plt.imshow(
     matrix,
-    cmap='hot',
-    interpolation='nearest',
+    # cmap='hot',
+    # interpolation='nearest',
     vmin=range[0] if range else None,
     vmax=range[1] if range else None
     )
@@ -15,6 +15,7 @@ def plot_matrix(matrix, title="Temperature Map (Matrix)", range=None):
   plt.xlabel("X-axis")
   plt.ylabel("Y-axis")
   plt.show()
+  plt.close()
 
 def plot_matrices_in_grid(matrices, titles=None, columns=5, value_range=None):
     num_matrices = len(matrices)

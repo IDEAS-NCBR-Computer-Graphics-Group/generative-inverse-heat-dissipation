@@ -6,7 +6,7 @@ from torchvision import transforms
 import os
 
 from configs.ffhq.ihd.default_ffhq_configs import get_config as get_config_ihd
-from configs.match_sim_numbers import get_ihd_solver_setup, calculate_u_max
+from configs.match_sim_numbers import get_ihd_solver_setup
 
 def get_config():
     return get_default_configs()
@@ -55,7 +55,8 @@ def get_default_configs():
     data.processed_filename = 'lbm_ade_pairs' if data.process_pairs else 'lbm_ade'
     data.dataset = 'FFHQ_128'
     data.image_size = 128
-    data.transform = transforms.Compose([transforms.ToTensor()])
+    data.transform = transforms.Compose(
+        [transforms.ToTensor()])
 
     # solver
     solver = config.solver =  ml_collections.ConfigDict()
@@ -110,8 +111,6 @@ def get_default_configs():
     turbulence.hash = conf_utils.hash_solver(turbulence)
     turbulence.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (turbulence.energy_slope)), 0, k ** (turbulence.energy_slope))
 
-    config.turb_intensity = calculate_u_max(niu_sched, Pe = 100, L = data.image_size)
-
     # model
     config.model = model = ml_collections.ConfigDict()
     
@@ -163,7 +162,7 @@ def get_default_configs():
     else:
         debug = False
     
-    # debug = True
+    debug = True
     if debug:
         data = config.data
         data.processed_filename = f'{data.processed_filename}_debug'

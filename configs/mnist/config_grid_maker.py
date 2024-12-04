@@ -5,69 +5,28 @@ from sklearn.model_selection import ParameterGrid
 import json
 import hashlib
 
-import conf_utils
-from conf_utils import evaluate_config_file_name
+import configs.conf_utils
+from configs.conf_utils import evaluate_config_file_name
 
 def main():
-    # Define the hyperparameter grid
-    
-    # third campaign
     param_grid = {
-        # 'solver.final_lbm_step' : [500],
-        'solver.n_denoising_steps' : [200] ,
-        # 'solver.max_fwd_steps': ['config.solver.n_denoising_steps + 1'],
-        # 'solver.corrupt_sched' : [
-        #     'conf_utils.exp_schedule(config.solver.min_fwd_steps, config.solver.final_lbm_step, config.solver.max_fwd_steps, dtype=int)',
-        #     'conf_utils.lin_schedule(config.solver.min_fwd_steps, config.solver.final_lbm_step, config.solver.max_fwd_steps, dtype=int)'
-        #     ],
-    
-        # 'turbulence.turb_intensity' : [
-        #     'conf_utils.lin_schedule(0., 0., config.solver.final_lbm_step, dtype=np.float32)',
-        #     'conf_utils.exp_schedule(1E-6, 1E-3, config.solver.final_lbm_step, dtype=np.float32)',
-        #     'conf_utils.lin_schedule(1E-6, 5E-4, config.solver.final_lbm_step, dtype=np.float32)'
-        #     ],
-        'solver.are_steps_unique': [True, False] 
-
+        'turbulence.turb_intensity' : [
+            'conf_utils.lin_schedule(0., 0., config.solver.final_lbm_step, dtype=np.float32)',
+            'conf_utils.exp_schedule(1E-6, 1E-2, config.solver.final_lbm_step, dtype=np.float32)',
+            'conf_utils.exp_schedule(1E-6, 5E-3, config.solver.final_lbm_step, dtype=np.float32)',
+            'conf_utils.exp_schedule(1E-6, 1E-3, config.solver.final_lbm_step, dtype=np.float32)',
+            'conf_utils.lin_schedule(1E-6, 5E-4, config.solver.final_lbm_step, dtype=np.float32)',
+            'conf_utils.lin_schedule(1E-6, 1E-4, config.solver.final_lbm_step, dtype=np.float32)'
+            ],
     }
-    
-    # second campaign
-    # param_grid = {
-    #     'turbulence.turb_intensity' : [0, 1E-4],
-    #     'solver.are_steps_unique': [True, False] 
-    # }
-    
-    # first campaign
-    # param_grid = {
-    #     'training.batch_size': [16, 32, 64],
-    #     'training.n_iters': [20001],
-    #     'optim.lr': [1e-4, 5e-5, 2e-5, 1e-5],
-    #     'turbulence.turb_intensity' : [0, 1E-4],
-    #     'solver.cs2' : [0.3*1./3 , 0.6*1./3 , 1./3 ]
-    # }
-    
-    # param_grid = {
-    #     'training.batch_size': [64],
-    #     'training.n_iters': [1001],
-    #     'optim.lr': [2e-5, 1e-5],
-    #     'turbulence.turb_intensity' : [0, 1E-4],
-    #     'solver.cs2' : [0.3*1./3 , 0.6*1./3 , 1./3 ]
-    # }  # solver.corrupt_sched = conf_utils.lin_schedul(
-    #         solver.min_fwd_steps, solver.final_lbm_step, solver.max_fwd_steps, dtype=int)
-    
 
-    # Create the grid
     grid = ParameterGrid(param_grid)
-    # Define the directory to save the config files
-    name = "debug_2_campaign_ffhq_ade_128"
-
-    save_dir =os.path.join("configs",name)
-    save_dir_2= os.path.join("configs","configs",name)
+    save_dir =os.path.join("configs", "mnist", "campaign_small_mnist_ade")
     if os.path.exists(save_dir):
         shutil.rmtree(save_dir)
     os.makedirs(save_dir, exist_ok=True)
-    # Define the default config
-    default_cfg_dir_list =  ["ffhq"]
-    default_cfg_file = "default_lbm_ade_ffhq_128_config.py"
+    default_cfg_dir_list =  ["configs", "mnist"]
+    default_cfg_file = "default_lbm_ade_small_mnist_config.py"
 
     shutil.copy(os.path.join(os.path.join(*default_cfg_dir_list), default_cfg_file),
                 save_dir)
@@ -75,8 +34,7 @@ def main():
     module_path = os.path.join(*default_cfg_dir_list).replace(os.sep, '.')
     file_name = re.match(r"(.*)\.py", default_cfg_file).group(1)
 
-    import_path = os.path.join(save_dir_2).replace(os.sep, '.')
-    
+    import_path = os.path.join(save_dir).replace(os.sep, '.')
     # Construct the default_cfg_str
     default_cfg_str = f"from {import_path} import {file_name} as default_config"
 
@@ -121,15 +79,6 @@ def get_config():
             f.write(f"""
     ### GRID MAKER DONE ###
     
-    
-    if config.solver.are_steps_unique:
-        config.solver.corrupt_sched = np.unique(config.solver.corrupt_sched)
-        config.solver.max_fwd_steps = len(config.solver.corrupt_sched)
-        config.solver.n_denoising_steps = config.solver.max_fwd_steps - 1
-        
-    config.solver.cs2 = conf_utils.lin_schedule(1./3, 1./3, config.solver.final_lbm_step)
-    # niu_sched = conf_utils.lin_schedule(1E-4*1/6, 1./6, config.solver.final_lbm_step)
-    # config.solver.niu = config.solver.bulk_visc = niu_sched  
     """)
         
             f.write(f"""
