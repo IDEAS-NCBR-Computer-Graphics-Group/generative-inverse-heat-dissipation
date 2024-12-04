@@ -48,7 +48,7 @@ def get_config():
     solver.max_init_gray_scale = 1.05
     # solver.niu = solver.bulk_visc =  0.5 * 1/6
     solver.min_fwd_steps = 1
-    solver.n_denoising_steps = 50
+    solver.n_denoising_steps = 200
     solver.max_fwd_steps = solver.n_denoising_steps + 1  # corruption_amount = np.random.randint(self.min_steps, self.max_steps) we need to add +1 as max_fwd_steps is excluded from tossing
    
     niu_sched  = conf_utils.lin_schedule(0.5 * 1/6, 0.5 * 1/6, solver.max_fwd_steps)

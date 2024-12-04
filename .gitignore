@@ -18,7 +18,8 @@ runs/
 data/
 wandb/
 6_experiments/
-
+configs_old*
+configs/configs/*
 __pycache__
 
 
