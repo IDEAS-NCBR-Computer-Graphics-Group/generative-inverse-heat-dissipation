@@ -155,7 +155,7 @@ class SpectralTurbulenceGenerator(t.nn.Module):
         v = t.real(t.fft.ifft2(v_hat))
 
        
-        if self.std_dev[time] < 1E-14:
+        if self.std_dev[time]< 1E-14:
             u,v = 0*self.K, 0*self.K #avoid division by 0 in t.std(u)
         else:
             # u *= (self.desired_std/t.std(u))
@@ -168,7 +168,7 @@ class SpectralTurbulenceGenerator(t.nn.Module):
             # # todo: would the followin chagne the std deviation?
             # u *= self.std_dev 
             # v *= self.std_dev 
-            u *= self.std_dev[time] / t.std(u)
+            u *= self.std_dev[time]/ t.std(u)
             v *= self.std_dev[time] / t.std(v)
             
 

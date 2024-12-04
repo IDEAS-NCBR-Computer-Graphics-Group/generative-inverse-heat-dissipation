@@ -2,6 +2,8 @@
 
 
 import os, sys
+sys.path.append(os.getcwd())
+
 import numpy as np
 from numba import jit, njit
 from numpy.testing import assert_almost_equal
@@ -135,6 +137,11 @@ def main():
     match_sim_numbers.plot_matrix(blurred_by_dct-blurred_by_lbm, title="Difference DCT schedule - LBM")
     print(f'Maximal value of DCT blurr: {blurred_by_dct.max()}')
     print(f'Maximal value of LBM blurr: {blurred_by_lbm.max()}')
+
+    squared_diff = (blurred_by_dct - blurred_by_lbm) ** 2
+    mse = np.mean(squared_diff)
+    print(f'MSE: {mse}')
+
 
 if __name__ == '__main__':
     main()

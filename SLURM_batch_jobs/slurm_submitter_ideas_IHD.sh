@@ -77,7 +77,7 @@ for CONFIG_FILE in $CONFIG_DIRNAME/*.py; do
         echo "cd \$HOME/generative-inverse-heat-dissipation"
         
         # Set the command to run with the specific config file
-        CMD="python train_corrupted.py --config $CONFIG_FILE"
+        CMD="python train.py --config $CONFIG_FILE --workdir runs/ffhq/ffhq256_sigma_128"
         echo 'echo "Executing CMD:"'
         echo "echo \"$CMD\""
         echo "eval $CMD"
@@ -86,7 +86,7 @@ for CONFIG_FILE in $CONFIG_DIRNAME/*.py; do
     ) > "$JOB_SCRIPT"
     
     if $PRINT_ONLY; then
-        echo "Generated SLURM script $JOB_SCRIPT for $CONFIG_FILE:"
+        echo "Generated SLURM script for $CONFIG_FILE:"
         cat "$JOB_SCRIPT"
         echo # Add a blank line for readability
     else

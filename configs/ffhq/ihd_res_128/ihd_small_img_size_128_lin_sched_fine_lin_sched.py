@@ -9,7 +9,7 @@ def get_config():
     config = small_img_size_128.get_config()
     model = config.model
     
-    model.K = 600 # was 200
+    model.K = 200 # was 200
     model.blur_schedule = np.linspace(model.blur_sigma_min, model.blur_sigma_max, model.K)
     model.blur_schedule = np.array([0] + list(model.blur_schedule))  # Add the k=0 timestep
     

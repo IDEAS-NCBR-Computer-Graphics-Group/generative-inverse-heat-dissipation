@@ -75,6 +75,6 @@ def get_ihd_solver_setup(config):
 
     return config
 
-def calculate_u_max(niu, Pe, L):
-  U_max = (Pe * niu) / L
-  return U_max
+def u_from_Pe(Pe, niu, L):
+        u = Pe*niu/L
+        return u    # Pe = conf_utils.lin_schedule(5E-1, 1E-0, solver.final_lbm_step, dtype=np.float32)

@@ -25,6 +25,9 @@ class LBM_SolverBase:
         self.omega_kin.from_numpy(1.0 / (3.0* kin_visc + 0.5))
                 
         self.cs2 = ti.field(ti.f32, shape=self.max_iter[None])
+        if isinstance(cs2, float):
+            cs2 = np.array([cs2])
+            cs2 = np.full((self.max_iter[None],), cs2)
         self.cs2.from_numpy(cs2)
         
         self.rho = ti.field(float, shape=(self.nx, self.ny))
