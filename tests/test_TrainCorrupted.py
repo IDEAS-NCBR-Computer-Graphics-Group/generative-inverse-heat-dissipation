@@ -30,16 +30,17 @@ class TestTrainCorrupted(unittest.TestCase):
 
         # Construct the config path relative to the script directory
         self.config_dir = os.path.join(self.project_dir, "tests", "configs")
-        self.config_files = ["ffhq_128_lbm_ade_example.py", "ffhq_128_lbm_ns_example.py"]
+        self.config_files = ["ffhq_128_lbm_ade_example.py", "ffhq_128_lbm_ns_example.py", "ffhq_128_lbm_ns_with_u_example.py"]
         
 
     def test_call_train_corrupted(self):
         # test your campaign before launch
         # self.config_dir = os.path.join(self.project_dir, "configs", "campaign_ffhq_ade_128")
         # self.config_files = ["config_d17dedb5.py"]
-        self.config_dir = os.path.join(self.project_dir, "configs", "campaign_ffhq_ade_128_rgb")
-        self.config_files = ["config_1cd7f47d.py"]
-        
+        # self.config_dir = os.path.join(self.project_dir, "configs", "campaign_ffhq_ade_128_rgb")
+        # self.config_files = ["config_1cd7f47d.py"]
+        self.config_files = ["ffhq_128_lbm_ns_with_u_example.py"]
+         
         for config_file in self.config_files:
             config_path = os.path.join(self.config_dir, config_file)
             logging.info(f"train: config_path = {config_path}")
