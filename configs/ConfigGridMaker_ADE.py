@@ -13,16 +13,16 @@ import conf_utils
 from conf_utils import evaluate_config_file_name, lin_schedule
 
 def main():
-    save_dir = os.path.join("configs","debug_recalculation_camp_3")
+    save_dir = os.path.join("configs","recalculation_camp_long_run")
     os.makedirs(save_dir, exist_ok=False)
     param_grid = {
         'training.batch_size': [8],
         'training.n_iters': [200001],
         'optim.lr': [2e-5],
         # 'solver.cs2' : [1./3.],
-        'solver.Pe' : [1e-1],
+        'solver.Pe' : [5e-2,1e-1, 2e-1, 5e-1, 1e-0],
         'model.K' : [200],
-        'model.blur_schedule' : [np.array([0] + list(np.exp(np.linspace(np.log(0.5), np.log(32), 200)) ))]
+        'model.blur_schedule' : [np.array([0] + list(np.exp(np.linspace(np.log(0.5), np.log(128), 200)) ))]
     }
 
     default_cfg_dir_list = ["ffhq"]

@@ -25,6 +25,8 @@ class LBM_Base_Corruptor(BaseCorruptor):
         self.max_steps = config.solver.max_fwd_steps
 
         self.corrupt_sched = config.solver.corrupt_sched
+        self.is_u_learnable = config.data.is_u_learnable
+        self.num_channels = config.data.num_channels
 
         self.min_init_gray_scale = config.solver.min_init_gray_scale
         self.max_init_gray_scale = config.solver.max_init_gray_scale
@@ -64,9 +66,18 @@ class LBM_Base_Corruptor(BaseCorruptor):
         # plt.savefig('testgreys.png')
 
 
-        self._intermediate_samples = torch.empty((steps + 1, *x.shape))
-
-        for c in range(x.shape[0]):
+        # self._intermediate_samples = torch.empty((steps + 1, *x.shape))
+        # velocity_channels = 0
+        # if self.is_u_learnable == True:
+        #     velocity_channels =2
+            
+            
+        self._intermediate_samples = torch.empty((steps + 1, self.num_channels, *x[0,:].shape))
+        
+    
+        color_channels = x.shape[0]
+        
+        for c in range(color_channels):
             np_gray_img = x.numpy()[c, :, :]
             np_gray_img = normalize_grayscale_image_range( # rescale to fit solver stability range
                 np_gray_img, self.min_init_gray_scale, self.max_init_gray_scale)
@@ -80,13 +91,26 @@ class LBM_Base_Corruptor(BaseCorruptor):
             rho_cpu = change_value_range(rho_cpu, self.min_init_gray_scale, self.max_init_gray_scale, 0., 1.)
             self._intermediate_samples[0][c] = torch.tensor(rho_cpu).unsqueeze(0)
 
+            if self.is_u_learnable:
+                rho_channel_id = c * 3
+                ux_channel_id = c *3 + 1
+                uy_channel_id = c *3 + 2
+            else:
+                rho_channel_id = c
+
             for i in range(1, steps+1):
                 step_difference = self.corrupt_sched[i] - self.corrupt_sched[i-1]
                 self.solver.solve(step_difference)
                 rho_cpu = self.solver.rho.to_numpy()
                 rho_cpu = change_value_range(rho_cpu, self.min_init_gray_scale, self.max_init_gray_scale, 0., 1.)
-                self._intermediate_samples[i][c] = torch.tensor(rho_cpu).unsqueeze(0)
-
+                self._intermediate_samples[i][rho_channel_id] = torch.tensor(rho_cpu).unsqueeze(0)
+                
+                if self.is_u_learnable:
+                    vel_cpu = self.solver.vel.to_numpy()
+                    vx_cpu = vel_cpu[:,:,0]
+                    vy_cpu = vel_cpu[:,:,1]
+                    self._intermediate_samples[i][ux_channel_id] = torch.tensor(vx_cpu).unsqueeze(0)
+                    self._intermediate_samples[i][uy_channel_id] = torch.tensor(vy_cpu).unsqueeze(0)
         logging.info(f"Corruptor scheduler idx: {steps} --> solver run for iterations: {self.solver.iterations_counter}")
 
         if generate_pair:
