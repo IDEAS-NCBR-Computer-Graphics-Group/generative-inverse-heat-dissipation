@@ -25,11 +25,12 @@ def plot_matrices_in_grid(matrices, titles=None, columns=5, value_range=None):
     cols = columns
     rows = int(np.ceil(num_matrices / cols))
 
-    if value_range is None:
-        vmin = min(matrix.min() for matrix in matrices)
-        vmax = max(matrix.max() for matrix in matrices)
-    else:
-        vmin, vmax = value_range
+    # if value_range is None:
+    #     vmin = min(matrix.min() for matrix in matrices)
+    #     vmax = max(matrix.max() for matrix in matrices)
+    # else:
+    #     vmin, vmax = value_range
+    vmin, vmax = None, None
 
     fig, axes = plt.subplots(rows, cols, figsize=(cols * 5, rows * 4))
     axes = np.array(axes).reshape(-1)

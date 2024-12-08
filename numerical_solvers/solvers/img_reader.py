@@ -66,4 +66,8 @@ def normalize_grayscale_image_range(image, min_val, max_val) -> np.array:
 
 def change_value_range(image, prev_min_val, prev_max_val, min_val, max_val) -> np.array:
     image = image.astype(np.float32)
-    return min_val + (image - prev_min_val) * (max_val - min_val) / (prev_max_val - prev_min_val)
+    epsilon = 1e-8
+    denominator = (prev_max_val - prev_min_val) + epsilon
+    scaled = min_val + (image - prev_min_val) * (max_val - min_val) / denominator
+    scaled = np.clip(scaled, min_val, max_val)
+    return scaled

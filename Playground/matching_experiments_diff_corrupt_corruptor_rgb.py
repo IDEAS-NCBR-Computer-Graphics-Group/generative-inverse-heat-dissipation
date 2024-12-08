@@ -17,16 +17,14 @@ from numerical_solvers.visualization import plotting
 def load_image(config, L):
     img_path = './numerical_solvers/runners/cat_768x768.jpg'
     image = cv2.imread(img_path) 
-    image = cv2.resize(image, (L,L))
+    image = cv2.resize(image, (L, L))
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image = config.data.transform(image)
     image = np.array(image)
     return image
 
 def map01(image):
-    min_val = image.min()
-    max_val = image.max()
-    return (image - min_val) / (max_val - min_val)
+    return image
 
 def calc_diff(x, y):
     return np.sqrt(x**2 - y**2)
@@ -103,7 +101,7 @@ def main():
 
     corruptor = LBM_ADE_Corruptor(config=config, transform=config.data.transform)
     _ = corruptor._corrupt(t_init.squeeze(0), config.solver.max_fwd_steps)
-    lbm_corrupted = [np.transpose(i.squeeze(0).numpy(), (1,2,0)) for i in corruptor.intermediate_samples]
+    lbm_corrupted = [(np.transpose(i.squeeze(0).numpy(), (1,2,0))) for i in corruptor.intermediate_samples]
 
     plotting.plot_matrices_in_grid(lbm_corrupted, columns=4)
     plotting.plot_matrix_side_by_side(lbm_corrupted[-1], blurred_by_dct_all[-1], title="LBM BLURR")
