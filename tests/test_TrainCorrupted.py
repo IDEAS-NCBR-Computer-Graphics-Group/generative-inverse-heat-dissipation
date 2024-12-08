@@ -30,7 +30,7 @@ class TestTrainCorrupted(unittest.TestCase):
 
         # Construct the config path relative to the script directory
         self.config_dir = os.path.join(self.project_dir, "tests", "configs")
-        self.config_files = ["ffhq_128_lbm_ade_example.py", "ffhq_128_lbm_ns_example.py"]
+        self.config_files = ["ffhq_128_lbm_ade_example.py", "ffhq_128_lbm_ns_example.py", "ffhq_128_lbm_ns_with_u_example.py"]
         
 
     def test_call_train_corrupted(self):
