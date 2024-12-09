@@ -1,4 +1,4 @@
-from configs.afhq import default_afhq_configs
+from configs.afhq.ihd import default_afhq_configs
 import numpy as np
 
 # This is the smaller AFHQ model

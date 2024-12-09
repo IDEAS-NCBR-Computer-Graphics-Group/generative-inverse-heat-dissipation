@@ -141,8 +141,7 @@ def train(config, workdir):
         if step % config.training.eval_freq == 0:
             logging.info(f"Starting evaluation on test dataset at step={step}.")
             # Use 25 batches for test-set evaluation, arbitrary choice
-            N_evals = 25
-            for i in range(N_evals):
+            for i in range(config.training.n_evals):
                 try:
                     eval_batch = next(eval_iter)[0].to(config.device).float()
                 except StopIteration:  # Start new epoch

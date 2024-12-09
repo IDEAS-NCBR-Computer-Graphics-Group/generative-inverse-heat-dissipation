@@ -63,28 +63,24 @@ class LBM_Base_Corruptor(BaseCorruptor):
         # axarr[2].axis('off')
         # plt.savefig('testgreys.png')
 
-
         self._intermediate_samples = torch.empty((steps + 1, *x.shape))
+        max_val, min_val = 1, 0
 
         for c in range(x.shape[0]):
-            np_gray_img = x.numpy()[c, :, :]
-            np_gray_img = normalize_grayscale_image_range( # rescale to fit solver stability range
-                np_gray_img, self.min_init_gray_scale, self.max_init_gray_scale)
-
+            np_gray_img = x.numpy()[c, :,:]
+            np_gray_img = change_value_range(np_gray_img, min_val, max_val, self.min_init_gray_scale, self.max_init_gray_scale)
+            
             self.solver.init(np_gray_img)
             self.solver.iterations_counter[None] = 0  # Reset counter
 
-            step_difference = self.corrupt_sched[0]
-            self.solver.solve(step_difference)
-            rho_cpu = self.solver.rho.to_numpy()
-            rho_cpu = change_value_range(rho_cpu, self.min_init_gray_scale, self.max_init_gray_scale, 0., 1.)
-            self._intermediate_samples[0][c] = torch.tensor(rho_cpu).unsqueeze(0)
-
+            img_zero = change_value_range(np_gray_img, self.min_init_gray_scale, self.max_init_gray_scale, min_val, max_val)
+            self._intermediate_samples[0][c] = torch.tensor(img_zero).unsqueeze(0).clone()
+            
             for i in range(1, steps+1):
                 step_difference = self.corrupt_sched[i] - self.corrupt_sched[i-1]
                 self.solver.solve(step_difference)
                 rho_cpu = self.solver.rho.to_numpy()
-                rho_cpu = change_value_range(rho_cpu, self.min_init_gray_scale, self.max_init_gray_scale, 0., 1.)
+                rho_cpu = change_value_range(rho_cpu, self.min_init_gray_scale, self.max_init_gray_scale, min_val, max_val)
                 self._intermediate_samples[i][c] = torch.tensor(rho_cpu).unsqueeze(0)
 
         logging.info(f"Corruptor scheduler idx: {steps} --> solver run for iterations: {self.solver.iterations_counter}")

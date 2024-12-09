@@ -6,7 +6,7 @@ from torchvision import transforms
 import os
 
 from configs.ffhq.ihd.default_ffhq_configs import get_config as get_config_ihd
-from configs.match_sim_numbers import get_ihd_solver_setup, calculate_u_max
+from configs.match_sim_numbers import get_ihd_solver_setup
 
 def get_config():
     return get_default_configs()
@@ -110,7 +110,7 @@ def get_default_configs():
     turbulence.hash = conf_utils.hash_solver(turbulence)
     turbulence.energy_spectrum = lambda k: torch.where(torch.isinf(k ** (turbulence.energy_slope)), 0, k ** (turbulence.energy_slope))
 
-    config.turb_intensity = calculate_u_max(niu_sched, Pe = 100, L = data.image_size)
+    # config.turb_intensity = calculate_u_max(niu_sched, Pe = 100, L = data.image_size)
 
     # model
     config.model = model = ml_collections.ConfigDict()
