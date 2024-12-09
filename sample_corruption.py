@@ -132,7 +132,6 @@ def produce_fwd_sample(config_path):
     logging.info(f"batch_size = x.shape[0]: {clean_image.shape[0]}")
     logging.info(f"Labels: {label.shape}")
 
-    matplotlib.use('TkAgg')
     fig, axs = plt.subplots(3, 1, figsize=(20, 20), sharex=True)
     axs[0].set_title('clean x', fontsize=24)
     axs[1].set_title('noisy x', fontsize=24)

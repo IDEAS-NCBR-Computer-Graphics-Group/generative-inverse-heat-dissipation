@@ -139,6 +139,8 @@ def sample_interpolate(config, workdir, checkpoint, delta, num_points, number):
     # The interpolation function returns only one interpolation between two random points
     # -> batch_size = 2
     batch_size = 2
+    config.training.batch_size = batch_size
+    config.eval.batch_size = batch_size
     if checkpoint > 0:
         checkpoint_dir = os.path.join(workdir, "checkpoints")
         model = utils.load_model_from_checkpoint(
