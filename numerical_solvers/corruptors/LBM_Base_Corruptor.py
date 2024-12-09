@@ -63,13 +63,12 @@ class LBM_Base_Corruptor(BaseCorruptor):
         # axarr[2].axis('off')
         # plt.savefig('testgreys.png')
 
-
         self._intermediate_samples = torch.empty((steps + 1, *x.shape))
+        max_val, min_val = 1, 0
+
         for c in range(x.shape[0]):
-            np_gray_img = x.numpy()[c, :, :]
-            max_val = np_gray_img.max()
-            min_val = np_gray_img.min()
-            np_gray_img = normalize_grayscale_image_range(np_gray_img, self.min_init_gray_scale, self.max_init_gray_scale)
+            np_gray_img = x.numpy()[c, :,:]
+            np_gray_img = change_value_range(np_gray_img, min_val, max_val, self.min_init_gray_scale, self.max_init_gray_scale)
             
             self.solver.init(np_gray_img)
             self.solver.iterations_counter[None] = 0  # Reset counter
