@@ -53,27 +53,23 @@ def calculate_t_niu_array_from_0(Fo, niu_min, niu_max, L):
 
   return np.array(dt_values, dtype=int), np.array(niu_values), np.array(niu_realizable_values), np.array(realizable_dFo)
 
-def get_ihd_solver_setup(config):
-    bs = config.model.blur_schedule
+def get_ihd_solver_setup(K, blur_schedule, image_size, solver):
+    bs = blur_schedule
     diff_blur_schedule = [calc_diff(bs[i], bs[i-1]) for  i in range(1, len(bs))]
     diff_blur_schedule = [bs[0] , *diff_blur_schedule]
     
-    Fo = calc_Fo(
-      diff_blur_schedule, config.data.image_size)
-    dt, niu, *_ = calculate_t_niu_array_from_0(
-      Fo, config.solver.min_niu, config.solver.max_niu, config.data.image_size)
+    Fo = calc_Fo(diff_blur_schedule, image_size)
+    dt, niu, *_ = calculate_t_niu_array_from_0(Fo, solver.min_niu, solver.max_niu, image_size)
     
-    corrupt_sched =  np.array(list(np.cumsum(dt)), dtype=int)
-    config.solver.n_denoising_steps = config.solver.max_fwd_steps = config.model.K
-    config.solver.corrupt_sched = corrupt_sched
+    solver.corrupt_sched =  np.array(list(np.cumsum(dt)), dtype=int)
+    solver.n_denoising_steps = solver.max_fwd_steps = K
 
-    config.solver.cs2 = conf_utils.lin_schedule(1./3, 1./3, corrupt_sched[-1], dtype=np.float32)
-    config.solver.niu = config.solver_bulk_visc = np.array(sum([[niu[i]]*dt[i] for i in range(len(niu))], []))
-    config.solver.final_lbm_step = int(corrupt_sched[-1])
+    solver.cs2 = conf_utils.lin_schedule(1./3, 1./3, solver.corrupt_sched[-1], dtype=np.float32)
+    solver.niu = solver.bulk_visc = np.array(sum([[niu[i]]*dt[i] for i in range(len(niu))], []))
+    solver.final_lbm_step = int(solver.corrupt_sched[-1])
 
-    config.solver.hash = conf_utils.hash_solver(config.solver)
-
-    return config
+    solver.hash = conf_utils.hash_solver(solver)
+    return solver
 
 def u_from_Pe(Pe, niu, L):
         u = Pe*niu/L
